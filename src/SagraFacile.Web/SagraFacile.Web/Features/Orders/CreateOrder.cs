@@ -61,7 +61,7 @@ public static class CreateOrder
                 .FirstOrDefaultAsync(cancellationToken);
 
             var sequence = 1;
-            if (lastOrder != null)
+            if (lastOrder != null && lastOrder.OrderNumber.Length >= 8)
             {
                 var lastSequence = lastOrder.OrderNumber.Substring(8);
                 if (int.TryParse(lastSequence, out var num))

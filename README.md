@@ -68,7 +68,16 @@ SagraFacile/
 
 1. Ensure PostgreSQL is running and accessible at `localhost:5432`
 
-2. Update connection string in `appsettings.json` if needed
+2. **Configure database credentials** (recommended for security):
+   
+   Using user secrets (recommended):
+   ```bash
+   cd src/SagraFacile.Web/SagraFacile.Web
+   dotnet user-secrets init
+   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=sagrafacile;Username=postgres;Password=your_password"
+   ```
+   
+   Or update connection string in `appsettings.Development.json` (not recommended for production)
 
 3. Apply database migrations:
    ```bash

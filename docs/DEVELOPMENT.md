@@ -158,6 +158,27 @@ Configure in `appsettings.json`:
 }
 ```
 
+**Security Note**: For production and even local development, it's recommended to use environment variables or user secrets instead of hardcoding credentials:
+
+#### Using Environment Variables
+```bash
+export ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=sagrafacile;Username=postgres;Password=your_password"
+```
+
+#### Using User Secrets (Recommended for Local Development)
+```bash
+cd src/SagraFacile.Web/SagraFacile.Web
+dotnet user-secrets init
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=sagrafacile;Username=postgres;Password=your_password"
+```
+
+The application will use connection strings in this priority order:
+1. Environment variable `ConnectionStrings__DefaultConnection`
+2. User secrets (in development)
+3. `appsettings.{Environment}.json`
+4. `appsettings.json`
+5. Fallback default in `Program.cs`
+
 ### Entity Configuration
 
 Use Fluent API in `OnModelCreating`:
