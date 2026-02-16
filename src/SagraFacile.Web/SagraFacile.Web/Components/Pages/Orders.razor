@@ -1,0 +1,151 @@
+@page "/orders"
+@rendermode InteractiveServer
+@using MediatR
+@using SagraFacile.Web.Features.Orders
+@inject IMediator Mediator
+
+<PageTitle>Orders</PageTitle>
+
+<h1>Orders Management</h1>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h3>Create New Order</h3>
+        <EditForm Model="@newOrder" OnValidSubmit="@CreateNewOrder">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">Customer Name</label>
+                <InputText @bind-Value="newOrder.CustomerName" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Total Amount</label>
+                <InputNumber @bind-Value="newOrder.TotalAmount" class="form-control" />
+            </div>
+
+            <button type="submit" class="btn btn-primary" disabled="@isCreating">
+                @if (isCreating)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                }
+                Create Order
+            </button>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(creationMessage))
+        {
+            <div class="alert alert-success mt-3">@creationMessage</div>
+        }
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <h3>Orders List</h3>
+        
+        @if (isLoading)
+        {
+            <p><em>Loading orders...</em></p>
+        }
+        else if (orders != null && orders.Any())
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Order Number</th>
+                        <th>Customer Name</th>
+                        <th>Status</th>
+                        <th>Total Amount</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in orders)
+                    {
+                        <tr>
+                            <td>@order.OrderNumber</td>
+                            <td>@order.CustomerName</td>
+                            <td><span class="badge bg-info">@order.Status</span></td>
+                            <td>€@order.TotalAmount.ToString("N2")</td>
+                            <td>@order.CreatedAt.ToString("g")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            
+            <p class="text-muted">Total orders: @totalCount</p>
+        }
+        else
+        {
+            <p><em>No orders found.</em></p>
+        }
+    </div>
+</div>
+
+@code {
+    private CreateOrderModel newOrder = new();
+    private List<GetOrders.OrderDto> orders = new();
+    private int totalCount = 0;
+    private bool isLoading = true;
+    private bool isCreating = false;
+    private string creationMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        isLoading = true;
+        try
+        {
+            var query = new GetOrders.Query(Page: 1, PageSize: 10);
+            var result = await Mediator.Send(query);
+            orders = result.Orders;
+            totalCount = result.TotalCount;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CreateNewOrder()
+    {
+        isCreating = true;
+        creationMessage = string.Empty;
+
+        try
+        {
+            var command = new CreateOrder.Command(
+                newOrder.CustomerName,
+                newOrder.TotalAmount
+            );
+
+            var result = await Mediator.Send(command);
+            
+            creationMessage = $"Order {result.OrderNumber} created successfully!";
+            newOrder = new();
+            
+            // Reload orders
+            await LoadOrders();
+        }
+        catch (Exception ex)
+        {
+            creationMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isCreating = false;
+        }
+    }
+
+    private class CreateOrderModel
+    {
+        public string CustomerName { get; set; } = string.Empty;
+        public decimal TotalAmount { get; set; }
+    }
+}
