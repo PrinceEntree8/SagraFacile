@@ -37,16 +37,20 @@ public static class GetReservationReport
     {
         var queryable = context.TableReservations.AsQueryable();
 
-        // Apply date filters - convert to UTC
+        // Apply date filters - ensure UTC by specifying kind if unspecified
         if (query.StartDate.HasValue)
         {
-            var startDateUtc = query.StartDate.Value.ToUniversalTime();
+            var startDateUtc = query.StartDate.Value.Kind == DateTimeKind.Unspecified 
+                ? DateTime.SpecifyKind(query.StartDate.Value, DateTimeKind.Utc)
+                : query.StartDate.Value.ToUniversalTime();
             queryable = queryable.Where(r => r.CreatedAt >= startDateUtc);
         }
 
         if (query.EndDate.HasValue)
         {
-            var endDateUtc = query.EndDate.Value.ToUniversalTime();
+            var endDateUtc = query.EndDate.Value.Kind == DateTimeKind.Unspecified 
+                ? DateTime.SpecifyKind(query.EndDate.Value, DateTimeKind.Utc)
+                : query.EndDate.Value.ToUniversalTime();
             queryable = queryable.Where(r => r.CreatedAt <= endDateUtc);
         }
 

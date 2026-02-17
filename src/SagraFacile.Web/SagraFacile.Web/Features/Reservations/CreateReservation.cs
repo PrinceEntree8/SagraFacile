@@ -49,6 +49,7 @@ public static class CreateReservation
 
     private static async Task<string> GenerateQueueNumberAsync(ApplicationDbContext context, CancellationToken cancellationToken)
     {
+        const int DatePrefixLength = 8; // yyyyMMdd format
         var date = DateTime.UtcNow.ToString("yyyyMMdd");
         var lastReservation = await context.TableReservations
             .Where(r => r.QueueNumber.StartsWith(date))
@@ -56,9 +57,9 @@ public static class CreateReservation
             .FirstOrDefaultAsync(cancellationToken);
 
         var sequence = 1;
-        if (lastReservation != null && lastReservation.QueueNumber.Length >= 8)
+        if (lastReservation != null && lastReservation.QueueNumber.Length >= DatePrefixLength)
         {
-            var lastSequence = lastReservation.QueueNumber.Substring(8);
+            var lastSequence = lastReservation.QueueNumber.Substring(DatePrefixLength);
             if (int.TryParse(lastSequence, out var num))
             {
                 sequence = num + 1;
