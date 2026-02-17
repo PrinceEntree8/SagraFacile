@@ -1,0 +1,212 @@
+@page "/nowcalling"
+@using SagraFacile.Web.Features.Reservations
+@using SagraFacile.Web.Data
+@using Microsoft.AspNetCore.SignalR.Client
+@inject ApplicationDbContext Db
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+
+<PageTitle>Now Calling - SagraFacile</PageTitle>
+
+<div class="now-calling-container">
+    @if (lastCalled != null)
+    {
+        <div class="now-calling-card">
+            <div class="now-calling-header">
+                <h1>Now Calling</h1>
+            </div>
+            
+            <div class="queue-number">
+                @lastCalled.QueueNumber
+            </div>
+            
+            <div class="customer-info">
+                <div class="customer-name">
+                    @lastCalled.CustomerName
+                </div>
+                <div class="party-size">
+                    Party of @lastCalled.PartySize
+                </div>
+            </div>
+            
+            <div class="called-time">
+                Called at @lastCalled.LastCalledAt.ToString("HH:mm:ss")
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="now-calling-card">
+            <div class="now-calling-header">
+                <h1>Now Calling</h1>
+            </div>
+            
+            <div class="no-calls">
+                <p>No reservations have been called yet</p>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .now-calling-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+    }
+
+    .now-calling-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 60px;
+        text-align: center;
+        max-width: 800px;
+        width: 100%;
+        animation: fadeIn 0.5s ease-in;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .now-calling-header h1 {
+        font-size: 3rem;
+        color: #333;
+        margin-bottom: 40px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .queue-number {
+        font-size: 5rem;
+        font-weight: 900;
+        color: #667eea;
+        margin: 30px 0;
+        letter-spacing: 3px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .customer-info {
+        margin: 40px 0;
+    }
+
+    .customer-name {
+        font-size: 3.5rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 20px;
+    }
+
+    .party-size {
+        font-size: 2rem;
+        color: #718096;
+        font-weight: 500;
+    }
+
+    .called-time {
+        font-size: 1.5rem;
+        color: #a0aec0;
+        margin-top: 30px;
+        font-style: italic;
+    }
+
+    .no-calls {
+        padding: 60px 0;
+    }
+
+    .no-calls p {
+        font-size: 2rem;
+        color: #718096;
+    }
+
+    @@media (max-width: 768px) {
+        .now-calling-card {
+            padding: 40px 20px;
+        }
+
+        .now-calling-header h1 {
+            font-size: 2rem;
+        }
+
+        .queue-number {
+            font-size: 3.5rem;
+        }
+
+        .customer-name {
+            font-size: 2.5rem;
+        }
+
+        .party-size {
+            font-size: 1.5rem;
+        }
+
+        .called-time {
+            font-size: 1.2rem;
+        }
+
+        .no-calls p {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+
+@code {
+    private LastCalledReservationDto? lastCalled;
+    private HubConnection? hubConnection;
+    private System.Threading.Timer? refreshTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLastCalled();
+
+        // Set up SignalR connection
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/reservationHub"))
+            .Build();
+
+        hubConnection.On("ReservationCalled", async () =>
+        {
+            await LoadLastCalled();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+
+        // Auto-refresh every 5 seconds as a backup
+        refreshTimer = new System.Threading.Timer(async _ =>
+        {
+            await LoadLastCalled();
+            await InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+    }
+
+    private async Task LoadLastCalled()
+    {
+        lastCalled = await GetLastCalledReservationHandler.Handle(
+            new GetLastCalledReservation(),
+            Db
+        );
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        refreshTimer?.Dispose();
+        
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}

@@ -86,9 +86,13 @@
                 {
                     <p class="mb-0">For Table @selectedTable.TableNumber (Covers: @selectedTable.CoverCount)</p>
                 }
+                else if (coverCountForSearch > 0)
+                {
+                    <p class="mb-0">For Cover Count: @coverCountForSearch</p>
+                }
                 else
                 {
-                    <p class="mb-0 text-muted">Select a table or enter cover count</p>
+                    <p class="mb-0">All Called Reservations (FIFO Order)</p>
                 }
             </div>
             <div class="card-body">
@@ -202,6 +206,7 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadTables();
+        await LoadAllCalledReservations(); // Load all Called reservations by default
         await InitializeSignalR();
     }
 
@@ -224,6 +229,10 @@
             {
                 await SearchBestFit();
             }
+            else
+            {
+                await LoadAllCalledReservations(); // Refresh the default view
+            }
             await InvokeAsync(StateHasChanged);
         });
 
@@ -233,6 +242,10 @@
             {
                 await SearchBestFit();
             }
+            else
+            {
+                await LoadAllCalledReservations(); // Refresh the default view
+            }
             await InvokeAsync(StateHasChanged);
         });
 
@@ -241,6 +254,10 @@
             if (coverCountForSearch > 0 || selectedTable != null)
             {
                 await SearchBestFit();
+            }
+            else
+            {
+                await LoadAllCalledReservations(); // Refresh the default view
             }
             await InvokeAsync(StateHasChanged);
         });
@@ -269,6 +286,22 @@
         finally
         {
             isLoadingTables = false;
+        }
+    }
+
+    private async Task LoadAllCalledReservations()
+    {
+        isSearching = true;
+        try
+        {
+            // Load all Called reservations without a specific cover count filter
+            var query = new GetBestFitReservation.Query(0); // Use 0 to indicate "all"
+            var result = await GetBestFitReservation.Handle(query, DbContext, CancellationToken.None);
+            bestFitResults = result.Matches.ToList();
+        }
+        finally
+        {
+            isSearching = false;
         }
     }
 
