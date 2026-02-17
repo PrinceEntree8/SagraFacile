@@ -33,6 +33,28 @@ public static class GetBestFitReservation
 
         var matches = new List<ReservationMatchDto>();
 
+        // If coverCount is 0, return ALL Called reservations without filtering
+        if (query.TableCoverCount == 0)
+        {
+            foreach (var reservation in reservations)
+            {
+                matches.Add(new ReservationMatchDto(
+                    reservation.Id,
+                    reservation.QueueNumber,
+                    reservation.CustomerName,
+                    reservation.PartySize,
+                    reservation.Notes,
+                    reservation.CreatedAt,
+                    now - reservation.CreatedAt,
+                    reservation.CallCount,
+                    reservation.LastCalledAt,
+                    "All")); // Use "All" to indicate no filtering
+            }
+            
+            return new Result(matches);
+        }
+
+        // Otherwise, apply best-fit algorithm with cover count filter
         foreach (var reservation in reservations)
         {
             // Best fit algorithm:

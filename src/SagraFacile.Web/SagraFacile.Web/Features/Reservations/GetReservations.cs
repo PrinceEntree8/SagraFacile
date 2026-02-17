@@ -28,10 +28,11 @@ public static class GetReservations
         var now = DateTime.UtcNow;
         var queryable = context.TableReservations.AsQueryable();
 
-        // Exclude seated reservations by default (for receptionist view)
+        // Exclude seated and voided reservations by default (for receptionist view)
+        // Both are terminal statuses
         if (string.IsNullOrEmpty(query.Status))
         {
-            queryable = queryable.Where(r => r.Status != "Seated");
+            queryable = queryable.Where(r => r.Status != "Seated" && r.Status != "Voided");
         }
         else
         {
