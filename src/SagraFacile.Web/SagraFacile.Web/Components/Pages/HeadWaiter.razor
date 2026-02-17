@@ -220,7 +220,25 @@
 
         hubConnection.On<int, string, string, int>("ReservationCreated", async (id, queueNumber, name, size) =>
         {
-            if (coverCountForSearch > 0)
+            if (coverCountForSearch > 0 || selectedTable != null)
+            {
+                await SearchBestFit();
+            }
+            await InvokeAsync(StateHasChanged);
+        });
+
+        hubConnection.On<int, string, int>("ReservationCalled", async (id, queueNumber, callCount) =>
+        {
+            if (coverCountForSearch > 0 || selectedTable != null)
+            {
+                await SearchBestFit();
+            }
+            await InvokeAsync(StateHasChanged);
+        });
+
+        hubConnection.On<int, string>("ReservationVoided", async (id, queueNumber) =>
+        {
+            if (coverCountForSearch > 0 || selectedTable != null)
             {
                 await SearchBestFit();
             }
@@ -229,7 +247,7 @@
 
         hubConnection.On<int, string>("ReservationSeated", async (id, queueNumber) =>
         {
-            if (coverCountForSearch > 0)
+            if (coverCountForSearch > 0 || selectedTable != null)
             {
                 await SearchBestFit();
             }
