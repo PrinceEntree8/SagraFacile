@@ -14,7 +14,7 @@ public static class GetBestFitReservation
         string QueueNumber,
         string CustomerName,
         int PartySize,
-        int Priority,
+        string Notes,
         DateTime CreatedAt,
         TimeSpan WaitingTime,
         int CallCount,
@@ -25,11 +25,10 @@ public static class GetBestFitReservation
     {
         var now = DateTime.UtcNow;
         
-        // Get all waiting or called reservations
+        // Get only CALLED reservations (head waiter works with called customers)
         var reservations = await context.TableReservations
-            .Where(r => r.Status == "Waiting" || r.Status == "Called")
-            .OrderByDescending(r => r.Priority)
-            .ThenBy(r => r.CreatedAt)
+            .Where(r => r.Status == "Called")
+            .OrderBy(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
 
         var matches = new List<ReservationMatchDto>();
@@ -64,7 +63,7 @@ public static class GetBestFitReservation
                     reservation.QueueNumber,
                     reservation.CustomerName,
                     reservation.PartySize,
-                    reservation.Priority,
+                    reservation.Notes,
                     reservation.CreatedAt,
                     now - reservation.CreatedAt,
                     reservation.CallCount,
@@ -73,10 +72,9 @@ public static class GetBestFitReservation
             }
         }
 
-        // Sort by priority first, then by match quality, then by waiting time
+        // Sort by match quality first, then by waiting time (FIFO - first in, first out)
         var sortedMatches = matches
-            .OrderByDescending(m => m.Priority)
-            .ThenBy(m => m.MatchQuality == "Perfect" ? 0 : m.MatchQuality == "Good" ? 1 : 2)
+            .OrderBy(m => m.MatchQuality == "Perfect" ? 0 : m.MatchQuality == "Good" ? 1 : 2)
             .ThenBy(m => m.CreatedAt)
             .ToList();
 

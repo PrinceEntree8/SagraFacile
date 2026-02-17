@@ -38,7 +38,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.CustomerName).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
             entity.Property(e => e.PartySize).IsRequired();
-            entity.Property(e => e.Priority).IsRequired();
+            entity.Property(e => e.Notes).HasMaxLength(500);
             entity.HasIndex(e => e.QueueNumber).IsUnique();
             entity.HasMany(e => e.Calls)
                 .WithOne(c => c.TableReservation)

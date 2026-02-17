@@ -7,7 +7,7 @@ public class TableReservation
     public string CustomerName { get; set; } = string.Empty;
     public int PartySize { get; set; }
     public string Status { get; set; } = "Waiting"; // Waiting, Called, Seated, Voided
-    public int Priority { get; set; } = 0; // 0 = normal, higher = higher priority
+    public string Notes { get; set; } = string.Empty; // Notes about the reservation
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? FirstCalledAt { get; set; }
     public DateTime? LastCalledAt { get; set; }

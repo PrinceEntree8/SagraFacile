@@ -15,7 +15,7 @@ public static class GetReservations
         string CustomerName, 
         int PartySize,
         string Status, 
-        int Priority,
+        string Notes,
         DateTime CreatedAt,
         DateTime? FirstCalledAt,
         DateTime? LastCalledAt,
@@ -28,7 +28,12 @@ public static class GetReservations
         var now = DateTime.UtcNow;
         var queryable = context.TableReservations.AsQueryable();
 
-        if (!string.IsNullOrEmpty(query.Status))
+        // Exclude seated reservations by default (for receptionist view)
+        if (string.IsNullOrEmpty(query.Status))
+        {
+            queryable = queryable.Where(r => r.Status != "Seated");
+        }
+        else if (!string.IsNullOrEmpty(query.Status))
         {
             queryable = queryable.Where(r => r.Status == query.Status);
         }
@@ -36,8 +41,7 @@ public static class GetReservations
         var totalCount = await queryable.CountAsync(cancellationToken);
 
         var reservations = await queryable
-            .OrderByDescending(r => r.Priority)
-            .ThenBy(r => r.CreatedAt)
+            .OrderBy(r => r.CreatedAt)
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
             .Select(r => new ReservationDto(
@@ -46,7 +50,7 @@ public static class GetReservations
                 r.CustomerName,
                 r.PartySize,
                 r.Status,
-                r.Priority,
+                r.Notes,
                 r.CreatedAt,
                 r.FirstCalledAt,
                 r.LastCalledAt,

@@ -6,7 +6,7 @@ namespace SagraFacile.Web.Features.Reservations;
 
 public static class CreateReservation
 {
-    public record Command(string CustomerName, int PartySize, int Priority = 0);
+    public record Command(string CustomerName, int PartySize, string Notes = "");
 
     public record Result(int Id, string QueueNumber);
 
@@ -22,8 +22,8 @@ public static class CreateReservation
                 .GreaterThan(0).WithMessage("Party size must be greater than 0")
                 .LessThanOrEqualTo(50).WithMessage("Party size must not exceed 50");
 
-            RuleFor(x => x.Priority)
-                .GreaterThanOrEqualTo(0).WithMessage("Priority must be 0 or greater");
+            RuleFor(x => x.Notes)
+                .MaximumLength(500).WithMessage("Notes must not exceed 500 characters");
         }
     }
 
@@ -36,7 +36,7 @@ public static class CreateReservation
             QueueNumber = queueNumber,
             CustomerName = command.CustomerName,
             PartySize = command.PartySize,
-            Priority = command.Priority,
+            Notes = command.Notes,
             Status = "Waiting",
             CreatedAt = DateTime.UtcNow
         };

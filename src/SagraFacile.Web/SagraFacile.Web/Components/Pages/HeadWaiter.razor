@@ -116,7 +116,7 @@
                                         <th>Queue #</th>
                                         <th>Name</th>
                                         <th>Party Size</th>
-                                        <th>Priority</th>
+                                        <th>Notes</th>
                                         <th>Waiting</th>
                                         <th>Calls</th>
                                         <th>Last Call</th>
@@ -138,9 +138,9 @@
                                                 <span class="badge bg-info">@match.PartySize</span>
                                             </td>
                                             <td>
-                                                @if (match.Priority > 0)
+                                                @if (!string.IsNullOrEmpty(match.Notes))
                                                 {
-                                                    <span class="badge bg-warning">P@match.Priority</span>
+                                                    <span class="text-muted">@match.Notes</span>
                                                 }
                                                 else
                                                 {
@@ -355,8 +355,6 @@
     {
         if (match.MatchQuality == "Perfect")
             return "table-success";
-        if (match.Priority > 0)
-            return "table-warning";
         return "";
     }
 

@@ -30,9 +30,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Priority</label>
-                        <InputNumber @bind-Value="newReservation.Priority" class="form-control" />
-                        <small class="form-text text-muted">0 = normal, higher = higher priority</small>
+                        <label class="form-label">Notes</label>
+                        <InputTextArea @bind-Value="newReservation.Notes" class="form-control" rows="3" />
+                        <small class="form-text text-muted">Optional notes about the reservation</small>
                     </div>
 
                     <button type="submit" class="btn btn-primary" disabled="@isCreating">
@@ -90,10 +90,6 @@
                                         <td>@reservation.CustomerName</td>
                                         <td>
                                             <span class="badge bg-info">@reservation.PartySize</span>
-                                            @if (reservation.Priority > 0)
-                                            {
-                                                <span class="badge bg-warning">P@reservation.Priority</span>
-                                            }
                                         </td>
                                         <td><span class="badge @GetStatusBadge(reservation.Status)">@reservation.Status</span></td>
                                         <td>
@@ -254,7 +250,7 @@
             var command = new CreateReservation.Command(
                 newReservation.CustomerName,
                 newReservation.PartySize,
-                newReservation.Priority
+                newReservation.Notes
             );
 
             var result = await Features.Reservations.CreateReservation.Handle(command, DbContext, CancellationToken.None);
@@ -366,8 +362,6 @@
 
     private string GetRowClass(GetReservations.ReservationDto reservation)
     {
-        if (reservation.Priority > 0)
-            return "table-warning";
         if (reservation.WaitingTime.TotalMinutes > 30)
             return "table-danger";
         return "";
@@ -392,6 +386,6 @@
     {
         public string CustomerName { get; set; } = string.Empty;
         public int PartySize { get; set; } = 2;
-        public int Priority { get; set; } = 0;
+        public string Notes { get; set; } = string.Empty;
     }
 }
