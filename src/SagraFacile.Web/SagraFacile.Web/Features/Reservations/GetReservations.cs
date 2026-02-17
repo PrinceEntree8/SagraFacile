@@ -33,7 +33,7 @@ public static class GetReservations
         {
             queryable = queryable.Where(r => r.Status != "Seated");
         }
-        else if (!string.IsNullOrEmpty(query.Status))
+        else
         {
             queryable = queryable.Where(r => r.Status == query.Status);
         }

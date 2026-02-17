@@ -210,10 +210,10 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<int, string, int>("TableUpdated", async (tableId, tableNumber, coverCount) =>
+        // Notification when head waiter updates table capacity
+        // This keeps receptionist informed of table availability changes
+        hubConnection.On<int, string, int>("TableUpdated", async (_, _, _) =>
         {
-            // Notification when head waiter updates table capacity
-            // This allows receptionist to know when tables become available
             await InvokeAsync(StateHasChanged);
         });
 
