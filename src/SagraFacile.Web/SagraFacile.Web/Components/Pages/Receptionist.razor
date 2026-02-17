@@ -110,9 +110,6 @@
                                                 <button class="btn btn-sm btn-success me-1" @onclick="@(() => CallReservationAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
                                                     Call
                                                 </button>
-                                                <button class="btn btn-sm btn-primary me-1" @onclick="@(() => SeatReservationAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
-                                                    Seat
-                                                </button>
                                                 <button class="btn btn-sm btn-danger" @onclick="@(() => VoidReservationAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
                                                     Void
                                                 </button>

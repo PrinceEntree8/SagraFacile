@@ -120,6 +120,7 @@
                                         <th>Waiting</th>
                                         <th>Calls</th>
                                         <th>Last Call</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -158,6 +159,11 @@
                                                     <span class="text-muted">Never</span>
                                                 }
                                             </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" @onclick="@(() => SeatReservationAsync(match.Id))" disabled="@(actionInProgress == match.Id)">
+                                                    Seat
+                                                </button>
+                                            </td>
                                         </tr>
                                     }
                                 </tbody>
@@ -191,6 +197,7 @@
     private bool isUpdating = false;
     private bool isSearching = false;
     private string updateMessage = string.Empty;
+    private int? actionInProgress = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -340,6 +347,40 @@
         if (timeSpan.TotalHours >= 1)
             return $"{(int)timeSpan.TotalHours}h {timeSpan.Minutes}m";
         return $"{(int)timeSpan.TotalMinutes}m";
+    }
+
+    private async Task SeatReservationAsync(int reservationId)
+    {
+        actionInProgress = reservationId;
+        try
+        {
+            var command = new SeatReservation.Command(reservationId);
+            await SeatReservation.Handle(command, DbContext, CancellationToken.None);
+            
+            // Notify via SignalR
+            if (hubConnection?.State == HubConnectionState.Connected)
+            {
+                var reservation = await DbContext.TableReservations.FindAsync(reservationId);
+                if (reservation != null)
+                {
+                    await hubConnection.SendAsync("NotifyReservationSeated", reservationId, reservation.QueueNumber);
+                }
+            }
+            
+            // Refresh the best fit results
+            if (coverCountForSearch > 0)
+            {
+                await SearchBestFit();
+            }
+        }
+        catch (Exception ex)
+        {
+            updateMessage = $"Error seating reservation: {ex.Message}";
+        }
+        finally
+        {
+            actionInProgress = null;
+        }
     }
 
     public async ValueTask DisposeAsync()
