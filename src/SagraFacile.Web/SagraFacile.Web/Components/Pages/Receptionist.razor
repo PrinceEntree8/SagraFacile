@@ -123,7 +123,10 @@
                             </tbody>
                         </table>
                     </div>
-                    <p class="text-muted mt-2">Total: @totalCount reservations</p>
+                    <p class="text-muted mt-2">
+                        <strong>Total: @totalCount reservations</strong> | 
+                        <strong>Total People: @totalPeople</strong>
+                    </p>
                 }
                 else
                 {
@@ -139,6 +142,7 @@
     private NewReservationModel newReservation = new();
     private List<GetReservations.ReservationDto> reservations = new();
     private int totalCount = 0;
+    private int totalPeople = 0;
     private bool isLoading = true;
     private bool isCreating = false;
     private string creationMessage = string.Empty;
@@ -195,6 +199,7 @@
             var result = await GetReservations.Handle(query, DbContext, CancellationToken.None);
             reservations = result.Reservations;
             totalCount = result.TotalCount;
+            totalPeople = reservations.Sum(r => r.PartySize);
         }
         finally
         {
