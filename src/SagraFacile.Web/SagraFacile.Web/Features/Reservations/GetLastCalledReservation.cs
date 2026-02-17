@@ -31,4 +31,24 @@ public static class GetLastCalledReservationHandler
 
         return lastCalled;
     }
+    
+    public static async Task<List<LastCalledReservationDto>> HandleMultiple(
+        GetLastCalledReservation query,
+        ApplicationDbContext db,
+        int count = 5)
+    {
+        var lastCalled = await db.TableReservations
+            .Where(r => r.LastCalledAt != null)
+            .OrderByDescending(r => r.LastCalledAt)
+            .Take(count)
+            .Select(r => new LastCalledReservationDto(
+                r.QueueNumber,
+                r.CustomerName,
+                r.PartySize,
+                r.LastCalledAt!.Value
+            ))
+            .ToListAsync();
+
+        return lastCalled;
+    }
 }
