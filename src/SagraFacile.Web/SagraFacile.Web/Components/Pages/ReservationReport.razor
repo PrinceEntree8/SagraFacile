@@ -1,8 +1,8 @@
 @page "/reservation-report"
 @rendermode InteractiveServer
-@using Wolverine
 @using SagraFacile.Web.Features.Reservations
-@inject IMessageBus MessageBus
+@using SagraFacile.Web.Data
+@inject ApplicationDbContext DbContext
 
 <PageTitle>Reservation Report</PageTitle>
 
@@ -206,15 +206,15 @@ else
 }
 
 @code {
-    private DateTime? startDate = DateTime.Today;
-    private DateTime? endDate = DateTime.Today.AddDays(1);
+    private DateTime? startDate = null;
+    private DateTime? endDate = null;
     private List<GetReservationReport.ReportDto> reports = new();
     private GetReservationReport.StatisticsDto? statistics = null;
     private bool isLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadReport();
+        // Don't load report automatically
     }
 
     private async Task LoadReport()
@@ -223,7 +223,7 @@ else
         try
         {
             var query = new GetReservationReport.Query(startDate, endDate);
-            var result = await MessageBus.InvokeAsync<GetReservationReport.Result>(query);
+            var result = await GetReservationReport.Handle(query, DbContext, CancellationToken.None);
             reports = result.Reports;
             statistics = result.Statistics;
         }

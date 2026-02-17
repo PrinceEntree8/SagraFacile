@@ -1,9 +1,9 @@
 @page "/headwaiter"
 @rendermode InteractiveServer
-@using Wolverine
 @using SagraFacile.Web.Features.Reservations
+@using SagraFacile.Web.Data
 @using Microsoft.AspNetCore.SignalR.Client
-@inject IMessageBus MessageBus
+@inject ApplicationDbContext DbContext
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
 
@@ -238,7 +238,7 @@
         try
         {
             var query = new GetTables.Query();
-            var result = await MessageBus.InvokeAsync<GetTables.Result>(query);
+            var result = await GetTables.Handle(query, DbContext, CancellationToken.None);
             tables = result.Tables;
         }
         finally
@@ -260,7 +260,7 @@
                 tableUpdate.CoverCount
             );
 
-            var result = await MessageBus.InvokeAsync<UpdateTableCover.Result>(command);
+            var result = await UpdateTableCover.Handle(command, DbContext, CancellationToken.None);
             
             updateMessage = $"Table {result.TableNumber} updated successfully!";
             tableUpdate = new();
@@ -301,7 +301,7 @@
         try
         {
             var query = new GetBestFitReservation.Query(coverCountForSearch);
-            var result = await MessageBus.InvokeAsync<GetBestFitReservation.Result>(query);
+            var result = await GetBestFitReservation.Handle(query, DbContext, CancellationToken.None);
             bestFitResults = result.Matches;
         }
         finally

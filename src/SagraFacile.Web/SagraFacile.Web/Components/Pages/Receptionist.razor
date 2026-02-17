@@ -1,9 +1,9 @@
 @page "/receptionist"
 @rendermode InteractiveServer
-@using Wolverine
 @using SagraFacile.Web.Features.Reservations
+@using SagraFacile.Web.Data
 @using Microsoft.AspNetCore.SignalR.Client
-@inject IMessageBus MessageBus
+@inject ApplicationDbContext DbContext
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
 
@@ -192,7 +192,7 @@
         try
         {
             var query = new GetReservations.Query(Status: status, Page: 1, PageSize: 100);
-            var result = await MessageBus.InvokeAsync<GetReservations.Result>(query);
+            var result = await GetReservations.Handle(query, DbContext, CancellationToken.None);
             reservations = result.Reservations;
             totalCount = result.TotalCount;
         }
@@ -215,7 +215,7 @@
                 newReservation.Priority
             );
 
-            var result = await MessageBus.InvokeAsync<CreateReservation.Result>(command);
+            var result = await Features.Reservations.CreateReservation.Handle(command, DbContext, CancellationToken.None);
             
             creationMessage = $"Reservation {result.QueueNumber} created successfully!";
             newReservation = new();
@@ -244,7 +244,7 @@
         try
         {
             var command = new CallReservation.Command(reservationId, "Receptionist");
-            var result = await MessageBus.InvokeAsync<CallReservation.Result>(command);
+            var result = await CallReservation.Handle(command, DbContext, CancellationToken.None);
             
             if (result.Success)
             {
@@ -269,7 +269,7 @@
         try
         {
             var command = new SeatReservation.Command(reservationId);
-            var result = await MessageBus.InvokeAsync<SeatReservation.Result>(command);
+            var result = await SeatReservation.Handle(command, DbContext, CancellationToken.None);
             
             if (result.Success)
             {
@@ -294,7 +294,7 @@
         try
         {
             var command = new VoidReservation.Command(reservationId);
-            var result = await MessageBus.InvokeAsync<VoidReservation.Result>(command);
+            var result = await VoidReservation.Handle(command, DbContext, CancellationToken.None);
             
             if (result.Success)
             {
