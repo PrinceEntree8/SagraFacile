@@ -173,7 +173,7 @@
 
         // Set up SignalR connection
         hubConnection = new HubConnectionBuilder()
-            .WithUrl(Navigation.ToAbsoluteUri("/reservationHub"))
+            .WithUrl(Navigation.ToAbsoluteUri("/hubs/reservations"))
             .Build();
 
         hubConnection.On("ReservationCalled", async () =>
