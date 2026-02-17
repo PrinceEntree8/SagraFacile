@@ -23,7 +23,7 @@ This implementation provides a complete, production-ready base template for the 
 - **Backend**: ASP.NET Core 10, Blazor Server & WebAssembly
 - **Database**: PostgreSQL 17 with Entity Framework Core
 - **Real-time**: SignalR for WebSocket communication
-- **Patterns**: CQRS with MediatR, Vertical Slice Architecture
+- **Patterns**: CQRS with Wolverine, Vertical Slice Architecture
 - **Validation**: FluentValidation
 - **Containerization**: Docker & Docker Compose
 
@@ -73,7 +73,7 @@ Three deployment options:
 - **QUICKSTART.md**: Fast start instructions
 - **docs/DEVELOPMENT.md**: Detailed development guide with:
   - Vertical slice architecture explanation
-  - MediatR usage examples
+  - Wolverine usage examples
   - SignalR integration guide
   - Database operations
   - Docker commands

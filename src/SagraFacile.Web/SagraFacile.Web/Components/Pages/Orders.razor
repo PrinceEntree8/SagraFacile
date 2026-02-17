@@ -1,8 +1,8 @@
 @page "/orders"
 @rendermode InteractiveServer
-@using MediatR
+@using Wolverine
 @using SagraFacile.Web.Features.Orders
-@inject IMediator Mediator
+@inject IMessageBus MessageBus
 
 <PageTitle>Orders</PageTitle>
 
@@ -103,7 +103,7 @@
         try
         {
             var query = new GetOrders.Query(Page: 1, PageSize: 10);
-            var result = await Mediator.Send(query);
+            var result = await MessageBus.InvokeAsync<GetOrders.Result>(query);
             orders = result.Orders;
             totalCount = result.TotalCount;
         }
@@ -125,7 +125,7 @@
                 newOrder.TotalAmount
             );
 
-            var result = await Mediator.Send(command);
+            var result = await MessageBus.InvokeAsync<CreateOrder.Result>(command);
             
             creationMessage = $"Order {result.OrderNumber} created successfully!";
             newOrder = new();

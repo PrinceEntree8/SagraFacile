@@ -1,5 +1,4 @@
 using FluentValidation;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SagraFacile.Web.Data;
 
@@ -7,7 +6,7 @@ namespace SagraFacile.Web.Features.Orders;
 
 public static class CreateOrder
 {
-    public record Command(string CustomerName, decimal TotalAmount) : IRequest<Result>;
+    public record Command(string CustomerName, decimal TotalAmount);
 
     public record Result(int Id, string OrderNumber);
 
@@ -24,53 +23,43 @@ public static class CreateOrder
         }
     }
 
-    public class Handler : IRequestHandler<Command, Result>
+    public static async Task<Result> Handle(Command command, ApplicationDbContext context, CancellationToken cancellationToken)
     {
-        private readonly ApplicationDbContext _context;
+        var orderNumber = await GenerateOrderNumberAsync(context, cancellationToken);
 
-        public Handler(ApplicationDbContext context)
+        var order = new Order
         {
-            _context = context;
-        }
+            OrderNumber = orderNumber,
+            CustomerName = command.CustomerName,
+            TotalAmount = command.TotalAmount,
+            Status = "Pending",
+            CreatedAt = DateTime.UtcNow
+        };
 
-        public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
+        context.Orders.Add(order);
+        await context.SaveChangesAsync(cancellationToken);
+
+        return new Result(order.Id, order.OrderNumber);
+    }
+
+    private static async Task<string> GenerateOrderNumberAsync(ApplicationDbContext context, CancellationToken cancellationToken)
+    {
+        var date = DateTime.UtcNow.ToString("yyyyMMdd");
+        var lastOrder = await context.Orders
+            .Where(o => o.OrderNumber.StartsWith(date))
+            .OrderByDescending(o => o.OrderNumber)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var sequence = 1;
+        if (lastOrder != null && lastOrder.OrderNumber.Length >= 8)
         {
-            var orderNumber = await GenerateOrderNumberAsync(cancellationToken);
-
-            var order = new Order
+            var lastSequence = lastOrder.OrderNumber.Substring(8);
+            if (int.TryParse(lastSequence, out var num))
             {
-                OrderNumber = orderNumber,
-                CustomerName = request.CustomerName,
-                TotalAmount = request.TotalAmount,
-                Status = "Pending",
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync(cancellationToken);
-
-            return new Result(order.Id, order.OrderNumber);
-        }
-
-        private async Task<string> GenerateOrderNumberAsync(CancellationToken cancellationToken)
-        {
-            var date = DateTime.UtcNow.ToString("yyyyMMdd");
-            var lastOrder = await _context.Orders
-                .Where(o => o.OrderNumber.StartsWith(date))
-                .OrderByDescending(o => o.OrderNumber)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            var sequence = 1;
-            if (lastOrder != null && lastOrder.OrderNumber.Length >= 8)
-            {
-                var lastSequence = lastOrder.OrderNumber.Substring(8);
-                if (int.TryParse(lastSequence, out var num))
-                {
-                    sequence = num + 1;
-                }
+                sequence = num + 1;
             }
-
-            return $"{date}{sequence:D4}";
         }
+
+        return $"{date}{sequence:D4}";
     }
 }

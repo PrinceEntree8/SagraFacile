@@ -9,7 +9,7 @@ This project uses a **vertical-slice architecture** with the following structure
 - **Blazor Web App** with Auto interactivity mode (Server + WebAssembly)
 - **PostgreSQL** database for data persistence
 - **SignalR** for real-time communication
-- **MediatR** for CQRS pattern implementation
+- **Wolverine** for CQRS pattern implementation
 - **Entity Framework Core** for database access
 - **FluentValidation** for request validation
 
@@ -128,8 +128,8 @@ dotnet ef migrations remove
 Each feature is organized as a self-contained vertical slice with:
 
 - **Entities**: Domain models
-- **Commands**: Write operations using MediatR
-- **Queries**: Read operations using MediatR
+- **Commands**: Write operations using Wolverine
+- **Queries**: Read operations using Wolverine
 - **Validators**: FluentValidation validators for request validation
 - **Handlers**: Business logic implementation
 
@@ -176,7 +176,7 @@ dotnet test
 - **Backend**: ASP.NET Core 10, Blazor Server & WebAssembly
 - **Database**: PostgreSQL 17 with Entity Framework Core
 - **Real-time**: SignalR
-- **Patterns**: CQRS with MediatR, Vertical Slice Architecture
+- **Patterns**: CQRS with Wolverine, Vertical Slice Architecture
 - **Validation**: FluentValidation
 - **Containerization**: Docker & Docker Compose
 

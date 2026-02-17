@@ -82,7 +82,7 @@ SagraFacile/
 ✅ **Vertical Slice Architecture** - Feature-focused organization  
 ✅ **PostgreSQL** - Robust relational database  
 ✅ **Entity Framework Core** - Modern ORM  
-✅ **MediatR** - CQRS pattern implementation  
+✅ **Wolverine** - CQRS pattern implementation  
 ✅ **SignalR** - Real-time communication  
 ✅ **Docker** - Containerized deployment  
 ✅ **FluentValidation** - Request validation  

@@ -45,11 +45,18 @@ Features/
    ```csharp
    public static class Create[Entity]
    {
-       public record Command(...) : IRequest<Result>;
+       public record Command(...);
        public record Result(...);
        
        public class Validator : AbstractValidator<Command> { }
-       public class Handler : IRequestHandler<Command, Result> { }
+       
+       public static async Task<Result> Handle(
+           Command command, 
+           ApplicationDbContext context, 
+           CancellationToken cancellationToken)
+       {
+           // Handler logic
+       }
    }
    ```
 
@@ -64,16 +71,16 @@ Features/
    dotnet ef migrations add Add[Entity]
    ```
 
-## Working with MediatR
+## Working with Wolverine
 
-MediatR implements the mediator pattern and is used for CQRS (Command Query Responsibility Segregation):
+Wolverine is used for CQRS (Command Query Responsibility Segregation) and message handling:
 
 ### Commands (Write Operations)
 
 Commands modify state:
 ```csharp
 var command = new CreateOrder.Command("Customer Name", 100.50m);
-var result = await _mediator.Send(command);
+var result = await _messageBus.InvokeAsync<CreateOrder.Result>(command);
 ```
 
 ### Queries (Read Operations)
@@ -81,7 +88,7 @@ var result = await _mediator.Send(command);
 Queries retrieve data:
 ```csharp
 var query = new GetOrders.Query(Page: 1, PageSize: 10);
-var result = await _mediator.Send(query);
+var result = await _messageBus.InvokeAsync<GetOrders.Result>(query);
 ```
 
 ## Working with SignalR
@@ -261,7 +268,7 @@ public class OrderFeatureTests : IClassFixture<WebApplicationFactory<Program>>
 ## Best Practices
 
 1. **Keep Slices Independent**: Avoid direct dependencies between features
-2. **Use MediatR**: All business logic should go through MediatR handlers
+2. **Use Wolverine**: All business logic should go through Wolverine handlers
 3. **Validate Early**: Use FluentValidation for all commands
 4. **Async All The Way**: Use async/await consistently
 5. **Explicit DTOs**: Don't expose entities directly; use DTOs in queries

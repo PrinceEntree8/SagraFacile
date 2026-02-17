@@ -4,6 +4,7 @@ using SagraFacile.Web.Client.Pages;
 using SagraFacile.Web.Components;
 using SagraFacile.Web.Data;
 using SagraFacile.Web.Hubs;
+using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,12 +22,15 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Add MediatR for CQRS
-builder.Services.AddMediatR(cfg => 
-    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
-
 // Add FluentValidation
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+
+// Add Wolverine for CQRS
+builder.Host.UseWolverine(opts =>
+{
+    // Discover and register all handlers in the current assembly
+    opts.Discovery.IncludeAssembly(typeof(Program).Assembly);
+});
 
 var app = builder.Build();
 
