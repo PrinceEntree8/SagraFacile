@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SagraFacile.Web.Components;
 using SagraFacile.Web.Data;
 using SagraFacile.Web.Hubs;
+using SagraFacile.Web.Infrastructure.CQRS;
 using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,7 +25,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Add FluentValidation
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
-// Add Wolverine for CQRS
+// Add CQRS Mediator and Handlers
+builder.Services.AddMediator(typeof(Program).Assembly);
+
+// Add Wolverine for CQRS (keeping for backward compatibility if needed)
 builder.Host.UseWolverine(opts =>
 {
     // Discover and register all handlers in the current assembly

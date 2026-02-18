@@ -1,8 +1,8 @@
 @page "/reservation-report"
 @rendermode InteractiveServer
 @using SagraFacile.Web.Features.Reservations
-@using SagraFacile.Web.Data
-@inject ApplicationDbContext DbContext
+@using SagraFacile.Web.Infrastructure.CQRS
+@inject IMediator Mediator
 
 <PageTitle>Reservation Report</PageTitle>
 
@@ -223,8 +223,7 @@ else
         try
         {
             var query = new GetReservationReport.Query(startDate, endDate);
-            var handler = new GetReservationReport.Handler(DbContext);
-            var result = await handler.Handle(query, CancellationToken.None);
+            var result = await Mediator.Send(query, CancellationToken.None);
             reports = result.Reports;
             statistics = result.Statistics;
         }

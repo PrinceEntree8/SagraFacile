@@ -1,9 +1,9 @@
 @page "/headwaiter"
 @rendermode InteractiveServer
 @using SagraFacile.Web.Features.Reservations
-@using SagraFacile.Web.Data
+@using SagraFacile.Web.Infrastructure.CQRS
 @using Microsoft.AspNetCore.SignalR.Client
-@inject ApplicationDbContext DbContext
+@inject IMediator Mediator
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
 
@@ -280,8 +280,7 @@
         try
         {
             var query = new GetTables.Query();
-            var handler = new GetTables.Handler(DbContext);
-            var result = await handler.Handle(query, CancellationToken.None);
+            var result = await Mediator.Send(query, CancellationToken.None);
             tables = result.Tables;
         }
         finally
@@ -297,8 +296,7 @@
         {
             // Load all Called reservations without a specific cover count filter
             var query = new GetBestFitReservation.Query(0); // Use 0 to indicate "all"
-            var handler = new GetBestFitReservation.Handler(DbContext);
-            var result = await handler.Handle(query, CancellationToken.None);
+            var result = await Mediator.Send(query, CancellationToken.None);
             bestFitResults = result.Matches.ToList();
         }
         finally
@@ -320,8 +318,7 @@
                 tableUpdate.CoverCount
             );
 
-            var handler = new UpdateTableCover.Handler(DbContext);
-            var result = await handler.Handle(command, CancellationToken.None);
+            var result = await Mediator.Send(command, CancellationToken.None);
             
             updateMessage = $"Table {result.TableNumber} updated successfully!";
             tableUpdate = new();
@@ -362,8 +359,7 @@
         try
         {
             var query = new GetBestFitReservation.Query(coverCountForSearch);
-            var handler = new GetBestFitReservation.Handler(DbContext);
-            var result = await handler.Handle(query, CancellationToken.None);
+            var result = await Mediator.Send(query, CancellationToken.None);
             bestFitResults = result.Matches;
         }
         finally
@@ -408,16 +404,15 @@
         try
         {
             var command = new SeatReservation.Command(reservationId);
-            var handler = new SeatReservation.Handler(DbContext);
-            await handler.Handle(command, CancellationToken.None);
+            await Mediator.Send(command, CancellationToken.None);
             
             // Notify via SignalR
             if (hubConnection?.State == HubConnectionState.Connected)
             {
-                var reservation = await DbContext.TableReservations.FindAsync(reservationId);
-                if (reservation != null)
+                var match = bestFitResults.FirstOrDefault(r => r.Id == reservationId);
+                if (match != null)
                 {
-                    await hubConnection.SendAsync("NotifyReservationSeated", reservationId, reservation.QueueNumber);
+                    await hubConnection.SendAsync("NotifyReservationSeated", reservationId, match.QueueNumber);
                 }
             }
             

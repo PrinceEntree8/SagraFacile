@@ -1,9 +1,9 @@
 @page "/receptionist"
 @rendermode InteractiveServer
 @using SagraFacile.Web.Features.Reservations
-@using SagraFacile.Web.Data
+@using SagraFacile.Web.Infrastructure.CQRS
 @using Microsoft.AspNetCore.SignalR.Client
-@inject ApplicationDbContext DbContext
+@inject IMediator Mediator
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
 
@@ -227,8 +227,7 @@
         try
         {
             var query = new GetReservations.Query(Status: status, Page: 1, PageSize: 100);
-            var handler = new GetReservations.Handler(DbContext);
-            var result = await handler.Handle(query, CancellationToken.None);
+            var result = await Mediator.Send(query, CancellationToken.None);
             reservations = result.Reservations;
             totalCount = result.TotalCount;
             totalPeople = reservations.Sum(r => r.PartySize);
@@ -261,8 +260,7 @@
                 newReservation.Notes
             );
 
-            var handler = new Features.Reservations.CreateReservation.Handler(DbContext);
-            var result = await handler.Handle(command, CancellationToken.None);
+            var result = await Mediator.Send(command, CancellationToken.None);
             
             creationMessage = $"Reservation {result.QueueNumber} created successfully!";
             newReservation = new();
@@ -291,8 +289,7 @@
         try
         {
             var command = new CallReservation.Command(reservationId, "Receptionist");
-            var handler = new CallReservation.Handler(DbContext);
-            var result = await handler.Handle(command, CancellationToken.None);
+            var result = await Mediator.Send(command, CancellationToken.None);
             
             if (result.Success)
             {
@@ -317,8 +314,7 @@
         try
         {
             var command = new SeatReservation.Command(reservationId);
-            var handler = new SeatReservation.Handler(DbContext);
-            var result = await handler.Handle(command, CancellationToken.None);
+            var result = await Mediator.Send(command, CancellationToken.None);
             
             if (result.Success)
             {
@@ -343,8 +339,7 @@
         try
         {
             var command = new VoidReservation.Command(reservationId);
-            var handler = new VoidReservation.Handler(DbContext);
-            var result = await handler.Handle(command, CancellationToken.None);
+            var result = await Mediator.Send(command, CancellationToken.None);
             
             if (result.Success)
             {
