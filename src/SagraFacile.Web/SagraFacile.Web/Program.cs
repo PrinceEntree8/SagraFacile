@@ -1,6 +1,5 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using SagraFacile.Web.Client.Pages;
 using SagraFacile.Web.Components;
 using SagraFacile.Web.Data;
 using SagraFacile.Web.Hubs;
@@ -53,8 +52,7 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
-    .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(SagraFacile.Web.Client._Imports).Assembly);
+    .AddInteractiveWebAssemblyRenderMode();
 
 // Map SignalR hub
 app.MapHub<OrderHub>("/hubs/orders");

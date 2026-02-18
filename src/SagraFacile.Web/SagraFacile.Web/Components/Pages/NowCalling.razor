@@ -24,8 +24,7 @@
                     var call = recentCalls[i];
                     <div class="sidebar-card">
                         <div class="sidebar-queue">@call.QueueNumber</div>
-                        <div class="sidebar-name">@call.CustomerName</div>
-                        <div class="sidebar-party">Party of @call.PartySize</div>
+                        <div class="sidebar-name">@call.CustomerName (@call.PartySize)</div>
                         <div class="sidebar-time">@call.LastCalledAt.ToString("HH:mm")</div>
                     </div>
                 }
@@ -35,8 +34,7 @@
             <div class="center-call">
                 <div class="center-card">
                     <div class="center-queue">@recentCalls[0].QueueNumber</div>
-                    <div class="center-name">@recentCalls[0].CustomerName</div>
-                    <div class="center-party">Party of @recentCalls[0].PartySize</div>
+                    <div class="center-name">@recentCalls[0].CustomerName (@recentCalls[0].PartySize)</div>
                     <div class="center-time">Called at @recentCalls[0].LastCalledAt.ToString("HH:mm:ss")</div>
                 </div>
             </div>
@@ -48,8 +46,7 @@
                     var call = recentCalls[i];
                     <div class="sidebar-card">
                         <div class="sidebar-queue">@call.QueueNumber</div>
-                        <div class="sidebar-name">@call.CustomerName</div>
-                        <div class="sidebar-party">Party of @call.PartySize</div>
+                        <div class="sidebar-name">@call.CustomerName (@call.PartySize)</div>
                         <div class="sidebar-time">@call.LastCalledAt.ToString("HH:mm")</div>
                     </div>
                 }
@@ -86,6 +83,7 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        z-index: 100;
     }
 
     .now-calling-header {
