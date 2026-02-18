@@ -55,7 +55,6 @@ app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode();
 
 // Map SignalR hub
-app.MapHub<OrderHub>("/hubs/orders");
 app.MapHub<ReservationHub>("/hubs/reservations");
 
 app.Run();

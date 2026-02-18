@@ -2,31 +2,31 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace SagraFacile.Web.Hubs;
 
-public class ReservationHub : Hub
+public class ReservationHub : Hub<IReservationHubClient>
 {
     public async Task NotifyReservationCreated(int reservationId, string queueNumber, string customerName, int partySize)
     {
-        await Clients.All.SendAsync("ReservationCreated", reservationId, queueNumber, customerName, partySize);
+        await Clients.All.ReservationCreated(reservationId, queueNumber, customerName, partySize);
     }
 
     public async Task NotifyReservationCalled(int reservationId, string queueNumber, int callCount)
     {
-        await Clients.All.SendAsync("ReservationCalled", reservationId, queueNumber, callCount);
+        await Clients.All.ReservationCalled(reservationId, queueNumber, callCount);
     }
 
     public async Task NotifyReservationVoided(int reservationId, string queueNumber)
     {
-        await Clients.All.SendAsync("ReservationVoided", reservationId, queueNumber);
+        await Clients.All.ReservationVoided(reservationId, queueNumber);
     }
 
     public async Task NotifyReservationSeated(int reservationId, string queueNumber)
     {
-        await Clients.All.SendAsync("ReservationSeated", reservationId, queueNumber);
+        await Clients.All.ReservationSeated(reservationId, queueNumber);
     }
 
     public async Task NotifyTableUpdated(int tableId, string tableNumber, int coverCount)
     {
-        await Clients.All.SendAsync("TableUpdated", tableId, tableNumber, coverCount);
+        await Clients.All.TableUpdated(tableId, tableNumber, coverCount);
     }
 
     public async Task JoinReservationGroup(string groupName)

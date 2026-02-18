@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using SagraFacile.Web.Features.Orders;
 using SagraFacile.Web.Features.Reservations;
 
 namespace SagraFacile.Web.Data;
@@ -11,7 +10,6 @@ public class ApplicationDbContext : DbContext
     {
     }
 
-    public DbSet<Order> Orders => Set<Order>();
     public DbSet<TableReservation> TableReservations => Set<TableReservation>();
     public DbSet<Table> Tables => Set<Table>();
     public DbSet<ReservationCall> ReservationCalls => Set<ReservationCall>();
@@ -21,16 +19,6 @@ public class ApplicationDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         // Configure entities
-        modelBuilder.Entity<Order>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.OrderNumber).IsRequired().HasMaxLength(50);
-            entity.Property(e => e.CustomerName).IsRequired().HasMaxLength(200);
-            entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
-            entity.Property(e => e.TotalAmount).HasPrecision(18, 2);
-            entity.HasIndex(e => e.OrderNumber).IsUnique();
-        });
-
         modelBuilder.Entity<TableReservation>(entity =>
         {
             entity.HasKey(e => e.Id);
