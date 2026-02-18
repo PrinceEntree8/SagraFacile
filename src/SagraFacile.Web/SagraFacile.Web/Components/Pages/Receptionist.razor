@@ -227,7 +227,8 @@
         try
         {
             var query = new GetReservations.Query(Status: status, Page: 1, PageSize: 100);
-            var result = await GetReservations.Handle(query, DbContext, CancellationToken.None);
+            var handler = new GetReservations.Handler(DbContext);
+            var result = await handler.Handle(query, CancellationToken.None);
             reservations = result.Reservations;
             totalCount = result.TotalCount;
             totalPeople = reservations.Sum(r => r.PartySize);
@@ -260,7 +261,8 @@
                 newReservation.Notes
             );
 
-            var result = await Features.Reservations.CreateReservation.Handle(command, DbContext, CancellationToken.None);
+            var handler = new Features.Reservations.CreateReservation.Handler(DbContext);
+            var result = await handler.Handle(command, CancellationToken.None);
             
             creationMessage = $"Reservation {result.QueueNumber} created successfully!";
             newReservation = new();
@@ -289,7 +291,8 @@
         try
         {
             var command = new CallReservation.Command(reservationId, "Receptionist");
-            var result = await CallReservation.Handle(command, DbContext, CancellationToken.None);
+            var handler = new CallReservation.Handler(DbContext);
+            var result = await handler.Handle(command, CancellationToken.None);
             
             if (result.Success)
             {
@@ -314,7 +317,8 @@
         try
         {
             var command = new SeatReservation.Command(reservationId);
-            var result = await SeatReservation.Handle(command, DbContext, CancellationToken.None);
+            var handler = new SeatReservation.Handler(DbContext);
+            var result = await handler.Handle(command, CancellationToken.None);
             
             if (result.Success)
             {
@@ -339,7 +343,8 @@
         try
         {
             var command = new VoidReservation.Command(reservationId);
-            var result = await VoidReservation.Handle(command, DbContext, CancellationToken.None);
+            var handler = new VoidReservation.Handler(DbContext);
+            var result = await handler.Handle(command, CancellationToken.None);
             
             if (result.Success)
             {

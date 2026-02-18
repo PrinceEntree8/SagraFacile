@@ -1,12 +1,13 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using SagraFacile.Web.Data;
+using SagraFacile.Web.Infrastructure.CQRS;
 
 namespace SagraFacile.Web.Features.Reservations;
 
 public static class CallReservation
 {
-    public record Command(int ReservationId, string CalledBy = "Receptionist", string Notes = "");
+    public record Command(int ReservationId, string CalledBy = "Receptionist", string Notes = "") : ICommand<Result>;
 
     public record Result(bool Success, string Message);
 
@@ -26,49 +27,59 @@ public static class CallReservation
         }
     }
 
-    public static async Task<Result> Handle(Command command, ApplicationDbContext context, CancellationToken cancellationToken)
+    public class Handler : ICommandHandler<Command, Result>
     {
-        var reservation = await context.TableReservations
-            .FirstOrDefaultAsync(r => r.Id == command.ReservationId, cancellationToken);
+        private readonly ApplicationDbContext _context;
 
-        if (reservation == null)
+        public Handler(ApplicationDbContext context)
         {
-            return new Result(false, "Reservation not found");
+            _context = context;
         }
 
-        if (reservation.Status == "Voided")
+        public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
         {
-            return new Result(false, "Cannot call a voided reservation");
+            var reservation = await _context.TableReservations
+                .FirstOrDefaultAsync(r => r.Id == command.ReservationId, cancellationToken);
+
+            if (reservation == null)
+            {
+                return new Result(false, "Reservation not found");
+            }
+
+            if (reservation.Status == "Voided")
+            {
+                return new Result(false, "Cannot call a voided reservation");
+            }
+
+            if (reservation.Status == "Seated")
+            {
+                return new Result(false, "Reservation is already seated");
+            }
+
+            var now = DateTime.UtcNow;
+            
+            // Update reservation
+            if (reservation.FirstCalledAt == null)
+            {
+                reservation.FirstCalledAt = now;
+            }
+            reservation.LastCalledAt = now;
+            reservation.CallCount++;
+            reservation.Status = "Called";
+
+            // Add call log
+            var call = new ReservationCall
+            {
+                TableReservationId = reservation.Id,
+                CalledAt = now,
+                CalledBy = command.CalledBy,
+                Notes = command.Notes
+            };
+            _context.ReservationCalls.Add(call);
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return new Result(true, $"Reservation {reservation.QueueNumber} called successfully (call #{reservation.CallCount})");
         }
-
-        if (reservation.Status == "Seated")
-        {
-            return new Result(false, "Reservation is already seated");
-        }
-
-        var now = DateTime.UtcNow;
-        
-        // Update reservation
-        if (reservation.FirstCalledAt == null)
-        {
-            reservation.FirstCalledAt = now;
-        }
-        reservation.LastCalledAt = now;
-        reservation.CallCount++;
-        reservation.Status = "Called";
-
-        // Add call log
-        var call = new ReservationCall
-        {
-            TableReservationId = reservation.Id,
-            CalledAt = now,
-            CalledBy = command.CalledBy,
-            Notes = command.Notes
-        };
-        context.ReservationCalls.Add(call);
-
-        await context.SaveChangesAsync(cancellationToken);
-
-        return new Result(true, $"Reservation {reservation.QueueNumber} called successfully (call #{reservation.CallCount})");
     }
 }

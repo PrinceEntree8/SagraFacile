@@ -280,7 +280,8 @@
         try
         {
             var query = new GetTables.Query();
-            var result = await GetTables.Handle(query, DbContext, CancellationToken.None);
+            var handler = new GetTables.Handler(DbContext);
+            var result = await handler.Handle(query, CancellationToken.None);
             tables = result.Tables;
         }
         finally
@@ -296,7 +297,8 @@
         {
             // Load all Called reservations without a specific cover count filter
             var query = new GetBestFitReservation.Query(0); // Use 0 to indicate "all"
-            var result = await GetBestFitReservation.Handle(query, DbContext, CancellationToken.None);
+            var handler = new GetBestFitReservation.Handler(DbContext);
+            var result = await handler.Handle(query, CancellationToken.None);
             bestFitResults = result.Matches.ToList();
         }
         finally
@@ -318,7 +320,8 @@
                 tableUpdate.CoverCount
             );
 
-            var result = await UpdateTableCover.Handle(command, DbContext, CancellationToken.None);
+            var handler = new UpdateTableCover.Handler(DbContext);
+            var result = await handler.Handle(command, CancellationToken.None);
             
             updateMessage = $"Table {result.TableNumber} updated successfully!";
             tableUpdate = new();
@@ -359,7 +362,8 @@
         try
         {
             var query = new GetBestFitReservation.Query(coverCountForSearch);
-            var result = await GetBestFitReservation.Handle(query, DbContext, CancellationToken.None);
+            var handler = new GetBestFitReservation.Handler(DbContext);
+            var result = await handler.Handle(query, CancellationToken.None);
             bestFitResults = result.Matches;
         }
         finally
@@ -404,7 +408,8 @@
         try
         {
             var command = new SeatReservation.Command(reservationId);
-            await SeatReservation.Handle(command, DbContext, CancellationToken.None);
+            var handler = new SeatReservation.Handler(DbContext);
+            await handler.Handle(command, CancellationToken.None);
             
             // Notify via SignalR
             if (hubConnection?.State == HubConnectionState.Connected)

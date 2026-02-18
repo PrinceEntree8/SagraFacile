@@ -223,7 +223,8 @@ else
         try
         {
             var query = new GetReservationReport.Query(startDate, endDate);
-            var result = await GetReservationReport.Handle(query, DbContext, CancellationToken.None);
+            var handler = new GetReservationReport.Handler(DbContext);
+            var result = await handler.Handle(query, CancellationToken.None);
             reports = result.Reports;
             statistics = result.Statistics;
         }

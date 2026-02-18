@@ -1,12 +1,13 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using SagraFacile.Web.Data;
+using SagraFacile.Web.Infrastructure.CQRS;
 
 namespace SagraFacile.Web.Features.Reservations;
 
 public static class UpdateTableCover
 {
-    public record Command(int? TableId, string? TableNumber, int CoverCount);
+    public record Command(int? TableId, string? TableNumber, int CoverCount) : ICommand<Result>;
 
     public record Result(int Id, string TableNumber, int CoverCount);
 
@@ -28,42 +29,52 @@ public static class UpdateTableCover
         }
     }
 
-    public static async Task<Result> Handle(Command command, ApplicationDbContext context, CancellationToken cancellationToken)
+    public class Handler : ICommandHandler<Command, Result>
     {
-        Table? table = null;
+        private readonly ApplicationDbContext _context;
 
-        if (command.TableId.HasValue)
+        public Handler(ApplicationDbContext context)
         {
-            table = await context.Tables
-                .FirstOrDefaultAsync(t => t.Id == command.TableId.Value, cancellationToken);
-        }
-        else if (!string.IsNullOrEmpty(command.TableNumber))
-        {
-            table = await context.Tables
-                .FirstOrDefaultAsync(t => t.TableNumber == command.TableNumber, cancellationToken);
+            _context = context;
         }
 
-        if (table == null)
+        public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
         {
-            // Create new table
-            table = new Table
+            Table? table = null;
+
+            if (command.TableId.HasValue)
             {
-                TableNumber = command.TableNumber ?? $"T{DateTime.UtcNow:yyyyMMddHHmmss}",
-                CoverCount = command.CoverCount,
-                Status = "Available",
-                CreatedAt = DateTime.UtcNow
-            };
-            context.Tables.Add(table);
-        }
-        else
-        {
-            // Update existing table
-            table.CoverCount = command.CoverCount;
-            table.UpdatedAt = DateTime.UtcNow;
-        }
+                table = await _context.Tables
+                    .FirstOrDefaultAsync(t => t.Id == command.TableId.Value, cancellationToken);
+            }
+            else if (!string.IsNullOrEmpty(command.TableNumber))
+            {
+                table = await _context.Tables
+                    .FirstOrDefaultAsync(t => t.TableNumber == command.TableNumber, cancellationToken);
+            }
 
-        await context.SaveChangesAsync(cancellationToken);
+            if (table == null)
+            {
+                // Create new table
+                table = new Table
+                {
+                    TableNumber = command.TableNumber ?? $"T{DateTime.UtcNow:yyyyMMddHHmmss}",
+                    CoverCount = command.CoverCount,
+                    Status = "Available",
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.Tables.Add(table);
+            }
+            else
+            {
+                // Update existing table
+                table.CoverCount = command.CoverCount;
+                table.UpdatedAt = DateTime.UtcNow;
+            }
 
-        return new Result(table.Id, table.TableNumber, table.CoverCount);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return new Result(table.Id, table.TableNumber, table.CoverCount);
+        }
     }
 }
