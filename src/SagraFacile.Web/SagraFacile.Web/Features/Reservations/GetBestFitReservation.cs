@@ -78,17 +78,22 @@ public static class GetBestFitReservation
                 {
                     matchQuality = "Perfect";
                 }
-                else if (reservation.PartySize >= query.TableCoverCount - 2 && reservation.PartySize <= query.TableCoverCount)
+                else if (reservation.PartySize < query.TableCoverCount)
                 {
-                    matchQuality = "Good";
-                }
-                else if (reservation.PartySize <= query.TableCoverCount && reservation.PartySize >= query.TableCoverCount - 4)
-                {
-                    matchQuality = "Acceptable";
+                    matchQuality = "Fits";
+                    
+                    if (reservation.PartySize >= query.TableCoverCount - 2)
+                    {
+                        matchQuality = "Good";
+                    }
+                    else if (reservation.PartySize >= query.TableCoverCount - 4)
+                    {
+                        matchQuality = "Acceptable";
+                    }
                 }
 
                 // Only include if it fits
-                if (matchQuality != null && reservation.PartySize <= query.TableCoverCount)
+                if (matchQuality != null)
                 {
                     matches.Add(new ReservationMatchDto(
                         reservation.Id,
@@ -104,9 +109,9 @@ public static class GetBestFitReservation
                 }
             }
 
-            // Sort by match quality first, then by waiting time (FIFO - first in, first out)
+            // Sort by match quality (Perfect -> Good -> Acceptable -> Fits) then by waiting time (FIFO - first in, first out)
             var sortedMatches = matches
-                .OrderBy(m => m.MatchQuality == "Perfect" ? 0 : m.MatchQuality == "Good" ? 1 : 2)
+                .OrderBy(m => m.MatchQuality == "Perfect" ? 0 : m.MatchQuality == "Good" ? 1 : m.MatchQuality == "Acceptable" ? 2 : 3)
                 .ThenBy(m => m.CreatedAt)
                 .ToList();
 

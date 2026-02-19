@@ -4,8 +4,6 @@ VisualStudioVersion = 16.0.0.0
 MinimumVisualStudioVersion = 16.0.0.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SagraFacile.Web", "src\SagraFacile.Web\SagraFacile.Web\SagraFacile.Web.csproj", "{E5BA889B-34A9-4F96-A48C-9513E44CA4EC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SagraFacile.Web.Client", "src\SagraFacile.Web\SagraFacile.Web.Client\SagraFacile.Web.Client.csproj", "{70F8D8F5-E94F-4ED6-A84A-40B571C10ED5}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -16,18 +14,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{70F8D8F5-E94F-4ED6-A84A-40B571C10ED5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{70F8D8F5-E94F-4ED6-A84A-40B571C10ED5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{70F8D8F5-E94F-4ED6-A84A-40B571C10ED5}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{70F8D8F5-E94F-4ED6-A84A-40B571C10ED5}.Debug|x64.Build.0 = Debug|Any CPU
-		{70F8D8F5-E94F-4ED6-A84A-40B571C10ED5}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{70F8D8F5-E94F-4ED6-A84A-40B571C10ED5}.Debug|x86.Build.0 = Debug|Any CPU
-		{70F8D8F5-E94F-4ED6-A84A-40B571C10ED5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{70F8D8F5-E94F-4ED6-A84A-40B571C10ED5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{70F8D8F5-E94F-4ED6-A84A-40B571C10ED5}.Release|x64.ActiveCfg = Release|Any CPU
-		{70F8D8F5-E94F-4ED6-A84A-40B571C10ED5}.Release|x64.Build.0 = Release|Any CPU
-		{70F8D8F5-E94F-4ED6-A84A-40B571C10ED5}.Release|x86.ActiveCfg = Release|Any CPU
-		{70F8D8F5-E94F-4ED6-A84A-40B571C10ED5}.Release|x86.Build.0 = Release|Any CPU
 		{E5BA889B-34A9-4F96-A48C-9513E44CA4EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E5BA889B-34A9-4F96-A48C-9513E44CA4EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E5BA889B-34A9-4F96-A48C-9513E44CA4EC}.Debug|x64.ActiveCfg = Debug|Any CPU

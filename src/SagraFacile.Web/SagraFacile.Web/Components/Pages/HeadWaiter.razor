@@ -7,72 +7,35 @@
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
 
-<PageTitle>Head Waiter - Table Management</PageTitle>
+<PageTitle>Head Waiter - Available Seats</PageTitle>
 
-<h1>Head Waiter - Table Management</h1>
+<h1>Head Waiter - Available Seats</h1>
 
 <div class="row">
     <div class="col-md-4">
         <div class="card mb-4">
             <div class="card-header">
-                <h3>Update Table</h3>
+                <h3>Announce Available Seats</h3>
             </div>
             <div class="card-body">
-                <EditForm Model="@tableUpdate" OnValidSubmit="@UpdateTable">
-                    <div class="mb-3">
-                        <label class="form-label">Table Number</label>
-                        <InputText @bind-Value="tableUpdate.TableNumber" class="form-control" />
+                <div class="mb-3">
+                    <label class="form-label">Number of Available Seats</label>
+                    <div class="input-group">
+                        <InputNumber @bind-Value="availableSeatsToAnnounce" class="form-control" min="0" />
+                        <button class="btn btn-primary" @onclick="@AnnounceAvailableSeats" disabled="@isAnnouncing">
+                            @if (isAnnouncing)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            Announce
+                        </button>
                     </div>
+                    <small class="text-muted">This will be shown at the reception.</small>
+                </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Cover Count</label>
-                        <InputNumber @bind-Value="tableUpdate.CoverCount" class="form-control" />
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" disabled="@isUpdating">
-                        @if (isUpdating)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                        }
-                        Update Table
-                    </button>
-                </EditForm>
-
-                @if (!string.IsNullOrEmpty(updateMessage))
+                @if (!string.IsNullOrEmpty(announcementMessage))
                 {
-                    <div class="alert alert-success mt-3">@updateMessage</div>
-                }
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h3>Tables</h3>
-            </div>
-            <div class="card-body">
-                @if (isLoadingTables)
-                {
-                    <p><em>Loading tables...</em></p>
-                }
-                else if (tables != null && tables.Any())
-                {
-                    <div class="list-group">
-                        @foreach (var table in tables)
-                        {
-                            <div class="list-group-item @(selectedTable?.Id == table.Id ? "active" : "")" 
-                                 @onclick="@(() => SelectTable(table))" style="cursor: pointer;">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">Table @table.TableNumber</h5>
-                                    <span class="badge @GetTableStatusBadge(table.Status)">@table.Status</span>
-                                </div>
-                                <p class="mb-1">Cover Count: <strong>@table.CoverCount</strong></p>
-                            </div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <p><em>No tables found.</em></p>
+                    <div class="alert alert-success mt-3">@announcementMessage</div>
                 }
             </div>
         </div>
@@ -82,13 +45,9 @@
         <div class="card">
             <div class="card-header">
                 <h3>Best Fit Recommendations</h3>
-                @if (selectedTable != null)
+                @if (coverCountForSearch > 0)
                 {
-                    <p class="mb-0">For Table @selectedTable.TableNumber (Covers: @selectedTable.CoverCount)</p>
-                }
-                else if (coverCountForSearch > 0)
-                {
-                    <p class="mb-0">For Cover Count: @coverCountForSearch</p>
+                    <p class="mb-0">For Available Seats: @coverCountForSearch</p>
                 }
                 else
                 {
@@ -97,11 +56,13 @@
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    <label class="form-label">Cover Count</label>
+                    <label class="form-label">Cover Count Filter</label>
                     <div class="input-group">
-                        <InputNumber @bind-Value="coverCountForSearch" class="form-control" />
-                        <button class="btn btn-outline-primary" @onclick="@SearchBestFit">Search Best Fit</button>
+                        <InputNumber @bind-Value="coverCountForSearch" class="form-control" placeholder="All" />
+                        <button class="btn btn-outline-primary" @onclick="@SearchBestFit">Filter</button>
+                        <button class="btn btn-outline-secondary" @onclick="@ClearFilter">Clear</button>
                     </div>
+                    <small class="text-muted">Enter cover count to see who fits (strictly less than count), or clear to see all called.</small>
                 </div>
 
                 @if (isSearching)
@@ -192,20 +153,15 @@
 
 @code {
     private HubConnection? hubConnection;
-    private TableUpdateModel tableUpdate = new();
-    private List<GetTables.TableDto> tables = new();
-    private GetTables.TableDto? selectedTable = null;
     private List<GetBestFitReservation.ReservationMatchDto> bestFitResults = new();
-    private int coverCountForSearch = 4;
-    private bool isLoadingTables = true;
-    private bool isUpdating = false;
-    private bool isSearching = false;
-    private string updateMessage = string.Empty;
+    private int coverCountForSearch = 0;
+    private int availableSeatsToAnnounce = 0;
+    private bool isAnnouncing = false;
+    private string announcementMessage = string.Empty;
     private int? actionInProgress = null;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadTables();
         await LoadAllCalledReservations(); // Load all Called reservations by default
         await InitializeSignalR();
     }
@@ -217,15 +173,9 @@
             .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.On<int, string, int>("TableUpdated", async (id, tableNumber, coverCount) =>
-        {
-            await LoadTables();
-            await InvokeAsync(StateHasChanged);
-        });
-
         hubConnection.On<int, string, string, int>("ReservationCreated", async (id, queueNumber, name, size) =>
         {
-            if (coverCountForSearch > 0 || selectedTable != null)
+            if (coverCountForSearch > 0)
             {
                 await SearchBestFit();
             }
@@ -238,7 +188,7 @@
 
         hubConnection.On<int, string, int>("ReservationCalled", async (id, queueNumber, callCount) =>
         {
-            if (coverCountForSearch > 0 || selectedTable != null)
+            if (coverCountForSearch > 0)
             {
                 await SearchBestFit();
             }
@@ -251,7 +201,7 @@
 
         hubConnection.On<int, string>("ReservationVoided", async (id, queueNumber) =>
         {
-            if (coverCountForSearch > 0 || selectedTable != null)
+            if (coverCountForSearch > 0)
             {
                 await SearchBestFit();
             }
@@ -264,7 +214,7 @@
 
         hubConnection.On<int, string>("ReservationSeated", async (id, queueNumber) =>
         {
-            if (coverCountForSearch > 0 || selectedTable != null)
+            if (coverCountForSearch > 0)
             {
                 await SearchBestFit();
             }
@@ -272,21 +222,6 @@
         });
 
         await hubConnection.StartAsync();
-    }
-
-    private async Task LoadTables()
-    {
-        isLoadingTables = true;
-        try
-        {
-            var query = new GetTables.Query();
-            var result = await Mediator.Send(query, CancellationToken.None);
-            tables = result.Tables;
-        }
-        finally
-        {
-            isLoadingTables = false;
-        }
     }
 
     private async Task LoadAllCalledReservations()
@@ -305,53 +240,43 @@
         }
     }
 
-    private async Task UpdateTable()
+    private async Task AnnounceAvailableSeats()
     {
-        isUpdating = true;
-        updateMessage = string.Empty;
-
+        isAnnouncing = true;
+        announcementMessage = string.Empty;
         try
         {
-            var command = new UpdateTableCover.Command(
-                null,
-                tableUpdate.TableNumber,
-                tableUpdate.CoverCount
-            );
-
-            var result = await Mediator.Send(command, CancellationToken.None);
-            
-            updateMessage = $"Table {result.TableNumber} updated successfully!";
-            tableUpdate = new();
-            
-            // Notify via SignalR
             if (hubConnection?.State == HubConnectionState.Connected)
             {
-                await hubConnection.SendAsync("NotifyTableUpdated", result.Id, result.TableNumber, result.CoverCount);
+                await hubConnection.SendAsync("NotifyAvailableSeatsUpdated", availableSeatsToAnnounce);
+                announcementMessage = $"Announced {availableSeatsToAnnounce} available seats to Reception.";
+                
+                // Also update the filter to show who fits
+                coverCountForSearch = availableSeatsToAnnounce;
+                await SearchBestFit();
             }
-            
-            await LoadTables();
         }
         catch (Exception ex)
         {
-            updateMessage = $"Error: {ex.Message}";
+            announcementMessage = $"Error: {ex.Message}";
         }
         finally
         {
-            isUpdating = false;
+            isAnnouncing = false;
         }
     }
 
-    private async Task SelectTable(GetTables.TableDto table)
+    private async Task ClearFilter()
     {
-        selectedTable = table;
-        coverCountForSearch = table.CoverCount;
-        await SearchBestFit();
+        coverCountForSearch = 0;
+        await LoadAllCalledReservations();
     }
 
     private async Task SearchBestFit()
     {
         if (coverCountForSearch <= 0)
         {
+            await LoadAllCalledReservations();
             return;
         }
 
@@ -368,19 +293,14 @@
         }
     }
 
-    private string GetTableStatusBadge(string status) => status switch
-    {
-        "Available" => "bg-success",
-        "Occupied" => "bg-danger",
-        "Reserved" => "bg-warning",
-        _ => "bg-secondary"
-    };
+    private bool isSearching = false;
 
     private string GetMatchBadge(string matchQuality) => matchQuality switch
     {
         "Perfect" => "bg-success",
         "Good" => "bg-primary",
         "Acceptable" => "bg-info",
+        "Fits" => "bg-secondary",
         _ => "bg-secondary"
     };
 
@@ -421,10 +341,14 @@
             {
                 await SearchBestFit();
             }
+            else
+            {
+                await LoadAllCalledReservations();
+            }
         }
         catch (Exception ex)
         {
-            updateMessage = $"Error seating reservation: {ex.Message}";
+            announcementMessage = $"Error seating reservation: {ex.Message}";
         }
         finally
         {
@@ -438,11 +362,5 @@
         {
             await hubConnection.DisposeAsync();
         }
-    }
-
-    private class TableUpdateModel
-    {
-        public string TableNumber { get; set; } = string.Empty;
-        public int CoverCount { get; set; } = 4;
     }
 }

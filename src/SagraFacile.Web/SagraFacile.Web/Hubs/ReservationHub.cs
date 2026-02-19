@@ -24,9 +24,9 @@ public class ReservationHub : Hub<IReservationHubClient>
         await Clients.All.ReservationSeated(reservationId, queueNumber);
     }
 
-    public async Task NotifyTableUpdated(int tableId, string tableNumber, int coverCount)
+    public async Task NotifyAvailableSeatsUpdated(int availableSeats)
     {
-        await Clients.All.TableUpdated(tableId, tableNumber, coverCount);
+        await Clients.All.AvailableSeatsUpdated(availableSeats);
     }
 
     public async Task JoinReservationGroup(string groupName)

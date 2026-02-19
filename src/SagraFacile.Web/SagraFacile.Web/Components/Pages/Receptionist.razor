@@ -14,6 +14,16 @@
 <div class="row">
     <div class="col-md-5">
         <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0">Available Seats</h3>
+            </div>
+            <div class="card-body text-center">
+                <h1 class="display-1">@availableSeats</h1>
+                <p class="text-muted">Announced by Head Waiter</p>
+            </div>
+        </div>
+
+        <div class="card mb-4">
             <div class="card-header">
                 <h3>Create New Reservation</h3>
             </div>
@@ -167,6 +177,7 @@
     private int toBeSeatedPeople = 0;
     private int seatedCount = 0;
     private int seatedPeople = 0;
+    private int availableSeats = 0;
     private bool isLoading = true;
     private bool isCreating = false;
     private string creationMessage = string.Empty;
@@ -210,10 +221,9 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        // Notification when head waiter updates table capacity
-        // This keeps receptionist informed of table availability changes
-        hubConnection.On<int, string, int>("TableUpdated", async (_, _, _) =>
+        hubConnection.On<int>("AvailableSeatsUpdated", async (seats) =>
         {
+            availableSeats = seats;
             await InvokeAsync(StateHasChanged);
         });
 

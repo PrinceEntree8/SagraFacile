@@ -6,5 +6,5 @@ public interface IReservationHubClient
     Task ReservationCalled(int reservationId, string queueNumber, int callCount);
     Task ReservationVoided(int reservationId, string queueNumber);
     Task ReservationSeated(int reservationId, string queueNumber);
-    Task TableUpdated(int tableId, string tableNumber, int coverCount);
+    Task AvailableSeatsUpdated(int availableSeats);
 }
