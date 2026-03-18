@@ -203,7 +203,7 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<int, string, int>("ReservationCalled", async (id, queueNumber, callCount) =>
+        hubConnection.On<int, string, string, int, int>("ReservationCalled", async (id, queueNumber, customerName, partySize, callCount) =>
         {
             await LoadReservations(currentFilter);
             await InvokeAsync(StateHasChanged);
@@ -306,7 +306,7 @@
                 var reservation = reservations.FirstOrDefault(r => r.Id == reservationId);
                 if (reservation != null && hubConnection?.State == HubConnectionState.Connected)
                 {
-                    await hubConnection.SendAsync("NotifyReservationCalled", reservationId, reservation.QueueNumber, reservation.CallCount + 1);
+                    await hubConnection.SendAsync("NotifyReservationCalled", reservationId, reservation.QueueNumber, reservation.CustomerName, reservation.PartySize, reservation.CallCount + 1);
                 }
             }
             

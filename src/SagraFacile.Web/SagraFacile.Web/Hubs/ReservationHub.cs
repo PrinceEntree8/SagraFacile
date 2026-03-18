@@ -9,9 +9,10 @@ public class ReservationHub : Hub<IReservationHubClient>
         await Clients.All.ReservationCreated(reservationId, queueNumber, customerName, partySize);
     }
 
-    public async Task NotifyReservationCalled(int reservationId, string queueNumber, int callCount)
+    public async Task NotifyReservationCalled(int reservationId, string queueNumber, string customerName, int partySize, int callCount)
     {
-        await Clients.All.ReservationCalled(reservationId, queueNumber, callCount);
+        // Broadcast to all connected clients (includes those in the NOW_CALLING group).
+        await Clients.All.ReservationCalled(reservationId, queueNumber, customerName, partySize, callCount);
     }
 
     public async Task NotifyReservationVoided(int reservationId, string queueNumber)
