@@ -1,0 +1,287 @@
+/* ============================================================
+   NowCalling.razor.css
+   Scoped styles for the public "Now Calling" display board.
+
+   Design goals:
+     • Looks great on a wall-mounted 16:9 display (TV/projector).
+     • Fully readable on a phone in both portrait and landscape.
+     • High-contrast dark theme for bright-room visibility.
+     • Minimal motion to avoid distraction; one subtle entrance animation.
+   ============================================================ */
+
+/* ── Initial-load failure warning ───────────────────────────── */
+.nc-load-warning {
+    width: 100%;
+    max-width: 900px;
+    background: rgba(110, 66, 0, 0.35);
+    color: #ffa657;
+    border: 1px solid rgba(255, 166, 87, 0.4);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+/* ── Root container ────────────────────────────────────────── */
+.nc-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.nc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 2rem;
+    background: #161b22;
+    border-bottom: 2px solid #30363d;
+    flex-shrink: 0;
+}
+
+.nc-title {
+    font-size: clamp(1.2rem, 3vw, 2rem);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #f0f6fc;
+}
+
+/* Live / offline status badge */
+.nc-status {
+    font-size: clamp(0.75rem, 1.8vw, 1rem);
+    font-weight: 600;
+    padding: 0.3em 0.75em;
+    border-radius: 2em;
+    letter-spacing: 0.05em;
+}
+
+.nc-status--live {
+    background: #1a7f37;
+    color: #aff5b4;
+}
+
+.nc-status--offline {
+    background: #6e4200;
+    color: #ffa657;
+    animation: nc-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes nc-blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.45; }
+}
+
+/* ── Body (main scrollable area) ───────────────────────────── */
+.nc-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 2rem 1rem;
+    overflow-y: auto;
+}
+
+/* ── Idle / empty state ────────────────────────────────────── */
+.nc-idle {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 4rem 2rem;
+    text-align: center;
+    opacity: 0.55;
+}
+
+.nc-idle-icon {
+    font-size: clamp(4rem, 12vw, 8rem);
+    line-height: 1;
+}
+
+.nc-idle-text {
+    font-size: clamp(1.1rem, 3vw, 1.8rem);
+    font-weight: 400;
+    margin: 0;
+}
+
+/* ── Current / highlighted call ────────────────────────────── */
+.nc-current {
+    width: 100%;
+    max-width: 900px;
+    background: linear-gradient(135deg, #1c2128 0%, #21262d 100%);
+    border: 2px solid #f0883e;
+    border-radius: 1.25rem;
+    padding: clamp(1.5rem, 5vw, 3.5rem) clamp(1rem, 4vw, 3rem);
+    text-align: center;
+    box-shadow: 0 0 40px rgba(240, 136, 62, 0.25);
+    animation: nc-slide-in 0.4s ease-out;
+    margin-bottom: 2.5rem;
+}
+
+@keyframes nc-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(-18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.nc-current-label {
+    font-size: clamp(0.75rem, 2vw, 1rem);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: #f0883e;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+/* Queue number — the star of the show */
+.nc-current-queue {
+    font-size: clamp(4.5rem, 18vw, 10rem);
+    font-weight: 900;
+    line-height: 1;
+    color: #f0f6fc;
+    letter-spacing: -0.02em;
+    text-shadow: 0 4px 24px rgba(240, 136, 62, 0.4);
+    margin-bottom: 0.25rem;
+    word-break: break-all;
+}
+
+.nc-current-name {
+    font-size: clamp(1.8rem, 6vw, 4rem);
+    font-weight: 600;
+    color: #f0883e;
+    margin-bottom: 0.75rem;
+    line-height: 1.2;
+}
+
+.nc-current-party {
+    margin-top: 0.5rem;
+}
+
+.nc-party-badge {
+    display: inline-block;
+    font-size: clamp(1.1rem, 3.5vw, 2rem);
+    font-weight: 600;
+    background: rgba(240, 136, 62, 0.15);
+    color: #ffa657;
+    border: 1px solid rgba(240, 136, 62, 0.4);
+    border-radius: 2em;
+    padding: 0.3em 1em;
+}
+
+/* ── History section ────────────────────────────────────────── */
+.nc-history {
+    width: 100%;
+    max-width: 900px;
+}
+
+.nc-history-title {
+    font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8b949e;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid #30363d;
+}
+
+.nc-history-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nc-history-item {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.5rem, 2vw, 1.25rem);
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 0.75rem;
+    padding: 0.65rem 1.25rem;
+    font-size: clamp(0.95rem, 2.5vw, 1.25rem);
+    transition: opacity 0.2s;
+}
+
+.nc-history-item:hover {
+    opacity: 0.85;
+}
+
+.nc-history-queue {
+    font-weight: 700;
+    color: #79c0ff;
+    min-width: 6ch;
+    flex-shrink: 0;
+}
+
+.nc-history-name {
+    flex: 1;
+    color: #c9d1d9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nc-history-party {
+    color: #8b949e;
+    flex-shrink: 0;
+    font-size: 0.9em;
+}
+
+/* ── Responsive: 16:9 landscape screens ─────────────────────── */
+@media (min-aspect-ratio: 16/9) and (min-width: 900px) {
+    .nc-body {
+        /* On wide landscape screens, balance the layout vertically */
+        justify-content: center;
+        padding: 1.5rem 3rem;
+    }
+
+    .nc-current {
+        padding: clamp(2rem, 4vw, 4rem) clamp(2rem, 5vw, 5rem);
+    }
+
+    .nc-history-list {
+        /* Two-column grid for a wide display board */
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+}
+
+/* ── Responsive: mobile / small screens ────────────────────── */
+@media (max-width: 480px) {
+    .nc-header {
+        padding: 0.6rem 1rem;
+    }
+
+    .nc-body {
+        padding: 1rem 0.75rem;
+    }
+
+    .nc-current {
+        border-radius: 0.85rem;
+    }
+
+    .nc-history-item {
+        gap: 0.4rem;
+        padding: 0.5rem 0.85rem;
+    }
+}

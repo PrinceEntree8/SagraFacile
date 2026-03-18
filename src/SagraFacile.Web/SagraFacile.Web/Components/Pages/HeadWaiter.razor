@@ -186,7 +186,7 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<int, string, int>("ReservationCalled", async (id, queueNumber, callCount) =>
+        hubConnection.On<int, string, string, int, int>("ReservationCalled", async (id, queueNumber, customerName, partySize, callCount) =>
         {
             if (coverCountForSearch > 0)
             {
