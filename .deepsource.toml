@@ -4,24 +4,12 @@ version = 1
 name = "csharp"
 enabled = true
 
-  [analyzers.meta]
-  project_root = "."
-  runtime_version = "10.0.0"
-
 [[analyzers]]
 name = "javascript"
 enabled = true
 
   [analyzers.meta]
   environment = ["browser"]
-
-[[analyzers]]
-name = "html"
-enabled = true
-
-[[analyzers]]
-name = "css"
-enabled = true
 
 [[transformers]]
 name = "dotnet-format"
