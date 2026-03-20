@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 
 namespace SagraFacile.Web.Data;
 
@@ -11,6 +12,8 @@ public static class DataSeeder
         var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger("DataSeeder");
 
         foreach (var role in Roles)
         {
@@ -19,8 +22,14 @@ public static class DataSeeder
         }
 
         var adminUsername = configuration["Seed:AdminUsername"] ?? "admin";
-        var adminPassword = configuration["Seed:AdminPassword"] ?? "Admin@123!";
+        var adminPassword = configuration["Seed:AdminPassword"];
         var adminEmail = configuration["Seed:AdminEmail"] ?? "admin@sagrafacile.local";
+
+        if (string.IsNullOrWhiteSpace(adminPassword))
+        {
+            logger.LogWarning("Seed:AdminPassword is not configured. Skipping admin user creation.");
+            return;
+        }
 
         var adminUser = await userManager.FindByNameAsync(adminUsername);
         if (adminUser == null)

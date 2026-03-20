@@ -45,7 +45,7 @@
 
 @code {
     [SupplyParameterFromForm]
-    private LoginModel loginModel { get; set; } = new();
+    private LoginModel loginModel { get; set; } = default!;
     private string errorMessage = string.Empty;
     private bool isLoading = false;
 
@@ -54,12 +54,14 @@
 
     protected override async Task OnInitializedAsync()
     {
+        loginModel ??= new LoginModel();
         if (HttpContext?.User?.Identity?.IsAuthenticated == true)
             Navigation.NavigateTo("/");
     }
 
     private async Task HandleLogin()
     {
+        if (loginModel == null) return;
         isLoading = true;
         errorMessage = string.Empty;
 

@@ -46,7 +46,10 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "SagraFacile-Super-Secret-Key-For-JWT-Authentication-2026!";
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+    throw new InvalidOperationException("JWT key (Jwt:Key) must be configured via environment variables or appsettings.");
+
 builder.Services.AddAuthentication()
     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {
