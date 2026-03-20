@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using SagraFacile.Web.Features.Events;
 using SagraFacile.Web.Features.Reservations;
 
 namespace SagraFacile.Web.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
@@ -13,6 +15,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<TableReservation> TableReservations => Set<TableReservation>();
     public DbSet<Table> Tables => Set<Table>();
     public DbSet<ReservationCall> ReservationCalls => Set<ReservationCall>();
+    public DbSet<Event> Events => Set<Event>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,6 +51,15 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.CalledBy).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Notes).IsRequired().HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<Event>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(10);
+            entity.Property(e => e.CurrencySymbol).IsRequired().HasMaxLength(5);
         });
     }
 }

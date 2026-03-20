@@ -1,0 +1,198 @@
+@page "/admin"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Identity
+@using SagraFacile.Web.Data
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<IdentityRole> RoleManager
+
+<PageTitle>Amministrazione - SagraFacile</PageTitle>
+
+<h1>⚙️ Amministrazione</h1>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white">
+                <h3 class="mb-0">Crea Utente</h3>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(createUserMessage))
+                {
+                    <div class="alert @(createUserSuccess ? "alert-success" : "alert-danger")">@createUserMessage</div>
+                }
+                <EditForm Model="newUser" OnValidSubmit="CreateUserAsync" FormName="CreateUserForm">
+                    <DataAnnotationsValidator />
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <InputText @bind-Value="newUser.Username" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nome visualizzato</label>
+                        <InputText @bind-Value="newUser.DisplayName" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <InputText @bind-Value="newUser.Email" class="form-control" type="email" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <InputText @bind-Value="newUser.Password" class="form-control" type="password" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ruolo</label>
+                        <InputSelect @bind-Value="newUser.Role" class="form-select">
+                            <option value="">Seleziona ruolo...</option>
+                            @foreach (var role in availableRoles)
+                            {
+                                <option value="@role">@role</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <button type="submit" class="btn btn-danger" disabled="@isCreatingUser">
+                        @if (isCreatingUser) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                        Crea Utente
+                    </button>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0">Utenti del Sistema</h3>
+            </div>
+            <div class="card-body">
+                @if (isLoadingUsers)
+                {
+                    <p><em>Caricamento...</em></p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Ruoli</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in users)
+                                {
+                                    <tr>
+                                        <td>@user.Username</td>
+                                        <td>@user.DisplayName</td>
+                                        <td>@user.Email</td>
+                                        <td>
+                                            @foreach (var role in user.Roles)
+                                            {
+                                                <span class="badge @GetRoleBadgeClass(role) me-1">@role</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<UserDto> users = new();
+    private List<string> availableRoles = new();
+    private NewUserModel newUser = new();
+    private bool isLoadingUsers = true;
+    private bool isCreatingUser = false;
+    private string createUserMessage = string.Empty;
+    private bool createUserSuccess = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        availableRoles = DataSeeder.Roles.ToList();
+        await LoadUsersAsync();
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        isLoadingUsers = true;
+        var allUsers = UserManager.Users.ToList();
+        var userDtos = new List<UserDto>();
+        foreach (var u in allUsers)
+        {
+            var roles = await UserManager.GetRolesAsync(u);
+            userDtos.Add(new UserDto(u.UserName ?? "", u.DisplayName, u.Email ?? "", roles.ToList()));
+        }
+        users = userDtos;
+        isLoadingUsers = false;
+    }
+
+    private async Task CreateUserAsync()
+    {
+        isCreatingUser = true;
+        createUserMessage = string.Empty;
+        try
+        {
+            var user = new ApplicationUser
+            {
+                UserName = newUser.Username,
+                Email = newUser.Email,
+                DisplayName = newUser.DisplayName,
+                EmailConfirmed = true
+            };
+            var result = await UserManager.CreateAsync(user, newUser.Password);
+            if (result.Succeeded)
+            {
+                if (!string.IsNullOrEmpty(newUser.Role))
+                    await UserManager.AddToRoleAsync(user, newUser.Role);
+                createUserMessage = $"Utente '{newUser.Username}' creato con successo!";
+                createUserSuccess = true;
+                newUser = new();
+                await LoadUsersAsync();
+            }
+            else
+            {
+                createUserMessage = string.Join(", ", result.Errors.Select(e => e.Description));
+                createUserSuccess = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            createUserMessage = $"Errore: {ex.Message}";
+            createUserSuccess = false;
+        }
+        isCreatingUser = false;
+    }
+
+    private string GetRoleBadgeClass(string role) => role switch
+    {
+        "Admin" => "bg-danger",
+        "Supervisore" => "bg-warning text-dark",
+        "Cassiere" => "bg-primary",
+        "Cucina" => "bg-success",
+        _ => "bg-secondary"
+    };
+
+    private record UserDto(string Username, string DisplayName, string Email, List<string> Roles);
+
+    public class NewUserModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Username { get; set; } = string.Empty;
+        [System.ComponentModel.DataAnnotations.Required]
+        public string DisplayName { get; set; } = string.Empty;
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.EmailAddress]
+        public string Email { get; set; } = string.Empty;
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.MinLength(8)]
+        public string Password { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+    }
+}
