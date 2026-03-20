@@ -11,14 +11,6 @@ enabled = true
   [analyzers.meta]
   environment = ["browser"]
 
-[[analyzers]]
-name = "html"
-enabled = true
-
-[[analyzers]]
-name = "css"
-enabled = true
-
 [[transformers]]
 name = "dotnet-format"
 enabled = true
