@@ -4,10 +4,6 @@ version = 1
 name = "csharp"
 enabled = true
 
-  [analyzers.meta]
-  project_root = "."
-  runtime_version = "10.0.0"
-
 [[analyzers]]
 name = "javascript"
 enabled = true
