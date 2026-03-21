@@ -1,0 +1,13 @@
+@inject NavigationManager Navigation
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    protected override void OnInitialized()
+    {
+        var returnUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var loginUrl = string.IsNullOrEmpty(returnUrl) ? "/login" : $"/login?returnUrl={Uri.EscapeDataString(returnUrl)}";
+        Navigation.NavigateTo(loginUrl);
+    }
+}
