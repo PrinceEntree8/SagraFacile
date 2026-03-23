@@ -41,17 +41,8 @@ public static class GetReservationReport
         public async Task<Result> Handle(Query query, CancellationToken cancellationToken)
         {
             // Normalise dates to UTC before delegating to the repository
-            DateTime? startUtc = query.StartDate.HasValue
-                ? query.StartDate.Value.Kind == DateTimeKind.Unspecified
-                    ? DateTime.SpecifyKind(query.StartDate.Value, DateTimeKind.Utc)
-                    : query.StartDate.Value.ToUniversalTime()
-                : null;
-
-            DateTime? endUtc = query.EndDate.HasValue
-                ? query.EndDate.Value.Kind == DateTimeKind.Unspecified
-                    ? DateTime.SpecifyKind(query.EndDate.Value, DateTimeKind.Utc)
-                    : query.EndDate.Value.ToUniversalTime()
-                : null;
+            DateTime? startUtc = NormaliseToUtc(query.StartDate);
+            DateTime? endUtc = NormaliseToUtc(query.EndDate);
 
             var reservations = await _repository.GetByDateRangeAsync(startUtc, endUtc, cancellationToken);
 
@@ -61,11 +52,13 @@ public static class GetReservationReport
                     ? r.FirstCalledAt.Value - r.CreatedAt
                     : (TimeSpan?)null;
 
-                TimeSpan? totalWait = r.SeatedAt.HasValue
-                    ? r.SeatedAt.Value - r.CreatedAt
-                    : r.VoidedAt.HasValue
-                        ? r.VoidedAt.Value - r.CreatedAt
-                        : null;
+                TimeSpan? totalWait;
+                if (r.SeatedAt.HasValue)
+                    totalWait = r.SeatedAt.Value - r.CreatedAt;
+                else if (r.VoidedAt.HasValue)
+                    totalWait = r.VoidedAt.Value - r.CreatedAt;
+                else
+                    totalWait = null;
 
                 return new ReportDto(
                     r.Id, r.QueueNumber, r.CustomerName, r.PartySize, r.Status,
@@ -104,6 +97,14 @@ public static class GetReservationReport
                 return TimeSpan.FromTicks((mid1.Ticks + mid2.Ticks) / 2);
             }
             return sorted[count / 2];
+        }
+
+        private static DateTime? NormaliseToUtc(DateTime? dt)
+        {
+            if (!dt.HasValue) return null;
+            return dt.Value.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(dt.Value, DateTimeKind.Utc)
+                : dt.Value.ToUniversalTime();
         }
     }
 }

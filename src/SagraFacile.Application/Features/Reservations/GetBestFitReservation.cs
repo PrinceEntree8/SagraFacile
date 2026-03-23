@@ -69,11 +69,19 @@ public static class GetBestFitReservation
             }
 
             var sorted = matches
-                .OrderBy(m => m.MatchQuality == "Perfect" ? 0 : m.MatchQuality == "Good" ? 1 : m.MatchQuality == "Acceptable" ? 2 : 3)
+                .OrderBy(m => MatchQualityOrder(m.MatchQuality))
                 .ThenBy(m => m.CreatedAt)
                 .ToList();
 
             return new Result(sorted);
         }
+
+        private static int MatchQualityOrder(string quality) => quality switch
+        {
+            "Perfect" => 0,
+            "Good" => 1,
+            "Acceptable" => 2,
+            _ => 3
+        };
     }
 }
