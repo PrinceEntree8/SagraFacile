@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy solution file
-COPY SagraFacile.sln ./
+COPY SagraFacile.slnx ./
 
 # Copy project files
 COPY src/SagraFacile.Web/SagraFacile.Web/SagraFacile.Web.csproj ./src/SagraFacile.Web/SagraFacile.Web/

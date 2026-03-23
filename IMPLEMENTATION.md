@@ -150,7 +150,7 @@ SagraFacile/
 ├── Dockerfile                             # Container definition
 ├── QUICKSTART.md                          # Quick start guide
 ├── README.md                              # Main documentation
-└── SagraFacile.sln                        # Solution file
+└── SagraFacile.slnx                       # Solution file
 ```
 
 ## How to Get Started

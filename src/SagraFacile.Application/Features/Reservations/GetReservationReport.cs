@@ -71,17 +71,35 @@ public static class GetReservationReport
                 .Select(r => r.TotalWaitTime!.Value)
                 .ToList();
 
+            TimeSpan averageWaitTime;
+            TimeSpan medianWaitTime;
+            TimeSpan? maxWaitTime;
+            TimeSpan? minWaitTime;
+
+            if (waitTimes.Any())
+            {
+                averageWaitTime = TimeSpan.FromTicks((long)waitTimes.Average(t => t.Ticks));
+                medianWaitTime = GetMedian(waitTimes);
+                maxWaitTime = waitTimes.Max();
+                minWaitTime = waitTimes.Min();
+            }
+            else
+            {
+                averageWaitTime = TimeSpan.Zero;
+                medianWaitTime = TimeSpan.Zero;
+                maxWaitTime = null;
+                minWaitTime = null;
+            }
+
             var stats = new StatisticsDto(
                 TotalReservations: reservations.Count,
                 SeatedCount: reservations.Count(r => r.Status == "Seated"),
                 VoidedCount: reservations.Count(r => r.Status == "Voided"),
                 WaitingCount: reservations.Count(r => r.Status is "Waiting" or "Called"),
-                AverageWaitTime: waitTimes.Any()
-                    ? TimeSpan.FromTicks((long)waitTimes.Average(t => t.Ticks))
-                    : TimeSpan.Zero,
-                MedianWaitTime: waitTimes.Any() ? GetMedian(waitTimes) : TimeSpan.Zero,
-                MaxWaitTime: waitTimes.Any() ? waitTimes.Max() : null,
-                MinWaitTime: waitTimes.Any() ? waitTimes.Min() : null);
+                AverageWaitTime: averageWaitTime,
+                MedianWaitTime: medianWaitTime,
+                MaxWaitTime: maxWaitTime,
+                MinWaitTime: minWaitTime);
 
             return new Result(reports, stats);
         }
