@@ -8,24 +8,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.3" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1" />
-    <PackageReference Include="WolverineFx" Version="5.16.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Microsoft.AspNetCore.SignalR.Client.Core">
-      <HintPath>bin\Debug\net10.0\Microsoft.AspNetCore.SignalR.Client.Core.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\..\SagraFacile.Application\SagraFacile.Application.csproj" />
+    <ProjectReference Include="..\..\SagraFacile.Infrastructure\SagraFacile.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

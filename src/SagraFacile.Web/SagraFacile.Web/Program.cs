@@ -1,41 +1,27 @@
-using Microsoft.AspNetCore.Authentication;
 using System.Text;
-using FluentValidation;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using SagraFacile.Application;
+using SagraFacile.Infrastructure;
+using SagraFacile.Infrastructure.Data;
+using SagraFacile.Infrastructure.Identity;
 using SagraFacile.Web.Components;
-using SagraFacile.Web.Data;
 using SagraFacile.Web.Hubs;
-using SagraFacile.Web.Infrastructure.CQRS;
-using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents()
-    .AddInteractiveWebAssemblyComponents();
+    .AddInteractiveServerComponents();
 
 builder.Services.AddSignalR();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Host=localhost;Port=5432;Database=sagrafacile;Username=postgres;Password=postgres";
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-{
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequireNonAlphanumeric = true;
-    options.Password.RequiredLength = 8;
-    options.User.RequireUniqueEmail = true;
-    options.SignIn.RequireConfirmedAccount = false;
-})
-.AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
+builder.Services.AddInfrastructureServices(connectionString);
+builder.Services.AddApplicationServices();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -74,13 +60,6 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddControllers();
-builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
-builder.Services.AddMediator(typeof(Program).Assembly);
-
-builder.Host.UseWolverine(opts =>
-{
-    opts.Discovery.IncludeAssembly(typeof(Program).Assembly);
-});
 
 var app = builder.Build();
 
@@ -91,9 +70,7 @@ using (var scope = app.Services.CreateScope())
     await DataSeeder.SeedAsync(scope.ServiceProvider);
 }
 
-if (app.Environment.IsDevelopment())
-    app.UseWebAssemblyDebugging();
-else
+if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
@@ -109,8 +86,7 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapControllers();
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode()
-    .AddInteractiveWebAssemblyRenderMode();
+    .AddInteractiveServerRenderMode();
 
 app.MapHub<ReservationHub>("/hubs/reservations");
 
@@ -121,4 +97,3 @@ app.MapPost("/logout", async (HttpContext context) =>
 });
 
 app.Run();
-

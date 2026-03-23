@@ -4,7 +4,7 @@ using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using SagraFacile.Web.Data;
+using SagraFacile.Infrastructure.Identity;
 
 namespace SagraFacile.Web.Controllers;
 
@@ -16,7 +16,10 @@ public class AuthController : ControllerBase
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IConfiguration _configuration;
 
-    public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
+    public AuthController(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        IConfiguration configuration)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -51,7 +54,8 @@ public class AuthController : ControllerBase
 
     private string GenerateJwtToken(ApplicationUser user, IList<string> roles)
     {
-        var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT key not configured");
+        var jwtKey = _configuration["Jwt:Key"]
+            ?? throw new InvalidOperationException("JWT key not configured");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
