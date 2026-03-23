@@ -1,8 +1,6 @@
 @page "/events"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
 @rendermode InteractiveServer
-@using SagraFacile.Web.Features.Events
-@using SagraFacile.Web.Infrastructure.CQRS
 @inject IMediator Mediator
 
 <PageTitle>Gestione Eventi - SagraFacile</PageTitle>
