@@ -1,0 +1,96 @@
+@page "/login"
+@using Microsoft.AspNetCore.Identity
+@using SagraFacile.Web.Data
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager Navigation
+
+<PageTitle>Login - SagraFacile</PageTitle>
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h3 class="mb-0">🍽️ SagraFacile</h3>
+                <small>Accedi al sistema</small>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger">@errorMessage</div>
+                }
+                <EditForm Model="loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
+                    <DataAnnotationsValidator />
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <InputText @bind-Value="loginModel.Username" class="form-control" placeholder="Inserisci username" autocomplete="username" />
+                        <ValidationMessage For="() => loginModel.Username" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <InputText @bind-Value="loginModel.Password" type="password" class="form-control" placeholder="Inserisci password" autocomplete="current-password" />
+                        <ValidationMessage For="() => loginModel.Password" />
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary" disabled="@isLoading">
+                            @if (isLoading) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                            Accedi
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private LoginModel loginModel { get; set; } = default!;
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        loginModel ??= new LoginModel();
+        if (HttpContext?.User?.Identity?.IsAuthenticated == true)
+            Navigation.NavigateTo("/");
+    }
+
+    private async Task HandleLogin()
+    {
+        if (loginModel == null) return;
+        isLoading = true;
+        errorMessage = string.Empty;
+
+        var user = await UserManager.FindByNameAsync(loginModel.Username);
+        if (user == null)
+        {
+            errorMessage = "Credenziali non valide";
+            isLoading = false;
+            return;
+        }
+
+        var result = await SignInManager.PasswordSignInAsync(user, loginModel.Password, isPersistent: false, lockoutOnFailure: false);
+        if (result.Succeeded)
+        {
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            errorMessage = "Credenziali non valide";
+        }
+        isLoading = false;
+    }
+
+    public class LoginModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Username obbligatorio")]
+        public string Username { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Password obbligatoria")]
+        public string Password { get; set; } = string.Empty;
+    }
+}
