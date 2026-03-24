@@ -4,17 +4,18 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager Navigation
 @inject IMediator Mediator
+@inject IStringLocalizer<SharedResource> L
 @implements IAsyncDisposable
 
-<PageTitle>Now Calling – SagraFacile</PageTitle>
+<PageTitle>@L["NowCalling_PageTitle"]</PageTitle>
 
 <div class="nc-container">
 
     @* ── Header ──────────────────────────────────────────────── *@
     <header class="nc-header">
-        <span class="nc-title">🔔 Now Calling</span>
+        <span class="nc-title">@L["NowCalling_Header"]</span>
         <span class="nc-status @(isConnected ? "nc-status--live" : "nc-status--offline")">
-            @(isConnected ? "● LIVE" : "⚠ Reconnecting…")
+            @(isConnected ? L["NowCalling_Live"].Value : L["NowCalling_Reconnecting"].Value)
         </span>
     </header>
 
@@ -24,7 +25,7 @@
         @if (initialLoadFailed)
         {
             <div class="nc-load-warning" role="alert">
-                ⚠ Could not load historical calls. Live updates are still active.
+                @L["NowCalling_LoadWarning"]
             </div>
         }
 
@@ -33,7 +34,7 @@
             @* Idle state – shown when no reservation has been called yet. *@
             <div class="nc-idle" role="status" aria-live="polite">
                 <div class="nc-idle-icon">🎟️</div>
-                <p class="nc-idle-text">Waiting for the first call…</p>
+                <p class="nc-idle-text">@L["NowCalling_WaitingForCall"]</p>
             </div>
         }
         else
@@ -41,7 +42,7 @@
             @* ── Current / most-recently-called reservation ── *@
             var latest = calledEntries[0];
             <section class="nc-current" aria-label="Current call" aria-live="assertive">
-                <div class="nc-current-label">CURRENT CALL</div>
+                <div class="nc-current-label">@L["NowCalling_CurrentCall"]</div>
                 <div class="nc-current-queue" aria-label="Queue number @latest.QueueNumber">
                     @latest.QueueNumber
                 </div>
@@ -55,7 +56,7 @@
             @if (calledEntries.Count > 1)
             {
                 <section class="nc-history" aria-label="Previous calls">
-                    <h2 class="nc-history-title">Previous Calls</h2>
+                    <h2 class="nc-history-title">@L["NowCalling_PreviousCalls"]</h2>
                     <ul class="nc-history-list" role="list">
                         @foreach (var entry in calledEntries.Skip(1))
                         {

@@ -216,9 +216,12 @@ dotnet add package <PackageName>
 
 ### Adding Migrations
 ```bash
-cd src/SagraFacile.Web/SagraFacile.Web
-dotnet ef migrations add <MigrationName>
-dotnet ef database update
+dotnet ef migrations add <MigrationName> \
+  --project src/SagraFacile.Infrastructure \
+  --startup-project src/SagraFacile.Web/SagraFacile.Web
+dotnet ef database update \
+  --project src/SagraFacile.Infrastructure \
+  --startup-project src/SagraFacile.Web/SagraFacile.Web
 ```
 
 ### Docker Maintenance

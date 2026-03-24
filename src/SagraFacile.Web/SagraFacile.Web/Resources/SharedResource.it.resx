@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Navigation -->
+  <data name="Nav_Home" xml:space="preserve"><value>Home</value></data>
+  <data name="Nav_NowCalling" xml:space="preserve"><value>In Chiamata</value></data>
+  <data name="Nav_Receptionist" xml:space="preserve"><value>Receptionist</value></data>
+  <data name="Nav_HeadWaiter" xml:space="preserve"><value>Capo Cameriere</value></data>
+  <data name="Nav_Reports" xml:space="preserve"><value>Report</value></data>
+  <data name="Nav_Events" xml:space="preserve"><value>Eventi</value></data>
+  <data name="Nav_Admin" xml:space="preserve"><value>Admin</value></data>
+  <data name="Nav_Logout" xml:space="preserve"><value>Esci</value></data>
+  <data name="Nav_Login" xml:space="preserve"><value>Accedi</value></data>
+  <data name="Nav_ActiveEvent" xml:space="preserve"><value>Evento Attivo</value></data>
+  <data name="Nav_NoActiveEvent" xml:space="preserve"><value>Nessun evento attivo</value></data>
+  <data name="Nav_Language" xml:space="preserve"><value>Lingua</value></data>
+
+  <!-- Login -->
+  <data name="Login_PageTitle" xml:space="preserve"><value>Accesso - SagraFacile</value></data>
+  <data name="Login_Subtitle" xml:space="preserve"><value>Accedi al sistema</value></data>
+  <data name="Login_Username" xml:space="preserve"><value>Username</value></data>
+  <data name="Login_UsernamePlaceholder" xml:space="preserve"><value>Inserisci username</value></data>
+  <data name="Login_Password" xml:space="preserve"><value>Password</value></data>
+  <data name="Login_PasswordPlaceholder" xml:space="preserve"><value>Inserisci password</value></data>
+  <data name="Login_Submit" xml:space="preserve"><value>Accedi</value></data>
+  <data name="Login_InvalidCredentials" xml:space="preserve"><value>Credenziali non valide</value></data>
+  <data name="Login_UsernameRequired" xml:space="preserve"><value>Username obbligatorio</value></data>
+  <data name="Login_PasswordRequired" xml:space="preserve"><value>Password obbligatoria</value></data>
+
+  <!-- Admin -->
+  <data name="Admin_PageTitle" xml:space="preserve"><value>Amministrazione - SagraFacile</value></data>
+  <data name="Admin_Heading" xml:space="preserve"><value>Amministrazione</value></data>
+  <data name="Admin_CreateUser" xml:space="preserve"><value>Crea Utente</value></data>
+  <data name="Admin_Username" xml:space="preserve"><value>Username</value></data>
+  <data name="Admin_DisplayName" xml:space="preserve"><value>Nome visualizzato</value></data>
+  <data name="Admin_Email" xml:space="preserve"><value>Email</value></data>
+  <data name="Admin_Password" xml:space="preserve"><value>Password</value></data>
+  <data name="Admin_Role" xml:space="preserve"><value>Ruolo</value></data>
+  <data name="Admin_SelectRole" xml:space="preserve"><value>Seleziona ruolo...</value></data>
+  <data name="Admin_Submit" xml:space="preserve"><value>Crea Utente</value></data>
+  <data name="Admin_SystemUsers" xml:space="preserve"><value>Utenti del Sistema</value></data>
+  <data name="Admin_ColUsername" xml:space="preserve"><value>Username</value></data>
+  <data name="Admin_ColName" xml:space="preserve"><value>Nome</value></data>
+  <data name="Admin_ColEmail" xml:space="preserve"><value>Email</value></data>
+  <data name="Admin_ColRoles" xml:space="preserve"><value>Ruoli</value></data>
+  <data name="Admin_Loading" xml:space="preserve"><value>Caricamento...</value></data>
+  <data name="Admin_UserCreated" xml:space="preserve"><value>Utente '{0}' creato con successo!</value></data>
+
+  <!-- Events -->
+  <data name="Events_PageTitle" xml:space="preserve"><value>Gestione Eventi - SagraFacile</value></data>
+  <data name="Events_Heading" xml:space="preserve"><value>🎪 Gestione Eventi</value></data>
+  <data name="Events_NewEvent" xml:space="preserve"><value>Nuovo Evento</value></data>
+  <data name="Events_EventName" xml:space="preserve"><value>Nome Evento</value></data>
+  <data name="Events_EventPlaceholder" xml:space="preserve"><value>es. Sagra 2026</value></data>
+  <data name="Events_Description" xml:space="preserve"><value>Descrizione</value></data>
+  <data name="Events_Date" xml:space="preserve"><value>Data</value></data>
+  <data name="Events_Currency" xml:space="preserve"><value>Valuta (codice)</value></data>
+  <data name="Events_CurrencySymbol" xml:space="preserve"><value>Simbolo valuta</value></data>
+  <data name="Events_CreateEvent" xml:space="preserve"><value>Crea Evento</value></data>
+  <data name="Events_AllEvents" xml:space="preserve"><value>Tutti gli Eventi</value></data>
+  <data name="Events_ColName" xml:space="preserve"><value>Nome</value></data>
+  <data name="Events_ColDate" xml:space="preserve"><value>Data</value></data>
+  <data name="Events_ColCurrency" xml:space="preserve"><value>Valuta</value></data>
+  <data name="Events_ColStatus" xml:space="preserve"><value>Stato</value></data>
+  <data name="Events_ColActions" xml:space="preserve"><value>Azioni</value></data>
+  <data name="Events_Active" xml:space="preserve"><value>Attivo</value></data>
+  <data name="Events_Inactive" xml:space="preserve"><value>Inattivo</value></data>
+  <data name="Events_Activate" xml:space="preserve"><value>Attiva</value></data>
+  <data name="Events_Loading" xml:space="preserve"><value>Caricamento...</value></data>
+  <data name="Events_NoEvents" xml:space="preserve"><value>Nessun evento trovato. Crea il primo evento.</value></data>
+  <data name="Events_EventCreated" xml:space="preserve"><value>Evento '{0}' creato con successo!</value></data>
+  <data name="Events_Error" xml:space="preserve"><value>Errore: {0}</value></data>
+
+  <!-- Receptionist -->
+  <data name="Receptionist_PageTitle" xml:space="preserve"><value>Receptionist - Prenotazioni Tavoli</value></data>
+  <data name="Receptionist_Heading" xml:space="preserve"><value>Receptionist - Prenotazioni Tavoli</value></data>
+  <data name="Receptionist_AvailableSeats" xml:space="preserve"><value>Posti Disponibili</value></data>
+  <data name="Receptionist_AnnouncedBy" xml:space="preserve"><value>Comunicato dal Capo Cameriere</value></data>
+  <data name="Receptionist_NewReservation" xml:space="preserve"><value>Crea Nuova Prenotazione</value></data>
+  <data name="Receptionist_CustomerName" xml:space="preserve"><value>Nome Cliente</value></data>
+  <data name="Receptionist_PartySize" xml:space="preserve"><value>Numero Persone</value></data>
+  <data name="Receptionist_Notes" xml:space="preserve"><value>Note</value></data>
+  <data name="Receptionist_NotesHint" xml:space="preserve"><value>Note opzionali sulla prenotazione</value></data>
+  <data name="Receptionist_Submit" xml:space="preserve"><value>Crea Prenotazione</value></data>
+  <data name="Receptionist_ActiveReservations" xml:space="preserve"><value>Prenotazioni Attive</value></data>
+  <data name="Receptionist_FilterWaiting" xml:space="preserve"><value>In Attesa</value></data>
+  <data name="Receptionist_FilterCalled" xml:space="preserve"><value>Chiamati</value></data>
+  <data name="Receptionist_FilterAll" xml:space="preserve"><value>Tutti</value></data>
+  <data name="Receptionist_LoadingReservations" xml:space="preserve"><value>Caricamento prenotazioni...</value></data>
+  <data name="Receptionist_ColQueue" xml:space="preserve"><value>Numero</value></data>
+  <data name="Receptionist_ColName" xml:space="preserve"><value>Nome</value></data>
+  <data name="Receptionist_ColParty" xml:space="preserve"><value>Persone</value></data>
+  <data name="Receptionist_ColStatus" xml:space="preserve"><value>Stato</value></data>
+  <data name="Receptionist_ColWaiting" xml:space="preserve"><value>Attesa</value></data>
+  <data name="Receptionist_ColCalls" xml:space="preserve"><value>Chiamate</value></data>
+  <data name="Receptionist_ColActions" xml:space="preserve"><value>Azioni</value></data>
+  <data name="Receptionist_ActionCall" xml:space="preserve"><value>Chiama</value></data>
+  <data name="Receptionist_ActionVoid" xml:space="preserve"><value>Annulla</value></data>
+  <data name="Receptionist_LastCall" xml:space="preserve"><value>Ultima chiamata: {0}</value></data>
+  <data name="Receptionist_ToBeSeated" xml:space="preserve"><value>Da Sedere</value></data>
+  <data name="Receptionist_Served" xml:space="preserve"><value>Serviti</value></data>
+  <data name="Receptionist_Total" xml:space="preserve"><value>Totale</value></data>
+  <data name="Receptionist_Reservations" xml:space="preserve"><value>{0} prenotazioni</value></data>
+  <data name="Receptionist_People" xml:space="preserve"><value>{0} persone</value></data>
+  <data name="Receptionist_NoReservations" xml:space="preserve"><value>Nessuna prenotazione trovata.</value></data>
+  <data name="Receptionist_ReservationCreated" xml:space="preserve"><value>Prenotazione {0} creata con successo!</value></data>
+  <data name="Receptionist_Error" xml:space="preserve"><value>Errore: {0}</value></data>
+
+  <!-- Head Waiter -->
+  <data name="HeadWaiter_PageTitle" xml:space="preserve"><value>Capo Cameriere - Posti Disponibili</value></data>
+  <data name="HeadWaiter_Heading" xml:space="preserve"><value>Capo Cameriere - Posti Disponibili</value></data>
+  <data name="HeadWaiter_AnnounceSeats" xml:space="preserve"><value>Annuncia Posti Disponibili</value></data>
+  <data name="HeadWaiter_NumberOfSeats" xml:space="preserve"><value>Numero di Posti Disponibili</value></data>
+  <data name="HeadWaiter_Announce" xml:space="preserve"><value>Annuncia</value></data>
+  <data name="HeadWaiter_ShownAtReception" xml:space="preserve"><value>Verrà mostrato alla reception.</value></data>
+  <data name="HeadWaiter_BestFit" xml:space="preserve"><value>Raccomandazioni Migliori</value></data>
+  <data name="HeadWaiter_ForSeats" xml:space="preserve"><value>Per Posti Disponibili: {0}</value></data>
+  <data name="HeadWaiter_AllCalled" xml:space="preserve"><value>Tutte le Prenotazioni Chiamate (Ordine FIFO)</value></data>
+  <data name="HeadWaiter_CoverFilter" xml:space="preserve"><value>Filtro Coperti</value></data>
+  <data name="HeadWaiter_Filter" xml:space="preserve"><value>Filtra</value></data>
+  <data name="HeadWaiter_Clear" xml:space="preserve"><value>Cancella</value></data>
+  <data name="HeadWaiter_FilterHint" xml:space="preserve"><value>Inserisci il numero di coperti per vedere chi entra (strettamente minore), oppure cancella per vedere tutti i chiamati.</value></data>
+  <data name="HeadWaiter_Searching" xml:space="preserve"><value>Ricerca delle migliori opzioni...</value></data>
+  <data name="HeadWaiter_ColMatch" xml:space="preserve"><value>Corrispondenza</value></data>
+  <data name="HeadWaiter_ColQueue" xml:space="preserve"><value>Numero</value></data>
+  <data name="HeadWaiter_ColName" xml:space="preserve"><value>Nome</value></data>
+  <data name="HeadWaiter_ColPartySize" xml:space="preserve"><value>Persone</value></data>
+  <data name="HeadWaiter_ColNotes" xml:space="preserve"><value>Note</value></data>
+  <data name="HeadWaiter_ColWaiting" xml:space="preserve"><value>Attesa</value></data>
+  <data name="HeadWaiter_ColCalls" xml:space="preserve"><value>Chiamate</value></data>
+  <data name="HeadWaiter_ColLastCall" xml:space="preserve"><value>Ultima Chiamata</value></data>
+  <data name="HeadWaiter_ColActions" xml:space="preserve"><value>Azioni</value></data>
+  <data name="HeadWaiter_Seat" xml:space="preserve"><value>Accomoda</value></data>
+  <data name="HeadWaiter_Never" xml:space="preserve"><value>Mai</value></data>
+  <data name="HeadWaiter_BestRecommendation" xml:space="preserve"><value>Migliore Raccomandazione: Chiama {0} - {1} (Gruppo di {2})</value></data>
+  <data name="HeadWaiter_NoMatch" xml:space="preserve"><value>Nessuna prenotazione corrisponde a questa dimensione tavolo.</value></data>
+  <data name="HeadWaiter_Announced" xml:space="preserve"><value>Annunciati {0} posti disponibili alla Reception.</value></data>
+  <data name="HeadWaiter_Error" xml:space="preserve"><value>Errore: {0}</value></data>
+  <data name="HeadWaiter_ErrorSeating" xml:space="preserve"><value>Errore nell'accomodare la prenotazione: {0}</value></data>
+
+  <!-- Now Calling -->
+  <data name="NowCalling_PageTitle" xml:space="preserve"><value>In Chiamata – SagraFacile</value></data>
+  <data name="NowCalling_Header" xml:space="preserve"><value>🔔 In Chiamata</value></data>
+  <data name="NowCalling_Live" xml:space="preserve"><value>● LIVE</value></data>
+  <data name="NowCalling_Reconnecting" xml:space="preserve"><value>⚠ Riconnessione…</value></data>
+  <data name="NowCalling_LoadWarning" xml:space="preserve"><value>⚠ Impossibile caricare le chiamate precedenti. Gli aggiornamenti in tempo reale sono attivi.</value></data>
+  <data name="NowCalling_WaitingForCall" xml:space="preserve"><value>In attesa della prima chiamata…</value></data>
+  <data name="NowCalling_CurrentCall" xml:space="preserve"><value>CHIAMATA CORRENTE</value></data>
+  <data name="NowCalling_PreviousCalls" xml:space="preserve"><value>Chiamate Precedenti</value></data>
+
+  <!-- Reservation Report -->
+  <data name="Report_PageTitle" xml:space="preserve"><value>Report Prenotazioni</value></data>
+  <data name="Report_Heading" xml:space="preserve"><value>Report Prenotazioni</value></data>
+  <data name="Report_FilterOptions" xml:space="preserve"><value>Opzioni Filtro</value></data>
+  <data name="Report_StartDate" xml:space="preserve"><value>Data Inizio</value></data>
+  <data name="Report_EndDate" xml:space="preserve"><value>Data Fine</value></data>
+  <data name="Report_Generate" xml:space="preserve"><value>Genera Report</value></data>
+  <data name="Report_Clear" xml:space="preserve"><value>Cancella</value></data>
+  <data name="Report_TotalReservations" xml:space="preserve"><value>Prenotazioni Totali</value></data>
+  <data name="Report_Seated" xml:space="preserve"><value>Seduti</value></data>
+  <data name="Report_Waiting" xml:space="preserve"><value>In Attesa</value></data>
+  <data name="Report_Voided" xml:space="preserve"><value>Annullati</value></data>
+  <data name="Report_WaitTimeStats" xml:space="preserve"><value>Statistiche Tempi d'Attesa</value></data>
+  <data name="Report_AverageWait" xml:space="preserve"><value>Attesa Media</value></data>
+  <data name="Report_MedianWait" xml:space="preserve"><value>Attesa Mediana</value></data>
+  <data name="Report_MinWait" xml:space="preserve"><value>Attesa Minima</value></data>
+  <data name="Report_MaxWait" xml:space="preserve"><value>Attesa Massima</value></data>
+  <data name="Report_DetailedReport" xml:space="preserve"><value>Report Dettagliato</value></data>
+  <data name="Report_ColQueue" xml:space="preserve"><value>Numero</value></data>
+  <data name="Report_ColCustomer" xml:space="preserve"><value>Cliente</value></data>
+  <data name="Report_ColPartySize" xml:space="preserve"><value>Persone</value></data>
+  <data name="Report_ColStatus" xml:space="preserve"><value>Stato</value></data>
+  <data name="Report_ColCreated" xml:space="preserve"><value>Creato</value></data>
+  <data name="Report_ColFirstCalled" xml:space="preserve"><value>Prima Chiamata</value></data>
+  <data name="Report_ColCalls" xml:space="preserve"><value>Chiamate</value></data>
+  <data name="Report_ColWaitUntilFirst" xml:space="preserve"><value>Attesa Prima Chiamata</value></data>
+  <data name="Report_ColTotalWait" xml:space="preserve"><value>Tempo Totale d'Attesa</value></data>
+  <data name="Report_NotCalled" xml:space="preserve"><value>Non chiamato</value></data>
+  <data name="Report_InProgress" xml:space="preserve"><value>In corso</value></data>
+  <data name="Report_Loading" xml:space="preserve"><value>Caricamento report...</value></data>
+  <data name="Report_SelectDateRange" xml:space="preserve"><value>Seleziona l'intervallo di date e clicca "Genera Report" per visualizzare le statistiche.</value></data>
+  <data name="Report_NoReservations" xml:space="preserve"><value>Nessuna prenotazione trovata per l'intervallo di date selezionato.</value></data>
+
+  <!-- Home -->
+  <data name="Home_Hello" xml:space="preserve"><value>Ciao, mondo!</value></data>
+  <data name="Home_Welcome" xml:space="preserve"><value>Benvenuto nella tua nuova app.</value></data>
+</root>

@@ -4,44 +4,45 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @inject IMediator Mediator
 @inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> L
 @implements IAsyncDisposable
 
-<PageTitle>Receptionist - Table Reservations</PageTitle>
+<PageTitle>@L["Receptionist_PageTitle"]</PageTitle>
 
-<h1>Receptionist - Table Reservations</h1>
+<h1>@L["Receptionist_Heading"]</h1>
 
 <div class="row">
     <div class="col-md-5">
         <div class="card mb-4">
             <div class="card-header bg-success text-white">
-                <h3 class="mb-0">Available Seats</h3>
+                <h3 class="mb-0">@L["Receptionist_AvailableSeats"]</h3>
             </div>
             <div class="card-body text-center">
                 <h1 class="display-1">@availableSeats</h1>
-                <p class="text-muted">Announced by Head Waiter</p>
+                <p class="text-muted">@L["Receptionist_AnnouncedBy"]</p>
             </div>
         </div>
 
         <div class="card mb-4">
             <div class="card-header">
-                <h3>Create New Reservation</h3>
+                <h3>@L["Receptionist_NewReservation"]</h3>
             </div>
             <div class="card-body">
                 <EditForm Model="@newReservation" OnValidSubmit="@CreateReservation">
                     <div class="mb-3">
-                        <label class="form-label">Customer Name</label>
+                        <label class="form-label">@L["Receptionist_CustomerName"]</label>
                         <InputText @bind-Value="newReservation.CustomerName" class="form-control" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Party Size</label>
+                        <label class="form-label">@L["Receptionist_PartySize"]</label>
                         <InputNumber @bind-Value="newReservation.PartySize" class="form-control" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Notes</label>
+                        <label class="form-label">@L["Receptionist_Notes"]</label>
                         <InputTextArea @bind-Value="newReservation.Notes" class="form-control" rows="3" />
-                        <small class="form-text text-muted">Optional notes about the reservation</small>
+                        <small class="form-text text-muted">@L["Receptionist_NotesHint"]</small>
                     </div>
 
                     <button type="submit" class="btn btn-primary" disabled="@isCreating">
@@ -49,7 +50,7 @@
                         {
                             <span class="spinner-border spinner-border-sm me-2"></span>
                         }
-                        Create Reservation
+                        @L["Receptionist_Submit"]
                     </button>
                 </EditForm>
 
@@ -64,17 +65,17 @@
     <div class="col-md-7">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h3>Active Reservations</h3>
+                <h3>@L["Receptionist_ActiveReservations"]</h3>
                 <div>
-                    <button class="btn btn-sm btn-outline-primary" @onclick="@(() => LoadReservations("Waiting"))">Waiting</button>
-                    <button class="btn btn-sm btn-outline-secondary" @onclick="@(() => LoadReservations("Called"))">Called</button>
-                    <button class="btn btn-sm btn-outline-info" @onclick="@(() => LoadReservations(null))">All</button>
+                    <button class="btn btn-sm btn-outline-primary" @onclick="@(() => LoadReservations("Waiting"))">@L["Receptionist_FilterWaiting"]</button>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="@(() => LoadReservations("Called"))">@L["Receptionist_FilterCalled"]</button>
+                    <button class="btn btn-sm btn-outline-info" @onclick="@(() => LoadReservations(null))">@L["Receptionist_FilterAll"]</button>
                 </div>
             </div>
             <div class="card-body">
                 @if (isLoading)
                 {
-                    <p><em>Loading reservations...</em></p>
+                    <p><em>@L["Receptionist_LoadingReservations"]</em></p>
                 }
                 else if (reservations != null && reservations.Any())
                 {
@@ -82,13 +83,13 @@
                         <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th>Queue #</th>
-                                    <th>Name</th>
-                                    <th>Party</th>
-                                    <th>Status</th>
-                                    <th>Waiting</th>
-                                    <th>Calls</th>
-                                    <th>Actions</th>
+                                    <th>@L["Receptionist_ColQueue"]</th>
+                                    <th>@L["Receptionist_ColName"]</th>
+                                    <th>@L["Receptionist_ColParty"]</th>
+                                    <th>@L["Receptionist_ColStatus"]</th>
+                                    <th>@L["Receptionist_ColWaiting"]</th>
+                                    <th>@L["Receptionist_ColCalls"]</th>
+                                    <th>@L["Receptionist_ColActions"]</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -105,7 +106,7 @@
                                             @FormatTimeSpan(reservation.WaitingTime)
                                             @if (reservation.TimeSinceLastCall.HasValue)
                                             {
-                                                <br /><small class="text-muted">Last call: @FormatTimeSpan(reservation.TimeSinceLastCall.Value)</small>
+                                                <br /><small class="text-muted">@string.Format(L["Receptionist_LastCall"], FormatTimeSpan(reservation.TimeSinceLastCall.Value))</small>
                                             }
                                         </td>
                                         <td>@reservation.CallCount</td>
@@ -113,10 +114,10 @@
                                             @if (reservation.Status == "Waiting" || reservation.Status == "Called")
                                             {
                                                 <button class="btn btn-sm btn-success me-1" @onclick="@(() => CallReservationAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
-                                                    Call
+                                                    @L["Receptionist_ActionCall"]
                                                 </button>
                                                 <button class="btn btn-sm btn-danger" @onclick="@(() => VoidReservationAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
-                                                    Void
+                                                    @L["Receptionist_ActionVoid"]
                                                 </button>
                                             }
                                         </td>
@@ -130,27 +131,27 @@
                             <div class="col-md-4">
                                 <div class="card text-center">
                                     <div class="card-body">
-                                        <h6 class="card-subtitle mb-2 text-muted">To Be Seated</h6>
-                                        <h4 class="card-title">@toBeSeatedCount reservations</h4>
-                                        <p class="text-muted">@toBeSeatedPeople people</p>
+                                        <h6 class="card-subtitle mb-2 text-muted">@L["Receptionist_ToBeSeated"]</h6>
+                                        <h4 class="card-title">@string.Format(L["Receptionist_Reservations"], toBeSeatedCount)</h4>
+                                        <p class="text-muted">@string.Format(L["Receptionist_People"], toBeSeatedPeople)</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="card text-center">
                                     <div class="card-body">
-                                        <h6 class="card-subtitle mb-2 text-muted">Served</h6>
-                                        <h4 class="card-title">@seatedCount reservations</h4>
-                                        <p class="text-muted">@seatedPeople people</p>
+                                        <h6 class="card-subtitle mb-2 text-muted">@L["Receptionist_Served"]</h6>
+                                        <h4 class="card-title">@string.Format(L["Receptionist_Reservations"], seatedCount)</h4>
+                                        <p class="text-muted">@string.Format(L["Receptionist_People"], seatedPeople)</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="card text-center bg-light">
                                     <div class="card-body">
-                                        <h6 class="card-subtitle mb-2 text-muted">Total</h6>
-                                        <h4 class="card-title">@totalCount reservations</h4>
-                                        <p class="text-muted">@totalPeople people</p>
+                                        <h6 class="card-subtitle mb-2 text-muted">@L["Receptionist_Total"]</h6>
+                                        <h4 class="card-title">@string.Format(L["Receptionist_Reservations"], totalCount)</h4>
+                                        <p class="text-muted">@string.Format(L["Receptionist_People"], totalPeople)</p>
                                     </div>
                                 </div>
                             </div>
@@ -159,7 +160,7 @@
                 }
                 else
                 {
-                    <p><em>No reservations found.</em></p>
+                    <p><em>@L["Receptionist_NoReservations"]</em></p>
                 }
             </div>
         </div>
@@ -271,7 +272,7 @@
 
             var result = await Mediator.Send(command, CancellationToken.None);
             
-            creationMessage = $"Reservation {result.QueueNumber} created successfully!";
+            creationMessage = string.Format(L["Receptionist_ReservationCreated"], result.QueueNumber);
             newReservation = new();
             
             // Notify via SignalR
@@ -284,7 +285,7 @@
         }
         catch (Exception ex)
         {
-            creationMessage = $"Error: {ex.Message}";
+            creationMessage = string.Format(L["Receptionist_Error"], ex.Message);
         }
         finally
         {

@@ -4,37 +4,35 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 @inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> L
 
-<PageTitle>Login - SagraFacile</PageTitle>
+<PageTitle>@L["Login_PageTitle"]</PageTitle>
 
 <div class="row justify-content-center mt-5">
     <div class="col-md-4">
         <div class="card shadow">
             <div class="card-header bg-primary text-white text-center">
                 <h3 class="mb-0">🍽️ SagraFacile</h3>
-                <small>Accedi al sistema</small>
+                <small>@L["Login_Subtitle"]</small>
             </div>
             <div class="card-body">
                 @if (!string.IsNullOrEmpty(errorMessage))
                 {
                     <div class="alert alert-danger">@errorMessage</div>
                 }
-                <EditForm Model="loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
-                    <DataAnnotationsValidator />
+                <EditForm Model="loginModel" OnSubmit="HandleLogin" FormName="LoginForm">
                     <div class="mb-3">
-                        <label class="form-label">Username</label>
-                        <InputText @bind-Value="loginModel.Username" class="form-control" placeholder="Inserisci username" autocomplete="username" />
-                        <ValidationMessage For="() => loginModel.Username" />
+                        <label class="form-label">@L["Login_Username"]</label>
+                        <InputText @bind-Value="loginModel.Username" class="form-control" placeholder="@L["Login_UsernamePlaceholder"]" autocomplete="username" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <InputText @bind-Value="loginModel.Password" type="password" class="form-control" placeholder="Inserisci password" autocomplete="current-password" />
-                        <ValidationMessage For="() => loginModel.Password" />
+                        <label class="form-label">@L["Login_Password"]</label>
+                        <InputText @bind-Value="loginModel.Password" type="password" class="form-control" placeholder="@L["Login_PasswordPlaceholder"]" autocomplete="current-password" />
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary" disabled="@isLoading">
                             @if (isLoading) { <span class="spinner-border spinner-border-sm me-2"></span> }
-                            Accedi
+                            @L["Login_Submit"]
                         </button>
                     </div>
                 </EditForm>
@@ -61,14 +59,25 @@
 
     private async Task HandleLogin()
     {
-        if (loginModel == null) return;
-        isLoading = true;
         errorMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(loginModel.Username))
+        {
+            errorMessage = L["Login_UsernameRequired"];
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(loginModel.Password))
+        {
+            errorMessage = L["Login_PasswordRequired"];
+            return;
+        }
+
+        isLoading = true;
 
         var user = await UserManager.FindByNameAsync(loginModel.Username);
         if (user == null)
         {
-            errorMessage = "Credenziali non valide";
+            errorMessage = L["Login_InvalidCredentials"];
             isLoading = false;
             return;
         }
@@ -80,17 +89,14 @@
         }
         else
         {
-            errorMessage = "Credenziali non valide";
+            errorMessage = L["Login_InvalidCredentials"];
         }
         isLoading = false;
     }
 
     public class LoginModel
     {
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Username obbligatorio")]
         public string Username { get; set; } = string.Empty;
-
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Password obbligatoria")]
         public string Password { get; set; } = string.Empty;
     }
 }
