@@ -269,7 +269,7 @@ public class OrderFeatureTests : IClassFixture<WebApplicationFactory<Program>>
 
 ## Internationalisation (i18n)
 
-The application supports **Italian (default)** and **English** using the built-in ASP.NET Core localisation system. The default culture is `it`. The culture is persisted per user via a `RequestCulture` cookie set by `CultureController`.
+The application supports **Italian (default)** and **English** using the built-in ASP.NET Core localisation system. The default culture is `it`. The active culture is determined automatically from the browser's `Accept-Language` header on every request.
 
 ### How it works
 
@@ -278,8 +278,6 @@ The application supports **Italian (default)** and **English** using the built-i
 | `Resources/SharedResource.cs` | Marker class — used as type parameter for `IStringLocalizer<SharedResource>` |
 | `Resources/SharedResource.resx` | English string table (neutral fallback) |
 | `Resources/SharedResource.it.resx` | Italian string table (served by default) |
-| `Controllers/CultureController` | `GET /culture?culture={it\|en}&redirectUri=/` — writes the `RequestCulture` cookie and redirects |
-| `NavMenu.razor` | Renders 🇮🇹/🇬🇧 buttons; calls `Navigation.NavigateTo("/culture?...", forceLoad: true)` |
 
 Registration in `Program.cs`:
 ```csharp
@@ -290,7 +288,11 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 {
     DefaultRequestCulture = new RequestCulture("it"),
     SupportedCultures    = supportedCultures.Select(c => new CultureInfo(c)).ToList(),
-    SupportedUICultures  = supportedCultures.Select(c => new CultureInfo(c)).ToList()
+    SupportedUICultures  = supportedCultures.Select(c => new CultureInfo(c)).ToList(),
+    RequestCultureProviders = new List<IRequestCultureProvider>
+    {
+        new AcceptLanguageHeaderRequestCultureProvider()
+    }
 });
 ```
 
@@ -341,7 +343,7 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 
 ### Language switching
 
-Language switching is already fully implemented in `NavMenu.razor`. New pages require **no additional wiring** — the culture cookie is read automatically by the `UseRequestLocalization` middleware on every request.
+The active language is determined by the browser's `Accept-Language` header. To change the language, users must update their browser's language preferences. New pages require **no additional wiring** — the `AcceptLanguageHeaderRequestCultureProvider` is applied automatically by the `UseRequestLocalization` middleware on every request.
 
 ---
 

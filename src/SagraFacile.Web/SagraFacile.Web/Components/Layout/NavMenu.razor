@@ -1,7 +1,6 @@
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject NavigationManager Navigation
 @inject IMediator Mediator
 @inject IStringLocalizer<SharedResource> L
 
@@ -104,14 +103,6 @@
                 </div>
             </div>
         }
-
-        <div class="nav-item px-3 mt-3">
-            <div class="small text-light opacity-75 mb-1">@L["Nav_Language"]</div>
-            <div>
-                <button class="btn btn-sm btn-outline-light py-0 me-1" @onclick='@(() => SetCulture("it"))' title="Italiano">🇮🇹</button>
-                <button class="btn btn-sm btn-outline-light py-0" @onclick='@(() => SetCulture("en"))' title="English">🇬🇧</button>
-            </div>
-        </div>
     </nav>
 </div>
 
@@ -122,13 +113,5 @@
     {
         var result = await Mediator.QueryAsync(new GetActiveEvent.Query());
         activeEvent = result.ActiveEvent;
-    }
-
-    private void SetCulture(string culture)
-    {
-        var currentUri = Navigation.Uri;
-        Navigation.NavigateTo(
-            $"/culture?culture={culture}&redirectUri={Uri.EscapeDataString(currentUri)}",
-            forceLoad: true);
     }
 }
