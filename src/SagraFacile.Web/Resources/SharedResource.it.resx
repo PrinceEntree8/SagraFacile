@@ -198,7 +198,7 @@
 
   <!-- Now Calling -->
   <data name="NowCalling_PageTitle" xml:space="preserve"><value>In Chiamata – SagraFacile</value></data>
-  <data name="NowCalling_Header" xml:space="preserve"><value>🔔 In Chiamata</value></data>
+  <data name="NowCalling_Header" xml:space="preserve"><value>In Chiamata</value></data>
   <data name="NowCalling_Live" xml:space="preserve"><value>● LIVE</value></data>
   <data name="NowCalling_Reconnecting" xml:space="preserve"><value>⚠ Riconnessione…</value></data>
   <data name="NowCalling_LoadWarning" xml:space="preserve"><value>⚠ Impossibile caricare le chiamate precedenti. Gli aggiornamenti in tempo reale sono attivi.</value></data>

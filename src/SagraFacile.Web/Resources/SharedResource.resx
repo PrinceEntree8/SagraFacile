@@ -198,7 +198,7 @@
 
   <!-- Now Calling -->
   <data name="NowCalling_PageTitle" xml:space="preserve"><value>Now Calling – SagraFacile</value></data>
-  <data name="NowCalling_Header" xml:space="preserve"><value>🔔 Now Calling</value></data>
+  <data name="NowCalling_Header" xml:space="preserve"><value>Now Calling</value></data>
   <data name="NowCalling_Live" xml:space="preserve"><value>● LIVE</value></data>
   <data name="NowCalling_Reconnecting" xml:space="preserve"><value>⚠ Reconnecting…</value></data>
   <data name="NowCalling_LoadWarning" xml:space="preserve"><value>⚠ Could not load historical calls. Live updates are still active.</value></data>

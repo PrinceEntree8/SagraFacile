@@ -16,7 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddLocalization(opts => opts.ResourcesPath = "Resources");
+builder.Services.AddLocalization();
 
 builder.Services.AddSignalR();
 
@@ -62,6 +62,8 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Cucina", policy => policy.RequireRole("Admin", "Supervisore", "Cucina"));
 });
 
+builder.Services.AddCascadingAuthenticationState();
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -90,6 +92,9 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     DefaultRequestCulture = new RequestCulture("it"),
     SupportedCultures = supportedCultures.Select(c => new System.Globalization.CultureInfo(c)).ToList(),
     SupportedUICultures = supportedCultures.Select(c => new System.Globalization.CultureInfo(c)).ToList(),
+    ApplyCurrentCultureToResponseHeaders = true,
+    FallBackToParentCultures = true,
+    FallBackToParentUICultures = true,
     RequestCultureProviders = new List<IRequestCultureProvider>
     {
         new AcceptLanguageHeaderRequestCultureProvider()
