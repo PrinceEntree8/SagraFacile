@@ -20,17 +20,14 @@
                 {
                     <div class="alert alert-danger">@errorMessage</div>
                 }
-                <EditForm Model="loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
-                    <DataAnnotationsValidator />
+                <EditForm Model="loginModel" OnSubmit="HandleLogin" FormName="LoginForm">
                     <div class="mb-3">
                         <label class="form-label">@L["Login_Username"]</label>
                         <InputText @bind-Value="loginModel.Username" class="form-control" placeholder="@L["Login_UsernamePlaceholder"]" autocomplete="username" />
-                        <ValidationMessage For="() => loginModel.Username" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label">@L["Login_Password"]</label>
                         <InputText @bind-Value="loginModel.Password" type="password" class="form-control" placeholder="@L["Login_PasswordPlaceholder"]" autocomplete="current-password" />
-                        <ValidationMessage For="() => loginModel.Password" />
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary" disabled="@isLoading">
@@ -62,9 +59,20 @@
 
     private async Task HandleLogin()
     {
-        if (loginModel == null) return;
-        isLoading = true;
         errorMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(loginModel.Username))
+        {
+            errorMessage = L["Login_UsernameRequired"];
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(loginModel.Password))
+        {
+            errorMessage = L["Login_PasswordRequired"];
+            return;
+        }
+
+        isLoading = true;
 
         var user = await UserManager.FindByNameAsync(loginModel.Username);
         if (user == null)
@@ -88,10 +96,7 @@
 
     public class LoginModel
     {
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Login_UsernameRequired")]
         public string Username { get; set; } = string.Empty;
-
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Login_PasswordRequired")]
         public string Password { get; set; } = string.Empty;
     }
 }
