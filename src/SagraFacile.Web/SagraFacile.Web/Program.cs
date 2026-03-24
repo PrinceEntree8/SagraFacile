@@ -89,7 +89,11 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 {
     DefaultRequestCulture = new RequestCulture("it"),
     SupportedCultures = supportedCultures.Select(c => new System.Globalization.CultureInfo(c)).ToList(),
-    SupportedUICultures = supportedCultures.Select(c => new System.Globalization.CultureInfo(c)).ToList()
+    SupportedUICultures = supportedCultures.Select(c => new System.Globalization.CultureInfo(c)).ToList(),
+    RequestCultureProviders = new List<IRequestCultureProvider>
+    {
+        new AcceptLanguageHeaderRequestCultureProvider()
+    }
 });
 
 app.UseAntiforgery();
