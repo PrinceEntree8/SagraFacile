@@ -3,7 +3,7 @@
     <Project Path="src/SagraFacile.Domain/SagraFacile.Domain.csproj" />
     <Project Path="src/SagraFacile.Application/SagraFacile.Application.csproj" />
     <Project Path="src/SagraFacile.Infrastructure/SagraFacile.Infrastructure.csproj" />
-    <Project Path="src/SagraFacile.Web/SagraFacile.Web/SagraFacile.Web.csproj" />
+    <Project Path="src/SagraFacile.Web/SagraFacile.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/SagraFacile.Application.Tests/SagraFacile.Application.Tests.csproj" />

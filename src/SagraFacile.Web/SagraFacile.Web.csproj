@@ -18,8 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\SagraFacile.Application\SagraFacile.Application.csproj" />
-    <ProjectReference Include="..\..\SagraFacile.Infrastructure\SagraFacile.Infrastructure.csproj" />
+    <ProjectReference Include="..\SagraFacile.Application\SagraFacile.Application.csproj" />
+    <ProjectReference Include="..\SagraFacile.Infrastructure\SagraFacile.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
