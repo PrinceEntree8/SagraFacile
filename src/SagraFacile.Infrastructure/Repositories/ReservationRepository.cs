@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Interfaces;
 using SagraFacile.Domain.Features.Reservations;
 using SagraFacile.Infrastructure.Data;
@@ -66,8 +67,22 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
     public async Task AddCallAsync(ReservationCall call, CancellationToken cancellationToken)
         => await _db.ReservationCalls.AddAsync(call, cancellationToken);
 
-    public Task SaveChangesAsync(CancellationToken cancellationToken)
-        => _db.SaveChangesAsync(cancellationToken);
+    public async Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        foreach (var entry in _db.ChangeTracker.Entries<TableReservation>())
+        {
+            if (entry.State == EntityState.Modified)
+                entry.Entity.Version++;
+        }
+        try
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new RepositoryConcurrencyException();
+        }
+    }
 
     public ValueTask DisposeAsync() => _db.DisposeAsync();
 }

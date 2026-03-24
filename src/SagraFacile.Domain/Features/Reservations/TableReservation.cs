@@ -15,5 +15,12 @@ public class TableReservation
     public DateTime? VoidedAt { get; set; }
     public int CallCount { get; set; } = 0;
 
+    /// <summary>
+    /// Optimistic concurrency token. Incremented automatically by the repository on every write.
+    /// EF Core includes this in the WHERE clause of UPDATE statements; if another transaction has
+    /// already committed a change (bumping the version), SaveChanges throws DbUpdateConcurrencyException.
+    /// </summary>
+    public long Version { get; set; } = 0;
+
     public ICollection<ReservationCall> Calls { get; set; } = new List<ReservationCall>();
 }

@@ -14,6 +14,7 @@ public class TableReservationConfiguration : IEntityTypeConfiguration<TableReser
         entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
         entity.Property(e => e.PartySize).IsRequired();
         entity.Property(e => e.Notes).HasMaxLength(500);
+        entity.Property(e => e.Version).IsConcurrencyToken();
         entity.HasIndex(e => e.QueueNumber).IsUnique();
         entity.HasMany(e => e.Calls)
             .WithOne(c => c.TableReservation)
