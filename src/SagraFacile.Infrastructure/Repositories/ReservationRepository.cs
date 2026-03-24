@@ -5,11 +5,12 @@ using SagraFacile.Infrastructure.Data;
 
 namespace SagraFacile.Infrastructure.Repositories;
 
-public class ReservationRepository : IReservationRepository
+public class ReservationRepository : IReservationRepository, IAsyncDisposable
 {
     private readonly ApplicationDbContext _db;
 
-    public ReservationRepository(ApplicationDbContext db) => _db = db;
+    public ReservationRepository(IDbContextFactory<ApplicationDbContext> factory)
+        => _db = factory.CreateDbContext();
 
     public Task<TableReservation?> GetByIdAsync(int id, CancellationToken cancellationToken)
         => _db.TableReservations.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
@@ -67,4 +68,6 @@ public class ReservationRepository : IReservationRepository
 
     public Task SaveChangesAsync(CancellationToken cancellationToken)
         => _db.SaveChangesAsync(cancellationToken);
+
+    public ValueTask DisposeAsync() => _db.DisposeAsync();
 }

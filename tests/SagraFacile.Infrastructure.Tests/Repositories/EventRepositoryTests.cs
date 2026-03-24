@@ -11,8 +11,7 @@ public class EventRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var db = factory.CreateDbContext();
-        var repo = new EventRepository(db);
+        await using var repo = new EventRepository(factory);
         var ev = new Event { Name = "Sagra 2026", Description = "Test", Date = DateTime.UtcNow, Currency = "EUR", CurrencySymbol = "€" };
 
         // Act
@@ -31,8 +30,7 @@ public class EventRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var db = factory.CreateDbContext();
-        var repo = new EventRepository(db);
+        await using var repo = new EventRepository(factory);
 
         await repo.AddAsync(new Event { Name = "Old", Date = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Currency = "EUR", CurrencySymbol = "€" }, CancellationToken.None);
         await repo.AddAsync(new Event { Name = "New", Date = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), Currency = "EUR", CurrencySymbol = "€" }, CancellationToken.None);
@@ -52,8 +50,7 @@ public class EventRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var db = factory.CreateDbContext();
-        var repo = new EventRepository(db);
+        await using var repo = new EventRepository(factory);
 
         await repo.AddAsync(new Event { Name = "E1", IsActive = true, Date = DateTime.UtcNow, Currency = "EUR", CurrencySymbol = "€" }, CancellationToken.None);
         await repo.AddAsync(new Event { Name = "E2", IsActive = true, Date = DateTime.UtcNow, Currency = "EUR", CurrencySymbol = "€" }, CancellationToken.None);
@@ -62,9 +59,8 @@ public class EventRepositoryTests
         // Act
         await repo.DeactivateAllAsync(CancellationToken.None);
 
-        // Open a new context to verify the bulk update was persisted
-        await using var db2 = factory.CreateDbContext();
-        var repo2 = new EventRepository(db2);
+        // Open a new repository instance to verify the bulk update was persisted
+        await using var repo2 = new EventRepository(factory);
         var events = await repo2.GetAllOrderedByDateDescAsync(CancellationToken.None);
 
         // Assert

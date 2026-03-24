@@ -7,8 +7,9 @@ namespace SagraFacile.Infrastructure.Tests;
 /// <summary>
 /// Creates a fresh SQLite in-memory ApplicationDbContext for each test.
 /// SQLite is used (instead of EF InMemory) because it supports bulk operations such as ExecuteUpdateAsync.
+/// Implements IDbContextFactory so it can be passed directly to repositories that use the factory pattern.
 /// </summary>
-public sealed class TestDbContextFactory : IDisposable
+public sealed class TestDbContextFactory : IDbContextFactory<ApplicationDbContext>, IDisposable
 {
     private readonly SqliteConnection _connection;
 

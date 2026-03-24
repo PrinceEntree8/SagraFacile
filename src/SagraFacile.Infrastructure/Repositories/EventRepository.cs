@@ -5,11 +5,12 @@ using SagraFacile.Infrastructure.Data;
 
 namespace SagraFacile.Infrastructure.Repositories;
 
-public class EventRepository : IEventRepository
+public class EventRepository : IEventRepository, IAsyncDisposable
 {
     private readonly ApplicationDbContext _db;
 
-    public EventRepository(ApplicationDbContext db) => _db = db;
+    public EventRepository(IDbContextFactory<ApplicationDbContext> factory)
+        => _db = factory.CreateDbContext();
 
     public Task<Event?> GetActiveAsync(CancellationToken cancellationToken)
         => _db.Events.FirstOrDefaultAsync(e => e.IsActive, cancellationToken);
@@ -30,4 +31,6 @@ public class EventRepository : IEventRepository
 
     public Task SaveChangesAsync(CancellationToken cancellationToken)
         => _db.SaveChangesAsync(cancellationToken);
+
+    public ValueTask DisposeAsync() => _db.DisposeAsync();
 }
