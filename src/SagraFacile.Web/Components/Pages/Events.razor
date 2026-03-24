@@ -105,7 +105,7 @@
                                         <td>
                                             @if (!ev.IsActive)
                                             {
-                                                <button class="btn btn-sm btn-success" @onclick="() => ActivateEventAsync(ev.Id)">
+                                                <button class="btn btn-sm btn-success" @onclick="() => ActivateEventAsync(ev.Id)" disabled="@(activatingEventId == ev.Id)">
                                                     @L["Events_Activate"]
                                                 </button>
                                             }
@@ -128,6 +128,7 @@
     private bool isCreating = false;
     private string createMessage = string.Empty;
     private bool createSuccess = false;
+    private int? activatingEventId = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -170,9 +171,17 @@
 
     private async Task ActivateEventAsync(int eventId)
     {
-        var result = await Mediator.SendAsync(new ActivateEvent.Command(eventId));
-        if (result.Success)
-            await LoadEventsAsync();
+        activatingEventId = eventId;
+        try
+        {
+            var result = await Mediator.SendAsync(new ActivateEvent.Command(eventId));
+            if (result.Success)
+                await LoadEventsAsync();
+        }
+        finally
+        {
+            activatingEventId = null;
+        }
     }
 
     public class NewEventModel
