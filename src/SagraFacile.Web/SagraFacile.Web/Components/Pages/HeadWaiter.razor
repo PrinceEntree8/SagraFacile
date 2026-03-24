@@ -4,21 +4,22 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @inject IMediator Mediator
 @inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> L
 @implements IAsyncDisposable
 
-<PageTitle>Head Waiter - Available Seats</PageTitle>
+<PageTitle>@L["HeadWaiter_PageTitle"]</PageTitle>
 
-<h1>Head Waiter - Available Seats</h1>
+<h1>@L["HeadWaiter_Heading"]</h1>
 
 <div class="row">
     <div class="col-md-4">
         <div class="card mb-4">
             <div class="card-header">
-                <h3>Announce Available Seats</h3>
+                <h3>@L["HeadWaiter_AnnounceSeats"]</h3>
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    <label class="form-label">Number of Available Seats</label>
+                    <label class="form-label">@L["HeadWaiter_NumberOfSeats"]</label>
                     <div class="input-group">
                         <InputNumber @bind-Value="availableSeatsToAnnounce" class="form-control" min="0" />
                         <button class="btn btn-primary" @onclick="@AnnounceAvailableSeats" disabled="@isAnnouncing">
@@ -26,10 +27,10 @@
                             {
                                 <span class="spinner-border spinner-border-sm me-2"></span>
                             }
-                            Announce
+                            @L["HeadWaiter_Announce"]
                         </button>
                     </div>
-                    <small class="text-muted">This will be shown at the reception.</small>
+                    <small class="text-muted">@L["HeadWaiter_ShownAtReception"]</small>
                 </div>
 
                 @if (!string.IsNullOrEmpty(announcementMessage))
@@ -43,30 +44,30 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-header">
-                <h3>Best Fit Recommendations</h3>
+                <h3>@L["HeadWaiter_BestFit"]</h3>
                 @if (coverCountForSearch > 0)
                 {
-                    <p class="mb-0">For Available Seats: @coverCountForSearch</p>
+                    <p class="mb-0">@string.Format(L["HeadWaiter_ForSeats"], coverCountForSearch)</p>
                 }
                 else
                 {
-                    <p class="mb-0">All Called Reservations (FIFO Order)</p>
+                    <p class="mb-0">@L["HeadWaiter_AllCalled"]</p>
                 }
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    <label class="form-label">Cover Count Filter</label>
+                    <label class="form-label">@L["HeadWaiter_CoverFilter"]</label>
                     <div class="input-group">
                         <InputNumber @bind-Value="coverCountForSearch" class="form-control" placeholder="All" />
-                        <button class="btn btn-outline-primary" @onclick="@SearchBestFit">Filter</button>
-                        <button class="btn btn-outline-secondary" @onclick="@ClearFilter">Clear</button>
+                        <button class="btn btn-outline-primary" @onclick="@SearchBestFit">@L["HeadWaiter_Filter"]</button>
+                        <button class="btn btn-outline-secondary" @onclick="@ClearFilter">@L["HeadWaiter_Clear"]</button>
                     </div>
-                    <small class="text-muted">Enter cover count to see who fits (strictly less than count), or clear to see all called.</small>
+                    <small class="text-muted">@L["HeadWaiter_FilterHint"]</small>
                 </div>
 
                 @if (isSearching)
                 {
-                    <p><em>Searching for best fit...</em></p>
+                    <p><em>@L["HeadWaiter_Searching"]</em></p>
                 }
                 else if (bestFitResults != null)
                 {
@@ -76,15 +77,15 @@
                             <table class="table table-striped table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Match</th>
-                                        <th>Queue #</th>
-                                        <th>Name</th>
-                                        <th>Party Size</th>
-                                        <th>Notes</th>
-                                        <th>Waiting</th>
-                                        <th>Calls</th>
-                                        <th>Last Call</th>
-                                        <th>Actions</th>
+                                        <th>@L["HeadWaiter_ColMatch"]</th>
+                                        <th>@L["HeadWaiter_ColQueue"]</th>
+                                        <th>@L["HeadWaiter_ColName"]</th>
+                                        <th>@L["HeadWaiter_ColPartySize"]</th>
+                                        <th>@L["HeadWaiter_ColNotes"]</th>
+                                        <th>@L["HeadWaiter_ColWaiting"]</th>
+                                        <th>@L["HeadWaiter_ColCalls"]</th>
+                                        <th>@L["HeadWaiter_ColLastCall"]</th>
+                                        <th>@L["HeadWaiter_ColActions"]</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -120,12 +121,12 @@
                                                 }
                                                 else
                                                 {
-                                                    <span class="text-muted">Never</span>
+                                                    <span class="text-muted">@L["HeadWaiter_Never"]</span>
                                                 }
                                             </td>
                                             <td>
                                                 <button class="btn btn-sm btn-primary" @onclick="@(() => SeatReservationAsync(match.Id))" disabled="@(actionInProgress == match.Id)">
-                                                    Seat
+                                                    @L["HeadWaiter_Seat"]
                                                 </button>
                                             </td>
                                         </tr>
@@ -135,13 +136,13 @@
                         </div>
 
                         <div class="alert alert-info mt-3">
-                            <strong>Best Recommendation:</strong> Call <strong>@bestFitResults.First().QueueNumber</strong> - @bestFitResults.First().CustomerName (Party of @bestFitResults.First().PartySize)
+                            <strong>@string.Format(L["HeadWaiter_BestRecommendation"], bestFitResults.First().QueueNumber, bestFitResults.First().CustomerName, bestFitResults.First().PartySize)</strong>
                         </div>
                     }
                     else
                     {
                         <div class="alert alert-warning">
-                            No reservations match this table size.
+                            @L["HeadWaiter_NoMatch"]
                         </div>
                     }
                 }
@@ -248,7 +249,7 @@
             if (hubConnection?.State == HubConnectionState.Connected)
             {
                 await hubConnection.SendAsync("NotifyAvailableSeatsUpdated", availableSeatsToAnnounce);
-                announcementMessage = $"Announced {availableSeatsToAnnounce} available seats to Reception.";
+            announcementMessage = string.Format(L["HeadWaiter_Announced"], availableSeatsToAnnounce);
                 
                 // Also update the filter to show who fits
                 coverCountForSearch = availableSeatsToAnnounce;
@@ -257,7 +258,7 @@
         }
         catch (Exception ex)
         {
-            announcementMessage = $"Error: {ex.Message}";
+            announcementMessage = string.Format(L["HeadWaiter_Error"], ex.Message);
         }
         finally
         {
@@ -347,7 +348,7 @@
         }
         catch (Exception ex)
         {
-            announcementMessage = $"Error seating reservation: {ex.Message}";
+            announcementMessage = string.Format(L["HeadWaiter_ErrorSeating"], ex.Message);
         }
         finally
         {

@@ -5,16 +5,17 @@
 @using SagraFacile.Infrastructure.Identity
 @inject UserManager<ApplicationUser> UserManager
 @inject RoleManager<IdentityRole> RoleManager
+@inject IStringLocalizer<SharedResource> L
 
-<PageTitle>Amministrazione - SagraFacile</PageTitle>
+<PageTitle>@L["Admin_PageTitle"]</PageTitle>
 
-<h1>⚙️ Amministrazione</h1>
+<h1>⚙️ @L["Admin_Heading"]</h1>
 
 <div class="row">
     <div class="col-md-5">
         <div class="card mb-4">
             <div class="card-header bg-danger text-white">
-                <h3 class="mb-0">Crea Utente</h3>
+                <h3 class="mb-0">@L["Admin_CreateUser"]</h3>
             </div>
             <div class="card-body">
                 @if (!string.IsNullOrEmpty(createUserMessage))
@@ -24,25 +25,25 @@
                 <EditForm Model="newUser" OnValidSubmit="CreateUserAsync" FormName="CreateUserForm">
                     <DataAnnotationsValidator />
                     <div class="mb-3">
-                        <label class="form-label">Username</label>
+                        <label class="form-label">@L["Admin_Username"]</label>
                         <InputText @bind-Value="newUser.Username" class="form-control" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Nome visualizzato</label>
+                        <label class="form-label">@L["Admin_DisplayName"]</label>
                         <InputText @bind-Value="newUser.DisplayName" class="form-control" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Email</label>
+                        <label class="form-label">@L["Admin_Email"]</label>
                         <InputText @bind-Value="newUser.Email" class="form-control" type="email" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Password</label>
+                        <label class="form-label">@L["Admin_Password"]</label>
                         <InputText @bind-Value="newUser.Password" class="form-control" type="password" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Ruolo</label>
+                        <label class="form-label">@L["Admin_Role"]</label>
                         <InputSelect @bind-Value="newUser.Role" class="form-select">
-                            <option value="">Seleziona ruolo...</option>
+                            <option value="">@L["Admin_SelectRole"]</option>
                             @foreach (var role in availableRoles)
                             {
                                 <option value="@role">@role</option>
@@ -51,7 +52,7 @@
                     </div>
                     <button type="submit" class="btn btn-danger" disabled="@isCreatingUser">
                         @if (isCreatingUser) { <span class="spinner-border spinner-border-sm me-2"></span> }
-                        Crea Utente
+                        @L["Admin_Submit"]
                     </button>
                 </EditForm>
             </div>
@@ -61,12 +62,12 @@
     <div class="col-md-7">
         <div class="card">
             <div class="card-header">
-                <h3 class="mb-0">Utenti del Sistema</h3>
+                <h3 class="mb-0">@L["Admin_SystemUsers"]</h3>
             </div>
             <div class="card-body">
                 @if (isLoadingUsers)
                 {
-                    <p><em>Caricamento...</em></p>
+                    <p><em>@L["Admin_Loading"]</em></p>
                 }
                 else
                 {
@@ -74,10 +75,10 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>Username</th>
-                                    <th>Nome</th>
-                                    <th>Email</th>
-                                    <th>Ruoli</th>
+                                    <th>@L["Admin_ColUsername"]</th>
+                                    <th>@L["Admin_ColName"]</th>
+                                    <th>@L["Admin_ColEmail"]</th>
+                                    <th>@L["Admin_ColRoles"]</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -151,7 +152,7 @@
             {
                 if (!string.IsNullOrEmpty(newUser.Role))
                     await UserManager.AddToRoleAsync(user, newUser.Role);
-                createUserMessage = $"Utente '{newUser.Username}' creato con successo!";
+                createUserMessage = string.Format(L["Admin_UserCreated"], newUser.Username);
                 createUserSuccess = true;
                 newUser = new();
                 await LoadUsersAsync();
@@ -164,7 +165,7 @@
         }
         catch (Exception ex)
         {
-            createUserMessage = $"Errore: {ex.Message}";
+            createUserMessage = ex.Message;
             createUserSuccess = false;
         }
         isCreatingUser = false;

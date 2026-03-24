@@ -2,16 +2,17 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
 @rendermode InteractiveServer
 @inject IMediator Mediator
+@inject IStringLocalizer<SharedResource> L
 
-<PageTitle>Gestione Eventi - SagraFacile</PageTitle>
+<PageTitle>@L["Events_PageTitle"]</PageTitle>
 
-<h1>🎪 Gestione Eventi</h1>
+<h1>@L["Events_Heading"]</h1>
 
 <div class="row">
     <div class="col-md-5">
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
-                <h3 class="mb-0">Nuovo Evento</h3>
+                <h3 class="mb-0">@L["Events_NewEvent"]</h3>
             </div>
             <div class="card-body">
                 @if (!string.IsNullOrEmpty(createMessage))
@@ -21,30 +22,30 @@
                 <EditForm Model="newEvent" OnValidSubmit="CreateEventAsync" FormName="CreateEventForm">
                     <DataAnnotationsValidator />
                     <div class="mb-3">
-                        <label class="form-label">Nome Evento</label>
-                        <InputText @bind-Value="newEvent.Name" class="form-control" placeholder="es. Sagra 2026" />
+                        <label class="form-label">@L["Events_EventName"]</label>
+                        <InputText @bind-Value="newEvent.Name" class="form-control" placeholder="@L["Events_EventPlaceholder"]" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Descrizione</label>
+                        <label class="form-label">@L["Events_Description"]</label>
                         <InputTextArea @bind-Value="newEvent.Description" class="form-control" rows="2" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Data</label>
+                        <label class="form-label">@L["Events_Date"]</label>
                         <InputDate @bind-Value="newEvent.Date" class="form-control" />
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Valuta (codice)</label>
+                            <label class="form-label">@L["Events_Currency"]</label>
                             <InputText @bind-Value="newEvent.Currency" class="form-control" placeholder="EUR" />
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Simbolo valuta</label>
+                            <label class="form-label">@L["Events_CurrencySymbol"]</label>
                             <InputText @bind-Value="newEvent.CurrencySymbol" class="form-control" placeholder="€" />
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary" disabled="@isCreating">
                         @if (isCreating) { <span class="spinner-border spinner-border-sm me-2"></span> }
-                        Crea Evento
+                        @L["Events_CreateEvent"]
                     </button>
                 </EditForm>
             </div>
@@ -54,16 +55,16 @@
     <div class="col-md-7">
         <div class="card">
             <div class="card-header">
-                <h3 class="mb-0">Tutti gli Eventi</h3>
+                <h3 class="mb-0">@L["Events_AllEvents"]</h3>
             </div>
             <div class="card-body">
                 @if (isLoading)
                 {
-                    <p><em>Caricamento...</em></p>
+                    <p><em>@L["Events_Loading"]</em></p>
                 }
                 else if (!events.Any())
                 {
-                    <p class="text-muted">Nessun evento trovato. Crea il primo evento.</p>
+                    <p class="text-muted">@L["Events_NoEvents"]</p>
                 }
                 else
                 {
@@ -71,11 +72,11 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>Nome</th>
-                                    <th>Data</th>
-                                    <th>Valuta</th>
-                                    <th>Stato</th>
-                                    <th>Azioni</th>
+                                    <th>@L["Events_ColName"]</th>
+                                    <th>@L["Events_ColDate"]</th>
+                                    <th>@L["Events_ColCurrency"]</th>
+                                    <th>@L["Events_ColStatus"]</th>
+                                    <th>@L["Events_ColActions"]</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -94,18 +95,18 @@
                                         <td>
                                             @if (ev.IsActive)
                                             {
-                                                <span class="badge bg-success">Attivo</span>
+                                                <span class="badge bg-success">@L["Events_Active"]</span>
                                             }
                                             else
                                             {
-                                                <span class="badge bg-secondary">Inattivo</span>
+                                                <span class="badge bg-secondary">@L["Events_Inactive"]</span>
                                             }
                                         </td>
                                         <td>
                                             @if (!ev.IsActive)
                                             {
                                                 <button class="btn btn-sm btn-success" @onclick="() => ActivateEventAsync(ev.Id)">
-                                                    Attiva
+                                                    @L["Events_Activate"]
                                                 </button>
                                             }
                                         </td>
@@ -154,14 +155,14 @@
                 newEvent.Currency,
                 newEvent.CurrencySymbol
             ));
-            createMessage = $"Evento '{result.Name}' creato con successo!";
+            createMessage = string.Format(L["Events_EventCreated"], result.Name);
             createSuccess = true;
             newEvent = new();
             await LoadEventsAsync();
         }
         catch (Exception ex)
         {
-            createMessage = $"Errore: {ex.Message}";
+            createMessage = string.Format(L["Events_Error"], ex.Message);
             createSuccess = false;
         }
         isCreating = false;

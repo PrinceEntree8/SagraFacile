@@ -11,6 +11,9 @@ public class EventRepository : IEventRepository
 
     public EventRepository(ApplicationDbContext db) => _db = db;
 
+    public Task<Event?> GetActiveAsync(CancellationToken cancellationToken)
+        => _db.Events.FirstOrDefaultAsync(e => e.IsActive, cancellationToken);
+
     public Task<Event?> GetByIdAsync(int id, CancellationToken cancellationToken)
         => _db.Events.FindAsync([id], cancellationToken).AsTask();
 

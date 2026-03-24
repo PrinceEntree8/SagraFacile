@@ -4,15 +4,16 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 @inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> L
 
-<PageTitle>Login - SagraFacile</PageTitle>
+<PageTitle>@L["Login_PageTitle"]</PageTitle>
 
 <div class="row justify-content-center mt-5">
     <div class="col-md-4">
         <div class="card shadow">
             <div class="card-header bg-primary text-white text-center">
                 <h3 class="mb-0">🍽️ SagraFacile</h3>
-                <small>Accedi al sistema</small>
+                <small>@L["Login_Subtitle"]</small>
             </div>
             <div class="card-body">
                 @if (!string.IsNullOrEmpty(errorMessage))
@@ -22,19 +23,19 @@
                 <EditForm Model="loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
                     <DataAnnotationsValidator />
                     <div class="mb-3">
-                        <label class="form-label">Username</label>
-                        <InputText @bind-Value="loginModel.Username" class="form-control" placeholder="Inserisci username" autocomplete="username" />
+                        <label class="form-label">@L["Login_Username"]</label>
+                        <InputText @bind-Value="loginModel.Username" class="form-control" placeholder="@L["Login_UsernamePlaceholder"]" autocomplete="username" />
                         <ValidationMessage For="() => loginModel.Username" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <InputText @bind-Value="loginModel.Password" type="password" class="form-control" placeholder="Inserisci password" autocomplete="current-password" />
+                        <label class="form-label">@L["Login_Password"]</label>
+                        <InputText @bind-Value="loginModel.Password" type="password" class="form-control" placeholder="@L["Login_PasswordPlaceholder"]" autocomplete="current-password" />
                         <ValidationMessage For="() => loginModel.Password" />
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary" disabled="@isLoading">
                             @if (isLoading) { <span class="spinner-border spinner-border-sm me-2"></span> }
-                            Accedi
+                            @L["Login_Submit"]
                         </button>
                     </div>
                 </EditForm>
@@ -68,7 +69,7 @@
         var user = await UserManager.FindByNameAsync(loginModel.Username);
         if (user == null)
         {
-            errorMessage = "Credenziali non valide";
+            errorMessage = L["Login_InvalidCredentials"];
             isLoading = false;
             return;
         }
@@ -80,17 +81,17 @@
         }
         else
         {
-            errorMessage = "Credenziali non valide";
+            errorMessage = L["Login_InvalidCredentials"];
         }
         isLoading = false;
     }
 
     public class LoginModel
     {
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Username obbligatorio")]
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Login_UsernameRequired")]
         public string Username { get; set; } = string.Empty;
 
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Password obbligatoria")]
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Login_PasswordRequired")]
         public string Password { get; set; } = string.Empty;
     }
 }
