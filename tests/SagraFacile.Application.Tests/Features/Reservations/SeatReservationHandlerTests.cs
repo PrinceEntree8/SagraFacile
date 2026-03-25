@@ -1,4 +1,6 @@
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
+using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Features.Reservations;
 using SagraFacile.Application.Interfaces;
 using SagraFacile.Domain.Features.Reservations;
@@ -60,5 +62,22 @@ public class SeatReservationHandlerTests
         // Assert
         Assert.False(result.Success);
         await _repository.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ConcurrentModification_ReturnsFailure()
+    {
+        // Arrange
+        var reservation = new TableReservation { Id = 1, QueueNumber = "202601010001", Status = "Called" };
+        _repository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(reservation);
+        _repository.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .ThrowsAsync(new RepositoryConcurrencyException());
+
+        // Act
+        var result = await _handler.Handle(new SeatReservation.Command(1), CancellationToken.None);
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("modified by another user", result.Message);
     }
 }

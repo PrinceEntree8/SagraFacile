@@ -1,4 +1,5 @@
 using FluentValidation;
+using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
 
@@ -39,7 +40,14 @@ public static class VoidReservation
             reservation.Status = "Voided";
             reservation.VoidedAt = DateTime.UtcNow;
 
-            await _repository.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _repository.SaveChangesAsync(cancellationToken);
+            }
+            catch (RepositoryConcurrencyException)
+            {
+                return new Result(false, "This reservation was modified by another user. Please refresh and try again.");
+            }
 
             return new Result(true, $"Reservation {reservation.QueueNumber} voided successfully");
         }

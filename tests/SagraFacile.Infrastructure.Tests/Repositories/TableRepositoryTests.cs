@@ -11,8 +11,7 @@ public class TableRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var db = factory.CreateDbContext();
-        var repo = new TableRepository(db);
+        await using var repo = new TableRepository(factory);
         var table = new Table { TableNumber = "T01", CoverCount = 4, Status = "Available", CreatedAt = DateTime.UtcNow };
 
         // Act
@@ -32,8 +31,7 @@ public class TableRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var db = factory.CreateDbContext();
-        var repo = new TableRepository(db);
+        await using var repo = new TableRepository(factory);
 
         await repo.AddAsync(new Table { TableNumber = "T01", CoverCount = 4, Status = "Available", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Table { TableNumber = "T02", CoverCount = 6, Status = "Available", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
@@ -52,8 +50,7 @@ public class TableRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var db = factory.CreateDbContext();
-        var repo = new TableRepository(db);
+        await using var repo = new TableRepository(factory);
 
         await repo.AddAsync(new Table { TableNumber = "T03", CoverCount = 2, Status = "Available", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Table { TableNumber = "T01", CoverCount = 4, Status = "Available", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
@@ -75,8 +72,7 @@ public class TableRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var db = factory.CreateDbContext();
-        var repo = new TableRepository(db);
+        await using var repo = new TableRepository(factory);
 
         await repo.AddAsync(new Table { TableNumber = "T01", CoverCount = 4, Status = "Available", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Table { TableNumber = "T02", CoverCount = 6, Status = "Occupied", CreatedAt = DateTime.UtcNow }, CancellationToken.None);

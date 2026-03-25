@@ -17,7 +17,7 @@ public static class DependencyInjection
         this IServiceCollection services,
         string connectionString)
     {
-        services.AddDbContext<ApplicationDbContext>(options =>
+        services.AddDbContextFactory<ApplicationDbContext>(options =>
             options.UseNpgsql(connectionString));
 
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -33,9 +33,9 @@ public static class DependencyInjection
         .AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultTokenProviders();
 
-        services.AddScoped<IEventRepository, EventRepository>();
-        services.AddScoped<IReservationRepository, ReservationRepository>();
-        services.AddScoped<ITableRepository, TableRepository>();
+        services.AddTransient<IEventRepository, EventRepository>();
+        services.AddTransient<IReservationRepository, ReservationRepository>();
+        services.AddTransient<ITableRepository, TableRepository>();
 
         return services;
     }

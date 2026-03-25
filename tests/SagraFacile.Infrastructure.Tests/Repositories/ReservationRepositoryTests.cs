@@ -11,8 +11,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var db = factory.CreateDbContext();
-        var repo = new ReservationRepository(db);
+        await using var repo = new ReservationRepository(factory);
         var r = new TableReservation { QueueNumber = "202601010001", CustomerName = "Mario", PartySize = 4, Status = "Waiting", CreatedAt = DateTime.UtcNow };
 
         // Act
@@ -31,8 +30,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var db = factory.CreateDbContext();
-        var repo = new ReservationRepository(db);
+        await using var repo = new ReservationRepository(factory);
         var today = "20260815";
 
         await repo.AddAsync(new TableReservation { QueueNumber = $"{today}0001", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
@@ -53,8 +51,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var db = factory.CreateDbContext();
-        var repo = new ReservationRepository(db);
+        await using var repo = new ReservationRepository(factory);
 
         await repo.AddAsync(new TableReservation { QueueNumber = "001", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new TableReservation { QueueNumber = "002", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
@@ -76,8 +73,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var db = factory.CreateDbContext();
-        var repo = new ReservationRepository(db);
+        await using var repo = new ReservationRepository(factory);
         var now = DateTime.UtcNow;
 
         await repo.AddAsync(new TableReservation { QueueNumber = "002", CustomerName = "B", PartySize = 2, Status = "Called", CreatedAt = now }, CancellationToken.None);
@@ -99,8 +95,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var db = factory.CreateDbContext();
-        var repo = new ReservationRepository(db);
+        await using var repo = new ReservationRepository(factory);
 
         var reservation = new TableReservation { QueueNumber = "001", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = DateTime.UtcNow };
         await repo.AddAsync(reservation, CancellationToken.None);

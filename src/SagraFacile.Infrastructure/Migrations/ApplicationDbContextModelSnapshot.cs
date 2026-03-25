@@ -308,6 +308,10 @@ namespace SagraFacile.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
                     b.Property<DateTime?>("VoidedAt")
                         .HasColumnType("timestamp with time zone");
 

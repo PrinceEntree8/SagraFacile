@@ -1,4 +1,5 @@
 using FluentValidation;
+using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
 using SagraFacile.Domain.Features.Reservations;
@@ -61,7 +62,15 @@ public static class CallReservation
                 Notes = command.Notes
             };
             await _repository.AddCallAsync(call, cancellationToken);
-            await _repository.SaveChangesAsync(cancellationToken);
+
+            try
+            {
+                await _repository.SaveChangesAsync(cancellationToken);
+            }
+            catch (RepositoryConcurrencyException)
+            {
+                return new Result(false, "This reservation was modified by another user. Please refresh and try again.");
+            }
 
             return new Result(true, $"Reservation {reservation.QueueNumber} called successfully (call #{reservation.CallCount})");
         }
