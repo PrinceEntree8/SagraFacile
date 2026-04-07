@@ -141,9 +141,9 @@ Then open `http://<server-ip>` in any browser on the same network.
 | Setting | Default |
 |---|---|
 | Admin username | `admin` |
-| Admin password | `Admin@123!` |
-| Database password | `SagraLAN2026!` |
-| JWT signing key | `SagraFacile-LAN-Change-This-Key-Before-Sharing!` |
+| Admin password | `SagraAdmin-ChangeMe!` |
+| Database password | `SagraLAN-ChangeMe!` |
+| JWT signing key | `SagraFacile-LAN-Replace-With-Your-Own-Random-Secret-Key!` |
 
 Override defaults by creating a `.env` file (see `.env.example`) or by passing environment variables:
 
