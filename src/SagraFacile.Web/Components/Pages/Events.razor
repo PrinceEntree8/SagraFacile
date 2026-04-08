@@ -1,0 +1,199 @@
+@page "/events"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@inject IMediator Mediator
+@inject IStringLocalizer<SharedResource> L
+
+<PageTitle>@L["Events_PageTitle"]</PageTitle>
+
+<h1>@L["Events_Heading"]</h1>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">@L["Events_NewEvent"]</h3>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(createMessage))
+                {
+                    <div class="alert @(createSuccess ? "alert-success" : "alert-danger")">@createMessage</div>
+                }
+                <EditForm Model="newEvent" OnValidSubmit="CreateEventAsync" FormName="CreateEventForm">
+                    <DataAnnotationsValidator />
+                    <div class="mb-3">
+                        <label class="form-label">@L["Events_EventName"]</label>
+                        <InputText @bind-Value="newEvent.Name" class="form-control" placeholder="@L["Events_EventPlaceholder"]" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">@L["Events_Description"]</label>
+                        <InputTextArea @bind-Value="newEvent.Description" class="form-control" rows="2" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">@L["Events_Date"]</label>
+                        <InputDate @bind-Value="newEvent.Date" class="form-control" />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Events_Currency"]</label>
+                            <InputText @bind-Value="newEvent.Currency" class="form-control" placeholder="EUR" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Events_CurrencySymbol"]</label>
+                            <InputText @bind-Value="newEvent.CurrencySymbol" class="form-control" placeholder="€" />
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" disabled="@isCreating">
+                        @if (isCreating) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                        @L["Events_CreateEvent"]
+                    </button>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0">@L["Events_AllEvents"]</h3>
+            </div>
+            <div class="card-body">
+                @if (isLoading)
+                {
+                    <p><em>@L["Events_Loading"]</em></p>
+                }
+                else if (!events.Any())
+                {
+                    <p class="text-muted">@L["Events_NoEvents"]</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>@L["Events_ColName"]</th>
+                                    <th>@L["Events_ColDate"]</th>
+                                    <th>@L["Events_ColCurrency"]</th>
+                                    <th>@L["Events_ColStatus"]</th>
+                                    <th>@L["Events_ColActions"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var ev in events)
+                                {
+                                    <tr class="@(ev.IsActive ? "table-success" : "")">
+                                        <td>
+                                            <strong>@ev.Name</strong>
+                                            @if (!string.IsNullOrEmpty(ev.Description))
+                                            {
+                                                <br /><small class="text-muted">@ev.Description</small>
+                                            }
+                                        </td>
+                                        <td>@ev.Date.ToString("dd/MM/yyyy")</td>
+                                        <td>@ev.CurrencySymbol @ev.Currency</td>
+                                        <td>
+                                            @if (ev.IsActive)
+                                            {
+                                                <span class="badge bg-success">@L["Events_Active"]</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">@L["Events_Inactive"]</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!ev.IsActive)
+                                            {
+                                                <button class="btn btn-sm btn-success" @onclick="() => ActivateEventAsync(ev.Id)" disabled="@(activatingEventId == ev.Id)">
+                                                    @L["Events_Activate"]
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<GetEvents.EventDto> events = new();
+    private NewEventModel newEvent = new();
+    private bool isLoading = true;
+    private bool isCreating = false;
+    private string createMessage = string.Empty;
+    private bool createSuccess = false;
+    private int? activatingEventId = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEventsAsync();
+    }
+
+    private async Task LoadEventsAsync()
+    {
+        isLoading = true;
+        var result = await Mediator.QueryAsync(new GetEvents.Query());
+        events = result.Events;
+        isLoading = false;
+    }
+
+    private async Task CreateEventAsync()
+    {
+        isCreating = true;
+        createMessage = string.Empty;
+        try
+        {
+            var result = await Mediator.SendAsync(new CreateEvent.Command(
+                newEvent.Name,
+                newEvent.Description,
+                newEvent.Date,
+                newEvent.Currency,
+                newEvent.CurrencySymbol
+            ));
+            createMessage = string.Format(L["Events_EventCreated"], result.Name);
+            createSuccess = true;
+            newEvent = new();
+            await LoadEventsAsync();
+        }
+        catch (Exception ex)
+        {
+            createMessage = string.Format(L["Events_Error"], ex.Message);
+            createSuccess = false;
+        }
+        isCreating = false;
+    }
+
+    private async Task ActivateEventAsync(int eventId)
+    {
+        activatingEventId = eventId;
+        try
+        {
+            var result = await Mediator.SendAsync(new ActivateEvent.Command(eventId));
+            if (result.Success)
+                await LoadEventsAsync();
+        }
+        finally
+        {
+            activatingEventId = null;
+        }
+    }
+
+    public class NewEventModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        [System.ComponentModel.DataAnnotations.Required]
+        public DateTime Date { get; set; } = DateTime.Today;
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Currency { get; set; } = "EUR";
+        [System.ComponentModel.DataAnnotations.Required]
+        public string CurrencySymbol { get; set; } = "€";
+    }
+}

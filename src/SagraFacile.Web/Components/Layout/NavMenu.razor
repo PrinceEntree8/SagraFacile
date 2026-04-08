@@ -1,0 +1,117 @@
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IMediator Mediator
+@inject IStringLocalizer<SharedResource> L
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">SagraFacile</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="nav flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> @L["Nav_Home"]
+            </NavLink>
+        </div>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="now-calling">
+                        <span class="bi bi-megaphone-fill-nav-menu" aria-hidden="true"></span> @L["Nav_NowCalling"]
+                    </NavLink>
+                </div>
+
+                <AuthorizeView Roles="Admin,Supervisore,Cassiere">
+                    <Authorized Context="receptionistCtx">
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="receptionist">
+                                <span class="bi bi-person-check-nav-menu" aria-hidden="true"></span> @L["Nav_Receptionist"]
+                            </NavLink>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Admin,Supervisore,Cassiere">
+                    <Authorized Context="headwaiterCtx">
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="headwaiter">
+                                <span class="bi bi-table-nav-menu" aria-hidden="true"></span> @L["Nav_HeadWaiter"]
+                            </NavLink>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Admin,Supervisore">
+                    <Authorized Context="reportsCtx">
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="reservation-report">
+                                <span class="bi bi-bar-chart-nav-menu" aria-hidden="true"></span> @L["Nav_Reports"]
+                            </NavLink>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Admin">
+                    <Authorized Context="adminCtx">
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="events">
+                                <span class="bi bi-calendar-event-nav-menu" aria-hidden="true"></span> @L["Nav_Events"]
+                            </NavLink>
+                        </div>
+
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="admin">
+                                <span class="bi bi-gear-fill-nav-menu" aria-hidden="true"></span> @L["Nav_Admin"]
+                            </NavLink>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+
+                <div class="nav-item px-3 mt-2">
+                    <form method="post" action="/logout">
+                        <AntiforgeryToken />
+                        <button type="submit" class="nav-link btn btn-link text-danger p-0">
+                            <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> @L["Nav_Logout"] (@context.User.Identity?.Name)
+                        </button>
+                    </form>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="login">
+                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @L["Nav_Login"]
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+
+        @if (activeEvent is not null)
+        {
+            <div class="nav-item px-3 mt-3">
+                <div class="small text-light opacity-75">
+                    <span class="bi bi-calendar-check-nav-menu" aria-hidden="true"></span>
+                    <strong>@L["Nav_ActiveEvent"]:</strong><br />
+                    <span>@activeEvent.Name</span>
+                    <span class="badge bg-light text-dark ms-1">@activeEvent.CurrencySymbol @activeEvent.Currency</span>
+                </div>
+            </div>
+        }
+    </nav>
+</div>
+
+@code {
+    private GetActiveEvent.EventDto? activeEvent;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Mediator.QueryAsync(new GetActiveEvent.Query());
+        activeEvent = result.ActiveEvent;
+    }
+}

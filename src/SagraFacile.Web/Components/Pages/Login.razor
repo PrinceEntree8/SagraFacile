@@ -1,0 +1,102 @@
+@page "/login"
+@using Microsoft.AspNetCore.Identity
+@using SagraFacile.Infrastructure.Identity
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> L
+
+<PageTitle>@L["Login_PageTitle"]</PageTitle>
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h3 class="mb-0">🍽️ SagraFacile</h3>
+                <small>@L["Login_Subtitle"]</small>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger">@errorMessage</div>
+                }
+                <EditForm Model="loginModel" OnSubmit="HandleLogin" FormName="LoginForm">
+                    <div class="mb-3">
+                        <label class="form-label">@L["Login_Username"]</label>
+                        <InputText @bind-Value="loginModel.Username" class="form-control" placeholder="@L["Login_UsernamePlaceholder"]" autocomplete="username" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">@L["Login_Password"]</label>
+                        <InputText @bind-Value="loginModel.Password" type="password" class="form-control" placeholder="@L["Login_PasswordPlaceholder"]" autocomplete="current-password" />
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary" disabled="@isLoading">
+                            @if (isLoading) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                            @L["Login_Submit"]
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private LoginModel loginModel { get; set; } = default!;
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        loginModel ??= new LoginModel();
+        if (HttpContext?.User?.Identity?.IsAuthenticated == true)
+            Navigation.NavigateTo("/");
+    }
+
+    private async Task HandleLogin()
+    {
+        errorMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(loginModel.Username))
+        {
+            errorMessage = L["Login_UsernameRequired"];
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(loginModel.Password))
+        {
+            errorMessage = L["Login_PasswordRequired"];
+            return;
+        }
+
+        isLoading = true;
+
+        var user = await UserManager.FindByNameAsync(loginModel.Username);
+        if (user == null)
+        {
+            errorMessage = L["Login_InvalidCredentials"];
+            isLoading = false;
+            return;
+        }
+
+        var result = await SignInManager.PasswordSignInAsync(user, loginModel.Password, isPersistent: false, lockoutOnFailure: false);
+        if (result.Succeeded)
+        {
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            errorMessage = L["Login_InvalidCredentials"];
+        }
+        isLoading = false;
+    }
+
+    public class LoginModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

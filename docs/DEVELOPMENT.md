@@ -68,7 +68,9 @@ Features/
 
 5. **Create Migration**:
    ```bash
-   dotnet ef migrations add Add[Entity]
+   dotnet ef migrations add Add[Entity] \
+     --project src/SagraFacile.Infrastructure \
+     --startup-project src/SagraFacile.Web/SagraFacile.Web
    ```
 
 ## Working with Wolverine
@@ -265,6 +267,86 @@ public class OrderFeatureTests : IClassFixture<WebApplicationFactory<Program>>
 }
 ```
 
+## Internationalisation (i18n)
+
+The application supports **Italian (default)** and **English** using the built-in ASP.NET Core localisation system. The default culture is `it`. The active culture is determined automatically from the browser's `Accept-Language` header on every request.
+
+### How it works
+
+| Component | Detail |
+|---|---|
+| `Resources/SharedResource.cs` | Marker class — used as type parameter for `IStringLocalizer<SharedResource>` |
+| `Resources/SharedResource.resx` | English string table (neutral fallback) |
+| `Resources/SharedResource.it.resx` | Italian string table (served by default) |
+
+Registration in `Program.cs`:
+```csharp
+builder.Services.AddLocalization(opts => opts.ResourcesPath = "Resources");
+// …
+var supportedCultures = new[] { "it", "en" };
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("it"),
+    SupportedCultures    = supportedCultures.Select(c => new CultureInfo(c)).ToList(),
+    SupportedUICultures  = supportedCultures.Select(c => new CultureInfo(c)).ToList(),
+    RequestCultureProviders = new List<IRequestCultureProvider>
+    {
+        new AcceptLanguageHeaderRequestCultureProvider()
+    }
+});
+```
+
+### Adding strings for a new page
+
+1. Open **both** resource files and add a new `<data>` element with the same key:
+
+   ```xml
+   <!-- Resources/SharedResource.resx (English) -->
+   <data name="Orders_Heading" xml:space="preserve"><value>Orders</value></data>
+   <data name="Orders_Created" xml:space="preserve"><value>Order '{0}' created!</value></data>
+
+   <!-- Resources/SharedResource.it.resx (Italian) -->
+   <data name="Orders_Heading" xml:space="preserve"><value>Ordini</value></data>
+   <data name="Orders_Created" xml:space="preserve"><value>Ordine '{0}' creato!</value></data>
+   ```
+
+2. Inject the localiser in the Blazor page/component:
+
+   ```razor
+   @inject IStringLocalizer<SharedResource> L
+   ```
+
+   > `Microsoft.Extensions.Localization` and `SagraFacile.Web.Resources` are already imported globally via `Components/_Imports.razor`. No extra `@using` directives are needed.
+
+3. Use the localiser in markup:
+
+   ```razor
+   <h1>@L["Orders_Heading"]</h1>
+
+   @* Parameterised string *@
+   <div class="alert alert-success">@string.Format(L["Orders_Created"], result.Name)</div>
+
+   @* Raw string value (e.g. for HTML attributes) *@
+   <input placeholder="@L["Orders_Heading"].Value" />
+   ```
+
+### Key naming convention
+
+`[Page/Component]_[Element]` — keep it flat and descriptive:
+
+| Key | Usage |
+|---|---|
+| `Nav_Home` | NavMenu – Home link |
+| `Receptionist_Submit` | Receptionist page – form submit button |
+| `Events_Loading` | Events page – loading message |
+| `Report_ColStatus` | Report page – table column header |
+
+### Language switching
+
+The active language is determined by the browser's `Accept-Language` header. To change the language, users must update their browser's language preferences. New pages require **no additional wiring** — the `AcceptLanguageHeaderRequestCultureProvider` is applied automatically by the `UseRequestLocalization` middleware on every request.
+
+---
+
 ## Best Practices
 
 1. **Keep Slices Independent**: Avoid direct dependencies between features
@@ -309,15 +391,21 @@ public class OrderFeatureTests : IClassFixture<WebApplicationFactory<Program>>
 
 1. Check migration list:
    ```bash
-   dotnet ef migrations list
+   dotnet ef migrations list \
+     --project src/SagraFacile.Infrastructure \
+     --startup-project src/SagraFacile.Web/SagraFacile.Web
    ```
 
 2. Remove problematic migration:
    ```bash
-   dotnet ef migrations remove
+   dotnet ef migrations remove \
+     --project src/SagraFacile.Infrastructure \
+     --startup-project src/SagraFacile.Web/SagraFacile.Web
    ```
 
 3. Update database:
    ```bash
-   dotnet ef database update
+   dotnet ef database update \
+     --project src/SagraFacile.Infrastructure \
+     --startup-project src/SagraFacile.Web/SagraFacile.Web
    ```

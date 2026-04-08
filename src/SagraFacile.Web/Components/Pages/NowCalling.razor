@@ -1,0 +1,202 @@
+@page "/now-calling"
+@layout Layout.DisplayLayout
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
+@inject IMediator Mediator
+@inject IStringLocalizer<SharedResource> L
+@implements IAsyncDisposable
+
+<PageTitle>@L["NowCalling_PageTitle"]</PageTitle>
+
+<div class="nc-container">
+
+    @* ── Header ──────────────────────────────────────────────── *@
+    <header class="nc-header">
+        <span class="nc-title">🔔 @L["NowCalling_Header"]</span>
+        <span class="nc-status @(isConnected ? "nc-status--live" : "nc-status--offline")">
+            @(isConnected ? L["NowCalling_Live"].Value : L["NowCalling_Reconnecting"].Value)
+        </span>
+    </header>
+
+    @* ── Main content area ───────────────────────────────────── *@
+    <div class="nc-body">
+
+        @if (initialLoadFailed)
+        {
+            <div class="nc-load-warning" role="alert">
+                @L["NowCalling_LoadWarning"]
+            </div>
+        }
+
+        @if (calledEntries.Count == 0)
+        {
+            @* Idle state – shown when no reservation has been called yet. *@
+            <div class="nc-idle" role="status" aria-live="polite">
+                <div class="nc-idle-icon">🎟️</div>
+                <p class="nc-idle-text">@L["NowCalling_WaitingForCall"]</p>
+            </div>
+        }
+        else
+        {
+            @* ── Current / most-recently-called reservation ── *@
+            var latest = calledEntries[0];
+            <section class="nc-current" aria-label="Current call" aria-live="assertive">
+                <div class="nc-current-label">@L["NowCalling_CurrentCall"]</div>
+                <div class="nc-current-queue" aria-label="Queue number @latest.QueueNumber">
+                    @latest.QueueNumber
+                </div>
+                <div class="nc-current-name">@latest.CustomerName</div>
+                <div class="nc-current-party">
+                    <span class="nc-party-badge">👥 @latest.PartySize</span>
+                </div>
+            </section>
+
+            @* ── Previous calls (LIFO order, newest first) ── *@
+            @if (calledEntries.Count > 1)
+            {
+                <section class="nc-history" aria-label="Previous calls">
+                    <h2 class="nc-history-title">@L["NowCalling_PreviousCalls"]</h2>
+                    <ul class="nc-history-list" role="list">
+                        @foreach (var entry in calledEntries.Skip(1))
+                        {
+                            <li class="nc-history-item" role="listitem">
+                                <span class="nc-history-queue">@entry.QueueNumber</span>
+                                <span class="nc-history-name">@entry.CustomerName</span>
+                                <span class="nc-history-party">👥 @entry.PartySize</span>
+                            </li>
+                        }
+                    </ul>
+                </section>
+            }
+        }
+
+    </div>
+</div>
+
+@code {
+    // ── State ──────────────────────────────────────────────────────────
+
+    /// <summary>LIFO list of called reservations (newest first).</summary>
+    private readonly List<CalledEntry> calledEntries = [];
+
+    private HubConnection? hubConnection;
+    private bool isConnected;
+
+    /// <summary>Maximum number of entries kept in the LIFO list.</summary>
+    private const int MaxEntries = 10;
+
+    private bool initialLoadFailed;
+
+    // ── Lifecycle ──────────────────────────────────────────────────────
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Pre-populate the list with reservations already in "Called" state
+        // so that the board shows the correct state when opened mid-event.
+        await LoadInitialCalledReservationsAsync();
+        await InitializeSignalRAsync();
+    }
+
+    /// <summary>
+    /// Loads the most recent "Called" reservations from the database and
+    /// fills the LIFO list in descending order of LastCalledAt.
+    /// </summary>
+    private async Task LoadInitialCalledReservationsAsync()
+    {
+        try
+        {
+            var query = new GetReservations.Query(Status: "Called", Page: 1, PageSize: MaxEntries);
+            var result = await Mediator.Send(query, CancellationToken.None);
+
+            // Sort descending by LastCalledAt so the most recently called is first.
+            var sorted = result.Reservations
+                .Where(r => r.LastCalledAt.HasValue)
+                .OrderByDescending(r => r.LastCalledAt!.Value)
+                .Take(MaxEntries);
+
+            foreach (var r in sorted)
+            {
+                calledEntries.Add(new CalledEntry(
+                    r.Id,
+                    r.QueueNumber,
+                    r.CustomerName,
+                    r.PartySize,
+                    r.LastCalledAt!.Value));
+            }
+        }
+        catch (Exception ex)
+        {
+            // Non-critical: the board still updates via live SignalR events.
+            // Record the failure so a debug message can be rendered if needed.
+            initialLoadFailed = true;
+            _ = ex; // suppress unused-variable warning
+        }
+    }
+
+    /// <summary>
+    /// Creates the SignalR connection, joins the "NOW_CALLING" group, and
+    /// registers the event listener for live reservation-called events.
+    /// </summary>
+    private async Task InitializeSignalRAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/hubs/reservations"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        // Track connection state for the live indicator.
+        hubConnection.Reconnecting += _ =>
+        {
+            isConnected = false;
+            InvokeAsync(StateHasChanged);
+            return Task.CompletedTask;
+        };
+
+        hubConnection.Reconnected += _ =>
+        {
+            isConnected = true;
+            InvokeAsync(StateHasChanged);
+            return Task.CompletedTask;
+        };
+
+        // Listen for new reservation calls (LIFO prepend).
+        hubConnection.On<int, string, string, int, int>(
+            "ReservationCalled",
+            async (id, queueNumber, customerName, partySize, callCount) =>
+            {
+                var entry = new CalledEntry(id, queueNumber, customerName, partySize, DateTime.UtcNow);
+
+                // Remove any existing entry for the same reservation (re-call scenario).
+                calledEntries.RemoveAll(e => e.Id == id);
+
+                // Prepend the new call at the front (LIFO).
+                calledEntries.Insert(0, entry);
+
+                // Trim to the configured maximum.
+                if (calledEntries.Count > MaxEntries)
+                    calledEntries.RemoveRange(MaxEntries, calledEntries.Count - MaxEntries);
+
+                await InvokeAsync(StateHasChanged);
+            });
+
+        await hubConnection.StartAsync();
+        isConnected = hubConnection.State == HubConnectionState.Connected;
+
+        // Join the "NOW_CALLING" SignalR group so the server can target
+        // display-board clients specifically.
+        if (isConnected)
+            await hubConnection.SendAsync("JoinReservationGroup", "NOW_CALLING");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+            await hubConnection.DisposeAsync();
+    }
+
+    // ── Local model ────────────────────────────────────────────────────
+
+    /// <summary>Lightweight record for a single "Now Calling" entry.</summary>
+    private record CalledEntry(int Id, string QueueNumber, string CustomerName, int PartySize, DateTime CalledAt);
+}

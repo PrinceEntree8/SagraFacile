@@ -18,70 +18,162 @@ dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Po
 ```
 
 ### Database Migrations
-Migrations are managed from the server project directory:
+Migrations live in `SagraFacile.Infrastructure` and must reference the Web project as startup:
 ```bash
-cd src/SagraFacile.Web/SagraFacile.Web
 # Create a new migration
-dotnet ef migrations add <MigrationName>
-# Apply migrations to database
-dotnet ef database update
+dotnet ef migrations add <MigrationName> \
+  --project src/SagraFacile.Infrastructure \
+  --startup-project src/SagraFacile.Web/SagraFacile.Web
+
+# Apply migrations to the database
+dotnet ef database update \
+  --project src/SagraFacile.Infrastructure \
+  --startup-project src/SagraFacile.Web/SagraFacile.Web
 ```
 
 ## 2. Testing Information
 
 ### Test Project Configuration
-The project uses **xUnit** for testing. To add a new test project:
-1. Create a project targeting `net10.0`.
-2. Add dependencies: `Microsoft.NET.Test.Sdk`, `xunit`, `xunit.runner.visualstudio`, `coverlet.collector`.
-3. Reference the relevant source projects (e.g., `SagraFacile.Web.csproj`).
+The project uses **xUnit** for testing:
+- **Application tests** (`tests/SagraFacile.Application.Tests/`) — unit tests using **NSubstitute** to mock repository interfaces.
+- **Infrastructure tests** (`tests/SagraFacile.Infrastructure.Tests/`) — repository tests using **SQLite in-memory** via `TestDbContextFactory` (not EF InMemory, which doesn't support `ExecuteUpdateAsync`).
 
 ### Running Tests
-Execute tests using the .NET CLI:
 ```bash
 dotnet test
 ```
 
-### Adding New Tests (Example)
-When adding tests for vertical slices, it is common to test the **Validators** and **Handlers** independently.
+### Adding New Tests
 
-**Example Test for a Validator:**
+**Unit test for a handler (Application layer):**
 ```csharp
-using FluentValidation;
-using Xunit;
+using NSubstitute;
+using SagraFacile.Application.Features.[FeatureName];
+using SagraFacile.Application.Interfaces;
+using SagraFacile.Domain.Features.[FeatureName];
 
-public class MyFeatureValidatorTests
+public class Get[Entity]HandlerTests
 {
-    private readonly CreateMyFeature.Validator _validator = new();
+    private readonly I[Entity]Repository _repository = Substitute.For<I[Entity]Repository>();
+    private readonly Get[Entities].Handler _handler;
+
+    public Get[Entity]HandlerTests() => _handler = new Get[Entities].Handler(_repository);
 
     [Fact]
-    public void Should_Fail_When_Name_Is_Empty()
+    public async Task Handle_Returns[Entity]Dto()
     {
-        var command = new CreateMyFeature.Command(Name: "");
-        var result = _validator.Validate(command);
-        Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == "Name");
+        // Arrange
+        var entities = new List<[Entity]> { new() { Id = 1, Name = "Test" } };
+        _repository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(entities);
+
+        // Act
+        var result = await _handler.Handle(new Get[Entities].Query(), CancellationToken.None);
+
+        // Assert
+        Assert.Single(result.Items);
+        Assert.Equal("Test", result.Items[0].Name);
     }
 }
 ```
 
 ## 3. Architecture and Code Style
 
-### Vertical Slice Architecture
-The project is organized into self-contained slices under `src/SagraFacile.Web/SagraFacile.Web/Features/`. Each folder should ideally contain:
-- `Entity.cs`: Domain models.
-- `Create[Feature].cs`: Command, Handler, and Validator.
-- `Get[Feature].cs`: Query and Handler.
+### 4-Layer Clean Architecture
+The project is split into four focused projects:
 
-### CQRS with Wolverine
-- Use `ICommand<T>` for write operations and `IQuery<T>` for read operations.
-- Handlers should be implemented within the same file as the command/query for better cohesion in the vertical slice.
+| Project | Responsibility |
+|---|---|
+| `SagraFacile.Domain` | Plain entity classes, no dependencies |
+| `SagraFacile.Application` | CQRS handlers, repository interfaces, DTOs |
+| `SagraFacile.Infrastructure` | EF Core, repository implementations, Identity |
+| `SagraFacile.Web` | Blazor pages, SignalR hubs, controllers |
+
+### Repository Pattern
+- **Interfaces** live in `SagraFacile.Application/Interfaces/` (e.g., `IEventRepository`).
+- **Implementations** live in `SagraFacile.Infrastructure/Repositories/` (e.g., `EventRepository`).
+- Handlers depend **only** on the interface, never on `DbContext` or concrete classes.
+
+### CQRS with Custom IMediator
+The project uses a custom in-house `IMediator` — **not** MediatR, **not** Wolverine.
+
+```csharp
+// In Blazor pages
+@inject IMediator Mediator
+
+// Query (read)
+var result = await Mediator.QueryAsync(new Get[Entities].Query());
+
+// Command (write)
+var result = await Mediator.SendAsync(new Create[Entity].Command(...));
+```
+
+Handlers implement `IQueryHandler<TQuery, TResult>` or `ICommandHandler<TCommand, TResult>`.
 
 ### Real-time Communication (SignalR)
-- Hubs are located in `Hubs/`.
-- Use the `HubContext` within Wolverine handlers to broadcast updates after successful state changes.
+- Hub: `Hubs/ReservationHub.cs`, mapped at `/hubs/reservations`.
+- Broadcast from Application handlers by injecting `IHubContext<ReservationHub>`.
 
 ### Code Style Guidelines
 - **File-scoped namespaces**: Always use `namespace MyNamespace;`.
 - **Primary Constructors**: Prefer C# 12+ primary constructors for dependency injection.
 - **Records**: Use `record` for DTOs, Commands, and Queries to ensure immutability.
 - **Async/Await**: Always use `Async` suffix for asynchronous methods and ensure `CancellationToken` is propagated.
+- **Never expose entities from queries**: Always return DTO records.
+
+## 4. Internationalisation (i18n)
+
+The app supports **Italian (default)** and **English** via ASP.NET Core `IStringLocalizer<SharedResource>`. The default culture is `it`.
+
+### Key files
+| File | Purpose |
+|---|---|
+| `Resources/SharedResource.cs` | Marker class for typed `IStringLocalizer<SharedResource>` |
+| `Resources/SharedResource.resx` | English strings (neutral/fallback) |
+| `Resources/SharedResource.it.resx` | Italian strings (served by default) |
+
+### Mandatory rules for every new page/component
+
+1. **Never hardcode user-visible strings** in `.razor` files.
+
+2. **Add keys to both resource files** before referencing them:
+   ```xml
+   <!-- SharedResource.resx -->
+   <data name="MyPage_Heading"><value>My Page</value></data>
+   <data name="MyPage_Saved"><value>'{0}' saved!</value></data>
+
+   <!-- SharedResource.it.resx -->
+   <data name="MyPage_Heading"><value>La Mia Pagina</value></data>
+   <data name="MyPage_Saved"><value>'{0}' salvato!</value></data>
+   ```
+
+3. **Inject the localiser** in the component:
+   ```razor
+   @inject IStringLocalizer<SharedResource> L
+   ```
+   (`Microsoft.Extensions.Localization` and `SagraFacile.Web.Resources` are imported globally in `_Imports.razor` — no extra `@using` needed.)
+
+4. **Use in markup**:
+   ```razor
+   <h1>@L["MyPage_Heading"]</h1>
+   <div class="alert alert-success">@string.Format(L["MyPage_Saved"], name)</div>
+   ```
+
+5. **Validation messages** — do **not** use `DataAnnotations [Required(ErrorMessage = "key")]` with `<DataAnnotationsValidator>`, because Blazor's `DataAnnotationsValidator` cannot resolve `IStringLocalizer` keys. Validate manually in the submit handler instead:
+   ```csharp
+   private async Task HandleSubmit()
+   {
+       errorMessage = string.Empty;
+       if (string.IsNullOrWhiteSpace(model.Name))
+       {
+           errorMessage = L["MyPage_NameRequired"];
+           return;
+       }
+       // proceed…
+   }
+   ```
+
+6. **Key naming convention**: `[Page]_[Element]`
+   Examples: `Nav_Home`, `Receptionist_Submit`, `Report_ColStatus`, `Events_Loading`.
+
+7. **Language switching** is determined automatically by the browser's `Accept-Language` header via `AcceptLanguageHeaderRequestCultureProvider`. No extra work is needed in new pages — there is no manual language switcher in the UI.
+

@@ -105,6 +105,61 @@ export WEB_PORT=80
 docker-compose -f docker-compose.release.yml up -d
 ```
 
+### LAN / Offline Deployment
+
+SagraFacile is designed to run entirely on a local network (LAN) without internet access.
+Authentication and role-based access control are handled locally against the embedded
+PostgreSQL database — no external identity provider is needed.
+
+Use `docker-compose.lan.yml` for a pre-configured, HTTP-only LAN deployment:
+
+```bash
+# (Optional) Override defaults via environment variables or a .env file
+# cp .env.example .env   # then edit passwords and keys
+
+# Build and start the LAN stack
+docker compose -f docker-compose.lan.yml up -d
+```
+
+The app will be available at **`http://<server-ip>:80`** from any device on the same network.
+
+#### Accessing from other devices
+
+Find the server's LAN IP address:
+```bash
+# Linux / macOS
+ip route get 1 | awk '{print $NF; exit}'   # or: hostname -I
+
+# Windows (PowerShell)
+(Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.InterfaceAlias -notmatch 'Loopback' }).IPAddress
+```
+
+Then open `http://<server-ip>` in any browser on the same network.
+
+#### Default credentials (change before sharing with others!)
+
+| Setting | Default |
+|---|---|
+| Admin username | `admin` |
+| Admin password | `SagraAdmin-ChangeMe!` |
+| Database password | `SagraLAN-ChangeMe!` |
+| JWT signing key | `SagraFacile-LAN-Replace-With-Your-Own-Random-Secret-Key!` |
+
+Override defaults by creating a `.env` file (see `.env.example`) or by passing environment variables:
+
+```bash
+Jwt__Key=my-long-random-secret \
+Seed__AdminPassword=MyStr0ngP@ss! \
+docker compose -f docker-compose.lan.yml up -d
+```
+
+#### Offline behaviour notes
+
+- **Authentication** works entirely offline — no internet calls are made during login or token validation.
+- **Roles** (`Admin`, `Cassiere`, `Cucina`, `Supervisore`) are stored in the local database and evaluated locally.
+- If `Jwt:Key` is not set, the app auto-generates a random key at startup. Sessions are invalidated on every restart. Configure a fixed key for stable sessions across restarts.
+- Set `AllowHttp=true` (already set in `docker-compose.lan.yml`) to disable HTTPS redirect and HSTS when running over plain HTTP.
+
 ## Database Migrations
 
 ### Create a new migration:
