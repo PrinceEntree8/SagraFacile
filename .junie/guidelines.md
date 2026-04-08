@@ -130,7 +130,6 @@ The app supports **Italian (default)** and **English** via ASP.NET Core `IString
 | `Resources/SharedResource.cs` | Marker class for typed `IStringLocalizer<SharedResource>` |
 | `Resources/SharedResource.resx` | English strings (neutral/fallback) |
 | `Resources/SharedResource.it.resx` | Italian strings (served by default) |
-| `Controllers/CultureController.cs` | `GET /culture?culture=it&redirectUri=/` — writes the culture cookie |
 
 ### Mandatory rules for every new page/component
 
@@ -176,5 +175,5 @@ The app supports **Italian (default)** and **English** via ASP.NET Core `IString
 6. **Key naming convention**: `[Page]_[Element]`
    Examples: `Nav_Home`, `Receptionist_Submit`, `Report_ColStatus`, `Events_Loading`.
 
-7. **Language switching** is already wired in `NavMenu.razor` (🇮🇹/🇬🇧 buttons). No extra work needed in new pages.
+7. **Language switching** is determined automatically by the browser's `Accept-Language` header via `AcceptLanguageHeaderRequestCultureProvider`. No extra work is needed in new pages — there is no manual language switcher in the UI.
 
