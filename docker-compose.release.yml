@@ -28,6 +28,12 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=${POSTGRES_DB:-sagrafacile};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      - Jwt__Key=${Jwt__Key:-}
+      - Jwt__Issuer=${Jwt__Issuer:-SagraFacile}
+      - Jwt__Audience=${Jwt__Audience:-SagraFacile}
+      - Seed__AdminUsername=${Seed__AdminUsername:-admin}
+      - Seed__AdminPassword=${Seed__AdminPassword:-}
+      - Seed__AdminEmail=${Seed__AdminEmail:-admin@sagrafacile.local}
     ports:
       - "${WEB_PORT:-80}:8080"
     depends_on:
