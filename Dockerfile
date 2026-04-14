@@ -7,7 +7,6 @@ COPY SagraFacile.slnx ./
 
 # Copy project files
 COPY src/SagraFacile.Web/SagraFacile.Web/SagraFacile.Web.csproj ./src/SagraFacile.Web/SagraFacile.Web/
-COPY src/SagraFacile.Web/SagraFacile.Web.Client/SagraFacile.Web.Client.csproj ./src/SagraFacile.Web/SagraFacile.Web.Client/
 
 # Restore dependencies
 RUN dotnet restore
