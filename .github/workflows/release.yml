@@ -1,0 +1,107 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  WEB_PROJECT: src/SagraFacile.Web/SagraFacile.Web/SagraFacile.Web.csproj
+
+jobs:
+  docker:
+    name: Build and push Docker image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  release-archives:
+    name: Build and upload release archives
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    strategy:
+      matrix:
+        include:
+          - rid: linux-x64
+            archive_ext: tar.gz
+          - rid: win-x64
+            archive_ext: zip
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish self-contained single-file executable (${{ matrix.rid }})
+        run: |
+          dotnet publish ${{ env.WEB_PROJECT }} \
+            -c Release \
+            -r ${{ matrix.rid }} \
+            --self-contained true \
+            /p:PublishSingleFile=true \
+            /p:UseAppHost=true \
+            -o publish/${{ matrix.rid }}
+
+      - name: Collect config files
+        run: |
+          cp .env.example                publish/${{ matrix.rid }}/
+          cp docker-compose.release.yml  publish/${{ matrix.rid }}/
+          cp docker-compose.lan.yml      publish/${{ matrix.rid }}/
+
+      - name: Create archive (tar.gz - linux-x64)
+        if: matrix.archive_ext == 'tar.gz'
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          ARCHIVE="sagrafacile-${VERSION}-${{ matrix.rid }}.tar.gz"
+          tar -czf "$ARCHIVE" -C publish/${{ matrix.rid }} .
+          echo "ARCHIVE=$ARCHIVE" >> $GITHUB_ENV
+
+      - name: Create archive (zip - win-x64)
+        if: matrix.archive_ext == 'zip'
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          ARCHIVE="sagrafacile-${VERSION}-${{ matrix.rid }}.zip"
+          cd publish/${{ matrix.rid }} && zip -r "../../$ARCHIVE" .
+          echo "ARCHIVE=$ARCHIVE" >> $GITHUB_ENV
+
+      - name: Upload archive to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ARCHIVE }}
