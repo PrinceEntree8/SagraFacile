@@ -6,7 +6,7 @@ WORKDIR /src
 COPY SagraFacile.slnx ./
 
 # Copy project files
-COPY src/SagraFacile.Web/SagraFacile.Web/SagraFacile.Web.csproj ./src/SagraFacile.Web/SagraFacile.Web/
+COPY src/SagraFacile.Web/SagraFacile.Web.csproj ./src/SagraFacile.Web/
 
 # Restore dependencies
 RUN dotnet restore
