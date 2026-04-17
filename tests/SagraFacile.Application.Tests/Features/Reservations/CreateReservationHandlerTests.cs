@@ -32,7 +32,8 @@ public class CreateReservationHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal($"{today}0001", result.QueueNumber);
+        Assert.Equal("0001", result.QueueNumber);
+        Assert.Equal(today, saved!.Date);
         Assert.Equal(1, result.Id);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -42,7 +43,7 @@ public class CreateReservationHandlerTests
     {
         // Arrange
         var today = DateTime.UtcNow.ToString("yyyyMMdd");
-        var last = new TableReservation { QueueNumber = $"{today}0005" };
+        var last = new TableReservation { Date = today, QueueNumber = "0005" };
         _repository.GetLastByDatePrefixAsync(today, Arg.Any<CancellationToken>()).Returns(last);
 
         _repository.When(r => r.AddAsync(Arg.Any<TableReservation>(), Arg.Any<CancellationToken>()))
@@ -54,7 +55,7 @@ public class CreateReservationHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal($"{today}0006", result.QueueNumber);
+        Assert.Equal("0006", result.QueueNumber);
     }
 
     [Fact]
