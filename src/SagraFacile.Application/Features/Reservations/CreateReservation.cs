@@ -29,8 +29,13 @@ public static class CreateReservation
     {
         private const int SequencePadding = 4;
         private readonly IReservationRepository _repository;
+        private readonly IReservationNotifier _notifier;
 
-        public Handler(IReservationRepository repository) => _repository = repository;
+        public Handler(IReservationRepository repository, IReservationNotifier notifier)
+        {
+            _repository = repository;
+            _notifier = notifier;
+        }
 
         public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
         {
@@ -50,6 +55,12 @@ public static class CreateReservation
 
             await _repository.AddAsync(reservation, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
+            await _notifier.NotifyReservationCreatedAsync(
+                reservation.Id,
+                reservation.QueueNumber,
+                reservation.CustomerName,
+                reservation.PartySize,
+                cancellationToken);
 
             return new Result(reservation.Id, reservation.QueueNumber);
         }

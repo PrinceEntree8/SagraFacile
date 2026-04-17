@@ -8,11 +8,12 @@ namespace SagraFacile.Application.Tests.Features.Reservations;
 public class CreateReservationHandlerTests
 {
     private readonly IReservationRepository _repository = Substitute.For<IReservationRepository>();
+    private readonly IReservationNotifier _notifier = Substitute.For<IReservationNotifier>();
     private readonly CreateReservation.Handler _handler;
 
     public CreateReservationHandlerTests()
     {
-        _handler = new CreateReservation.Handler(_repository);
+        _handler = new CreateReservation.Handler(_repository, _notifier);
     }
 
     [Fact]
@@ -36,6 +37,12 @@ public class CreateReservationHandlerTests
         Assert.Equal(today, saved!.Date);
         Assert.Equal(1, result.Id);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+        await _notifier.Received(1).NotifyReservationCreatedAsync(
+            result.Id,
+            result.QueueNumber,
+            command.CustomerName,
+            command.PartySize,
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]

@@ -10,11 +10,12 @@ namespace SagraFacile.Application.Tests.Features.Reservations;
 public class VoidReservationHandlerTests
 {
     private readonly IReservationRepository _repository = Substitute.For<IReservationRepository>();
+    private readonly IReservationNotifier _notifier = Substitute.For<IReservationNotifier>();
     private readonly VoidReservation.Handler _handler;
 
     public VoidReservationHandlerTests()
     {
-        _handler = new VoidReservation.Handler(_repository);
+        _handler = new VoidReservation.Handler(_repository, _notifier);
     }
 
     [Fact]
@@ -32,6 +33,10 @@ public class VoidReservationHandlerTests
         Assert.Equal("Voided", reservation.Status);
         Assert.NotNull(reservation.VoidedAt);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+        await _notifier.Received(1).NotifyReservationVoidedAsync(
+            reservation.Id,
+            reservation.QueueNumber,
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -79,5 +84,9 @@ public class VoidReservationHandlerTests
         // Assert
         Assert.False(result.Success);
         Assert.Contains("modified by another user", result.Message);
+        await _notifier.DidNotReceive().NotifyReservationVoidedAsync(
+            Arg.Any<int>(),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>());
     }
 }
