@@ -106,14 +106,14 @@
 
 ---
 
-### Sub-task: Layout dedicato Cassiere (tablet/laptop)
+### Sub-task: Layout dedicato cassiere (tablet/laptop)
 - **Description:** Progettare e implementare layout operativo ottimizzato per ruolo cassiere su tablet/laptop, con priorità su rapidità e leggibilità.
 - **Relationship to Epic:** Sub-issue of Epic "Ottimizzazione interfacce e layout responsive"
 - **Labels:** enhancement, ui/ux, responsive, role:cassiere
 
 ---
 
-### Sub-task: Layout dedicato Cassa Volante (mobile)
+### Sub-task: Layout dedicato cassa volante (mobile)
 - **Description:** Progettare e implementare layout mobile-first per cassa volante, con interazioni rapide e minimizzazione errori input.
 - **Relationship to Epic:** Sub-issue of Epic "Ottimizzazione interfacce e layout responsive"
 - **Labels:** enhancement, ui/ux, responsive, mobile
