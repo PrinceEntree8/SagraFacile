@@ -9,13 +9,15 @@ public class TableReservationConfiguration : IEntityTypeConfiguration<TableReser
     public void Configure(EntityTypeBuilder<TableReservation> entity)
     {
         entity.HasKey(e => e.Id);
-        entity.Property(e => e.QueueNumber).IsRequired().HasMaxLength(50);
+        entity.Ignore(e => e.Date);
+        entity.Ignore(e => e.QueueNumber);
+        entity.Property(e => e.ReservationId).IsRequired().HasMaxLength(50).HasColumnName("QueueNumber");
         entity.Property(e => e.CustomerName).IsRequired().HasMaxLength(200);
         entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
         entity.Property(e => e.PartySize).IsRequired();
         entity.Property(e => e.Notes).HasMaxLength(500);
         entity.Property(e => e.Version).IsConcurrencyToken();
-        entity.HasIndex(e => e.QueueNumber).IsUnique();
+        entity.HasIndex(e => e.ReservationId).IsUnique();
         entity.HasMany(e => e.Calls)
             .WithOne(c => c.TableReservation)
             .HasForeignKey(c => c.TableReservationId)

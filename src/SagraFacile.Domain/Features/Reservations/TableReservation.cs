@@ -3,7 +3,9 @@ namespace SagraFacile.Domain.Features.Reservations;
 public class TableReservation
 {
     public int Id { get; set; }
+    public string Date { get; set; } = string.Empty;
     public string QueueNumber { get; set; } = string.Empty;
+    public string ReservationId { get; set; } = string.Empty;
     public string CustomerName { get; set; } = string.Empty;
     public int PartySize { get; set; }
     public string Status { get; set; } = "Waiting"; // Waiting, Called, Seated, Voided

@@ -27,16 +27,19 @@ public static class CreateReservation
 
     public class Handler : ICommandHandler<Command, Result>
     {
+        private const int SequencePadding = 4;
         private readonly IReservationRepository _repository;
 
         public Handler(IReservationRepository repository) => _repository = repository;
 
         public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
         {
-            var queueNumber = await GenerateQueueNumberAsync(cancellationToken);
+            var date = DateTime.UtcNow.ToString("yyyyMMdd");
+            var queueNumber = await GenerateQueueNumberAsync(date, cancellationToken);
 
             var reservation = new TableReservation
             {
+                Date = date,
                 QueueNumber = queueNumber,
                 CustomerName = command.CustomerName,
                 PartySize = command.PartySize,
@@ -51,22 +54,15 @@ public static class CreateReservation
             return new Result(reservation.Id, reservation.QueueNumber);
         }
 
-        private async Task<string> GenerateQueueNumberAsync(CancellationToken cancellationToken)
+        private async Task<string> GenerateQueueNumberAsync(string date, CancellationToken cancellationToken)
         {
-            const int DatePrefixLength = 8; // yyyyMMdd
-            var date = DateTime.UtcNow.ToString("yyyyMMdd");
-
             var last = await _repository.GetLastByDatePrefixAsync(date, cancellationToken);
 
             var sequence = 1;
-            if (last != null && last.QueueNumber.Length >= DatePrefixLength)
-            {
-                var suffix = last.QueueNumber[DatePrefixLength..];
-                if (int.TryParse(suffix, out var num))
-                    sequence = num + 1;
-            }
+            if (last != null && int.TryParse(last.QueueNumber, out var num))
+                sequence = num + 1;
 
-            return $"{date}{sequence:D4}";
+            return sequence.ToString($"D{SequencePadding}");
         }
     }
 }
