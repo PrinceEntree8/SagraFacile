@@ -275,12 +275,6 @@
             creationMessage = string.Format(L["Receptionist_ReservationCreated"], result.QueueNumber);
             newReservation = new();
             
-            // Notify via SignalR
-            if (hubConnection?.State == HubConnectionState.Connected)
-            {
-                await hubConnection.SendAsync("NotifyReservationCreated", result.Id, result.QueueNumber, command.CustomerName, command.PartySize);
-            }
-            
             await LoadReservations(currentFilter);
         }
         catch (Exception ex)
@@ -299,16 +293,7 @@
         try
         {
             var command = new CallReservation.Command(reservationId, "Receptionist");
-            var result = await Mediator.Send(command, CancellationToken.None);
-            
-            if (result.Success)
-            {
-                var reservation = reservations.FirstOrDefault(r => r.Id == reservationId);
-                if (reservation != null && hubConnection?.State == HubConnectionState.Connected)
-                {
-                    await hubConnection.SendAsync("NotifyReservationCalled", reservationId, reservation.QueueNumber, reservation.CustomerName, reservation.PartySize, reservation.CallCount + 1);
-                }
-            }
+            await Mediator.Send(command, CancellationToken.None);
             
             await LoadReservations(currentFilter);
         }
@@ -349,16 +334,7 @@
         try
         {
             var command = new VoidReservation.Command(reservationId);
-            var result = await Mediator.Send(command, CancellationToken.None);
-            
-            if (result.Success)
-            {
-                var reservation = reservations.FirstOrDefault(r => r.Id == reservationId);
-                if (reservation != null && hubConnection?.State == HubConnectionState.Connected)
-                {
-                    await hubConnection.SendAsync("NotifyReservationVoided", reservationId, reservation.QueueNumber);
-                }
-            }
+            await Mediator.Send(command, CancellationToken.None);
             
             await LoadReservations(currentFilter);
         }

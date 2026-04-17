@@ -10,11 +10,12 @@ namespace SagraFacile.Application.Tests.Features.Reservations;
 public class CallReservationHandlerTests
 {
     private readonly IReservationRepository _repository = Substitute.For<IReservationRepository>();
+    private readonly IReservationNotifier _notifier = Substitute.For<IReservationNotifier>();
     private readonly CallReservation.Handler _handler;
 
     public CallReservationHandlerTests()
     {
-        _handler = new CallReservation.Handler(_repository);
+        _handler = new CallReservation.Handler(_repository, _notifier);
     }
 
     [Fact]
@@ -35,6 +36,13 @@ public class CallReservationHandlerTests
         Assert.NotNull(reservation.LastCalledAt);
         await _repository.Received(1).AddCallAsync(Arg.Any<ReservationCall>(), Arg.Any<CancellationToken>());
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+        await _notifier.Received(1).NotifyReservationCalledAsync(
+            reservation.Id,
+            reservation.QueueNumber,
+            reservation.CustomerName,
+            reservation.PartySize,
+            reservation.CallCount,
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -116,5 +124,12 @@ public class CallReservationHandlerTests
         // Assert
         Assert.False(result.Success);
         Assert.Contains("modified by another user", result.Message);
+        await _notifier.DidNotReceive().NotifyReservationCalledAsync(
+            Arg.Any<int>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<int>(),
+            Arg.Any<int>(),
+            Arg.Any<CancellationToken>());
     }
 }

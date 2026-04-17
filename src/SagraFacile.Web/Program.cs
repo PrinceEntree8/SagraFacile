@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SagraFacile.Application;
+using SagraFacile.Application.Interfaces;
 using SagraFacile.Infrastructure;
 using SagraFacile.Infrastructure.Data;
 using SagraFacile.Infrastructure.Identity;
@@ -19,6 +20,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddLocalization();
 
 builder.Services.AddSignalR();
+builder.Services.AddScoped<IReservationNotifier, SignalRReservationNotifier>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Host=localhost;Port=5432;Database=sagrafacile;Username=postgres;Password=postgres";
