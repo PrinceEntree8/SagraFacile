@@ -80,9 +80,9 @@ public class ReservationRepositoryTests
         await using var repo = new ReservationRepository(factory);
         var now = DateTime.UtcNow;
 
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "002", CustomerName = "B", PartySize = 2, Status = "Called", CreatedAt = now }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "001", CustomerName = "A", PartySize = 3, Status = "Called", CreatedAt = now.AddMinutes(-5) }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "003", CustomerName = "C", PartySize = 1, Status = "Waiting", CreatedAt = now.AddMinutes(-10) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0002", CustomerName = "B", PartySize = 2, Status = "Called", CreatedAt = now }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "A", PartySize = 3, Status = "Called", CreatedAt = now.AddMinutes(-5) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0003", CustomerName = "C", PartySize = 1, Status = "Waiting", CreatedAt = now.AddMinutes(-10) }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act
