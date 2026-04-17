@@ -7,7 +7,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  WEB_PROJECT: src/SagraFacile.Web/SagraFacile.Web/SagraFacile.Web.csproj
+  WEB_PROJECT: src/SagraFacile.Web/SagraFacile.Web.csproj
 
 jobs:
   docker:
