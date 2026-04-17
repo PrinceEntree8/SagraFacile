@@ -21,8 +21,13 @@ public static class VoidReservation
     public class Handler : ICommandHandler<Command, Result>
     {
         private readonly IReservationRepository _repository;
+        private readonly IReservationNotifier _notifier;
 
-        public Handler(IReservationRepository repository) => _repository = repository;
+        public Handler(IReservationRepository repository, IReservationNotifier notifier)
+        {
+            _repository = repository;
+            _notifier = notifier;
+        }
 
         public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
         {
@@ -48,6 +53,11 @@ public static class VoidReservation
             {
                 return new Result(false, "This reservation was modified by another user. Please refresh and try again.");
             }
+
+            await _notifier.NotifyReservationVoidedAsync(
+                reservation.Id,
+                reservation.QueueNumber,
+                cancellationToken);
 
             return new Result(true, $"Reservation {reservation.QueueNumber} voided successfully");
         }
