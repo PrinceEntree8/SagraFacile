@@ -5,8 +5,13 @@ WORKDIR /src
 # Copy solution file
 COPY SagraFacile.slnx ./
 
-# Copy project files
+# Copy project files referenced by the solution
+COPY src/SagraFacile.Domain/SagraFacile.Domain.csproj ./src/SagraFacile.Domain/
+COPY src/SagraFacile.Application/SagraFacile.Application.csproj ./src/SagraFacile.Application/
+COPY src/SagraFacile.Infrastructure/SagraFacile.Infrastructure.csproj ./src/SagraFacile.Infrastructure/
 COPY src/SagraFacile.Web/SagraFacile.Web.csproj ./src/SagraFacile.Web/
+COPY tests/SagraFacile.Application.Tests/SagraFacile.Application.Tests.csproj ./tests/SagraFacile.Application.Tests/
+COPY tests/SagraFacile.Infrastructure.Tests/SagraFacile.Infrastructure.Tests.csproj ./tests/SagraFacile.Infrastructure.Tests/
 
 # Restore dependencies
 RUN dotnet restore
@@ -15,7 +20,7 @@ RUN dotnet restore
 COPY . .
 
 # Build the application
-WORKDIR /src/src/SagraFacile.Web/SagraFacile.Web
+WORKDIR /src/src/SagraFacile.Web
 RUN dotnet build -c Release -o /app/build
 
 # Publish stage
