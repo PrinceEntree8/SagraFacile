@@ -57,10 +57,10 @@ public class ReservationRepositoryTests
         using var factory = new TestDbContextFactory();
         await using var repo = new ReservationRepository(factory);
 
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "001", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "002", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "003", CustomerName = "C", PartySize = 3, Status = "Voided", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "004", CustomerName = "D", PartySize = 2, Status = "Called", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0002", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0003", CustomerName = "C", PartySize = 3, Status = "Voided", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0004", CustomerName = "D", PartySize = 2, Status = "Called", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act — null status = default (exclude Seated + Voided)
@@ -101,7 +101,7 @@ public class ReservationRepositoryTests
         using var factory = new TestDbContextFactory();
         await using var repo = new ReservationRepository(factory);
 
-        var reservation = new TableReservation { Date = "20260101", QueueNumber = "001", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = DateTime.UtcNow };
+        var reservation = new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = DateTime.UtcNow };
         await repo.AddAsync(reservation, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
