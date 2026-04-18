@@ -1,6 +1,6 @@
 namespace SagraFacile.Domain.Features.Menu;
 
-public class MenuItem
+public record MenuItem
 {
     public int Id { get; set; }
     public int EventId { get; set; }

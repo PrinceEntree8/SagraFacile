@@ -10,8 +10,6 @@ public class AllergenConfiguration : IEntityTypeConfiguration<Allergen>
     {
         entity.HasKey(a => a.Id);
         entity.Property(a => a.Code).IsRequired().HasMaxLength(50);
-        entity.Property(a => a.Name).IsRequired().HasMaxLength(200);
-        entity.Property(a => a.NameIt).IsRequired().HasMaxLength(200);
         entity.Property(a => a.Icon).IsRequired().HasMaxLength(20);
         entity.HasIndex(a => a.Code).IsUnique();
     }

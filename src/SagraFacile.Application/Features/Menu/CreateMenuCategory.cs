@@ -7,7 +7,7 @@ namespace SagraFacile.Application.Features.Menu;
 
 public static class CreateMenuCategory
 {
-    public record Command(string Name, string NameIt, int DisplayOrder = 0) : ICommand<Result>;
+    public record Command(string Name, int DisplayOrder = 0) : ICommand<Result>;
     public record Result(int Id, string Name);
 
     public class Validator : AbstractValidator<Command>
@@ -15,7 +15,6 @@ public static class CreateMenuCategory
         public Validator()
         {
             RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
-            RuleFor(x => x.NameIt).NotEmpty().MaximumLength(100);
         }
     }
 
@@ -30,7 +29,6 @@ public static class CreateMenuCategory
             var cat = new MenuCategory
             {
                 Name = command.Name,
-                NameIt = command.NameIt,
                 DisplayOrder = command.DisplayOrder
             };
             await _repo.AddAsync(cat, ct);

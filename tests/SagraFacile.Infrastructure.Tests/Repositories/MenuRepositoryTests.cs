@@ -8,7 +8,7 @@ public class MenuRepositoryTests
 {
     private static async Task<MenuCategory> CreateCategoryAsync(MenuCategoryRepository catRepo)
     {
-        var cat = new MenuCategory { Name = "Test", NameIt = "Test IT", DisplayOrder = 1 };
+        var cat = new MenuCategory { Name = "Test", DisplayOrder = 1 };
         await catRepo.AddAsync(cat, CancellationToken.None);
         await catRepo.SaveChangesAsync(CancellationToken.None);
         return cat;

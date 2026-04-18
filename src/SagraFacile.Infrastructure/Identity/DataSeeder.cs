@@ -60,25 +60,25 @@ public static class DataSeeder
         var db = serviceProvider.GetRequiredService<ApplicationDbContext>();
         var allergens = new[]
         {
-            ("GLUTEN",      "Gluten (cereals)",              "Glutine (cereali)",            "🌾"),
-            ("CRUSTACEANS", "Crustaceans",                   "Crostacei",                    "🦐"),
-            ("EGGS",        "Eggs",                          "Uova",                         "🥚"),
-            ("FISH",        "Fish",                          "Pesce",                        "🐟"),
-            ("PEANUTS",     "Peanuts",                       "Arachidi",                     "🥜"),
-            ("SOYBEANS",    "Soybeans",                      "Soia",                         "🫘"),
-            ("MILK",        "Milk",                          "Latte",                        "🥛"),
-            ("NUTS",        "Tree nuts",                     "Frutta a guscio",              "🌰"),
-            ("CELERY",      "Celery",                        "Sedano",                       "🥬"),
-            ("MUSTARD",     "Mustard",                       "Senape",                       "🌭"),
-            ("SESAME",      "Sesame seeds",                  "Semi di sesamo",               "🌿"),
-            ("SULPHITES",   "Sulphur dioxide & sulphites",   "Anidride solforosa e solfiti", "🍷"),
-            ("LUPIN",       "Lupin",                         "Lupino",                       "🌸"),
-            ("MOLLUSCS",    "Molluscs",                      "Molluschi",                    "🐙"),
+            ("GLUTEN",      "🌾"),
+            ("CRUSTACEANS", "🦐"),
+            ("EGGS",        "🥚"),
+            ("FISH",        "🐟"),
+            ("PEANUTS",     "🥜"),
+            ("SOYBEANS",    "🫘"),
+            ("MILK",        "🥛"),
+            ("NUTS",        "🌰"),
+            ("CELERY",      "🥬"),
+            ("MUSTARD",     "🌭"),
+            ("SESAME",      "🌿"),
+            ("SULPHITES",   "🍷"),
+            ("LUPIN",       "🌸"),
+            ("MOLLUSCS",    "🐙"),
         };
-        foreach (var (code, name, nameIt, icon) in allergens)
+        foreach (var (code, icon) in allergens)
         {
             if (!await db.Allergens.AnyAsync(a => a.Code == code))
-                db.Allergens.Add(new Allergen { Code = code, Name = name, NameIt = nameIt, Icon = icon });
+                db.Allergens.Add(new Allergen { Code = code, Icon = icon });
         }
         await db.SaveChangesAsync();
     }
@@ -88,16 +88,16 @@ public static class DataSeeder
         var db = serviceProvider.GetRequiredService<ApplicationDbContext>();
         var categories = new[]
         {
-            ("Starters",    "Antipasti",          1),
-            ("Main Course", "Primi / Secondi",    2),
-            ("Side Dishes", "Contorni",           3),
-            ("Dessert",     "Dolci",              4),
-            ("Drinks",      "Bevande",            5),
+            ("Starters",    1),
+            ("Main Course", 2),
+            ("Side Dishes", 3),
+            ("Dessert",     4),
+            ("Drinks",      5),
         };
-        foreach (var (name, nameIt, order) in categories)
+        foreach (var (name, order) in categories)
         {
             if (!await db.MenuCategories.AnyAsync(c => c.Name == name))
-                db.MenuCategories.Add(new MenuCategory { Name = name, NameIt = nameIt, DisplayOrder = order });
+                db.MenuCategories.Add(new MenuCategory { Name = name, DisplayOrder = order });
         }
         await db.SaveChangesAsync();
     }

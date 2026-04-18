@@ -15,11 +15,10 @@ public static class GetEventMenu
         int PriceInCents,
         int CategoryId,
         string CategoryName,
-        string CategoryNameIt,
         int DisplayOrder,
         bool IsAvailable,
         List<AllergenDto> Allergens);
-    public record AllergenDto(int Id, string Code, string Name, string NameIt, string Icon);
+    public record AllergenDto(int Id, string Code, string Icon);
 
     public class Handler : IQueryHandler<Query, Result>
     {
@@ -34,10 +33,9 @@ public static class GetEventMenu
                 i.Id, i.EventId, i.Name, i.Description, i.PriceInCents,
                 i.CategoryId,
                 i.Category?.Name ?? string.Empty,
-                i.Category?.NameIt ?? string.Empty,
                 i.DisplayOrder, i.IsAvailable,
                 i.MenuItemAllergens.Select(mia => new AllergenDto(
-                    mia.Allergen.Id, mia.Allergen.Code, mia.Allergen.Name, mia.Allergen.NameIt, mia.Allergen.Icon)).ToList()
+                    mia.Allergen.Id, mia.Allergen.Code, mia.Allergen.Icon)).ToList()
             )).ToList();
             return new Result(dtos);
         }

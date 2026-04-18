@@ -29,13 +29,11 @@
         else
         {
             @foreach (var catGroup in items
-                .GroupBy(i => new { i.CategoryId, i.CategoryName, i.CategoryNameIt })
+                .GroupBy(i => new { i.CategoryId, i.CategoryName })
                 .OrderBy(g => categories.FirstOrDefault(c => c.Id == g.Key.CategoryId)?.DisplayOrder ?? 999))
             {
-                var lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-                var catLabel = lang == "it" ? catGroup.Key.CategoryNameIt : catGroup.Key.CategoryName;
                 <section class="mb-5">
-                    <h2 class="border-bottom pb-2">@catLabel</h2>
+                    <h2 class="border-bottom pb-2">@catGroup.Key.CategoryName</h2>
                     <div class="row row-cols-1 row-cols-md-2 g-3 mt-1">
                         @foreach (var item in catGroup.OrderBy(i => i.Name))
                         {
@@ -58,8 +56,7 @@
                                                 <small class="text-muted">@L["PublicMenu_Allergens"]: </small>
                                                 @foreach (var a in item.Allergens)
                                                 {
-                                                    var aName = lang == "it" ? a.NameIt : a.Name;
-                                                    <span class="badge bg-warning text-dark me-1" title="@aName">
+                                                    <span class="badge bg-warning text-dark me-1" title="@L[$"Allergen_{a.Code}"]">
                                                         @a.Icon @a.Code
                                                     </span>
                                                 }

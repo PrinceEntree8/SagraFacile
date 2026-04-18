@@ -7,7 +7,7 @@ public static class GetMenuCategories
 {
     public record Query() : IQuery<Result>;
     public record Result(List<CategoryDto> Categories);
-    public record CategoryDto(int Id, string Name, string NameIt, int DisplayOrder);
+    public record CategoryDto(int Id, string Name, int DisplayOrder);
 
     public class Handler : IQueryHandler<Query, Result>
     {
@@ -18,7 +18,7 @@ public static class GetMenuCategories
         public async Task<Result> Handle(Query query, CancellationToken ct)
         {
             var cats = await _repo.GetAllAsync(ct);
-            return new Result(cats.Select(c => new CategoryDto(c.Id, c.Name, c.NameIt, c.DisplayOrder)).ToList());
+            return new Result(cats.Select(c => new CategoryDto(c.Id, c.Name, c.DisplayOrder)).ToList());
         }
     }
 }

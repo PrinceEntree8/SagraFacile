@@ -29,11 +29,8 @@
         <div id="catCollapse" class="accordion-collapse collapse">
             <div class="accordion-body">
                 <div class="row g-2 mb-3">
-                    <div class="col-sm-4">
+                    <div class="col-sm-6">
                         <input class="form-control" placeholder="@L["MenuMgmt_CatNameEn"]" @bind="catForm.Name" />
-                    </div>
-                    <div class="col-sm-4">
-                        <input class="form-control" placeholder="@L["MenuMgmt_CatNameIt"]" @bind="catForm.NameIt" />
                     </div>
                     <div class="col-sm-2">
                         <input type="number" class="form-control" placeholder="@L["MenuMgmt_CatOrder"]" @bind="catForm.DisplayOrder" />
@@ -51,13 +48,12 @@
                     <button class="btn btn-outline-secondary btn-sm mb-2" @onclick="CancelCatEdit">@L["MenuMgmt_Cancel"]</button>
                 }
                 <table class="table table-sm">
-                    <thead><tr><th>@L["MenuMgmt_CatNameEn"]</th><th>@L["MenuMgmt_CatNameIt"]</th><th>@L["MenuMgmt_CatOrder"]</th><th></th></tr></thead>
+                    <thead><tr><th>@L["MenuMgmt_CatNameEn"]</th><th>@L["MenuMgmt_CatOrder"]</th><th></th></tr></thead>
                     <tbody>
                         @foreach (var c in categories)
                         {
                             <tr>
                                 <td>@c.Name</td>
-                                <td>@c.NameIt</td>
                                 <td>@c.DisplayOrder</td>
                                 <td>
                                     <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditCategory(c)">@L["MenuMgmt_Edit"]</button>
@@ -120,7 +116,7 @@
                                        checked="@form.AllergenIds.Contains(a.Id)"
                                        @onchange="e => ToggleAllergen(a.Id, (bool)e.Value!)" />
                                 <label class="form-check-label" for="allergen_@a.Id">
-                                    @a.Icon @GetAllergenName(a)
+                                    @a.Icon @L[$"Allergen_{a.Code}"]
                                 </label>
                             </div>
                         }
@@ -191,7 +187,7 @@
                                                     @foreach (var a in item.Allergens)
                                                     {
                                                         <span class="badge bg-warning text-dark me-1"
-                                                              title="@GetAllergenName(a)">@a.Icon @a.Code</span>
+                                                              title="@L[$"Allergen_{a.Code}"]">@a.Icon @a.Code</span>
                                                     }
                                                 }
                                             </td>
@@ -343,7 +339,7 @@
     private void EditCategory(GetMenuCategories.CategoryDto c)
     {
         editingCatId = c.Id;
-        catForm = new CatForm { Name = c.Name, NameIt = c.NameIt, DisplayOrder = c.DisplayOrder };
+        catForm = new CatForm { Name = c.Name, DisplayOrder = c.DisplayOrder };
     }
 
     private void CancelCatEdit() { editingCatId = null; catForm = new CatForm(); }
@@ -351,7 +347,7 @@
     private async Task SaveCategoryAsync()
     {
         message = string.Empty;
-        if (string.IsNullOrWhiteSpace(catForm.Name) || string.IsNullOrWhiteSpace(catForm.NameIt))
+        if (string.IsNullOrWhiteSpace(catForm.Name))
         {
             ShowError(L["MenuMgmt_CatNameRequired"]);
             return;
@@ -362,14 +358,14 @@
             if (editingCatId.HasValue)
             {
                 var r = await Mediator.SendAsync(new UpdateMenuCategory.Command(
-                    editingCatId.Value, catForm.Name, catForm.NameIt, catForm.DisplayOrder));
+                    editingCatId.Value, catForm.Name, catForm.DisplayOrder));
                 message = r.Success ? string.Format(L["MenuMgmt_CatUpdated"], catForm.Name) : r.Message;
                 messageSuccess = r.Success;
             }
             else
             {
                 var r = await Mediator.SendAsync(new CreateMenuCategory.Command(
-                    catForm.Name, catForm.NameIt, catForm.DisplayOrder));
+                    catForm.Name, catForm.DisplayOrder));
                 message = string.Format(L["MenuMgmt_CatAdded"], r.Name);
                 messageSuccess = true;
             }
@@ -413,23 +409,7 @@
         return 0;
     }
 
-    private string GetAllergenName(GetAllergens.AllergenDto a)
-    {
-        var lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-        return lang == "it" ? a.NameIt : a.Name;
-    }
-
-    private string GetAllergenName(GetEventMenu.AllergenDto a)
-    {
-        var lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-        return lang == "it" ? a.NameIt : a.Name;
-    }
-
-    private string GetCategoryName(GetMenuCategories.CategoryDto c)
-    {
-        var lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-        return lang == "it" ? c.NameIt : c.Name;
-    }
+    private static string GetCategoryName(GetMenuCategories.CategoryDto c) => c.Name;
 
     private class ItemForm
     {
@@ -444,7 +424,6 @@
     private class CatForm
     {
         public string Name { get; set; } = string.Empty;
-        public string NameIt { get; set; } = string.Empty;
         public int DisplayOrder { get; set; } = 0;
     }
 }

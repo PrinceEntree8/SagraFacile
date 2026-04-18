@@ -1,6 +1,6 @@
 namespace SagraFacile.Domain.Features.Menu;
 
-public class MenuItemAllergen
+public record MenuItemAllergen
 {
     public int MenuItemId { get; set; }
     public MenuItem MenuItem { get; set; } = null!;

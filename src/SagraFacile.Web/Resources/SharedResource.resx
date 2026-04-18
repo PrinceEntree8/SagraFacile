@@ -251,6 +251,22 @@
   <data name="MenuCategory_Dessert" xml:space="preserve"><value>Dessert</value></data>
   <data name="MenuCategory_Drinks" xml:space="preserve"><value>Drinks</value></data>
 
+  <!-- Allergens (EU 14) -->
+  <data name="Allergen_GLUTEN" xml:space="preserve"><value>Gluten (cereals)</value></data>
+  <data name="Allergen_CRUSTACEANS" xml:space="preserve"><value>Crustaceans</value></data>
+  <data name="Allergen_EGGS" xml:space="preserve"><value>Eggs</value></data>
+  <data name="Allergen_FISH" xml:space="preserve"><value>Fish</value></data>
+  <data name="Allergen_PEANUTS" xml:space="preserve"><value>Peanuts</value></data>
+  <data name="Allergen_SOYBEANS" xml:space="preserve"><value>Soybeans</value></data>
+  <data name="Allergen_MILK" xml:space="preserve"><value>Milk</value></data>
+  <data name="Allergen_NUTS" xml:space="preserve"><value>Tree nuts</value></data>
+  <data name="Allergen_CELERY" xml:space="preserve"><value>Celery</value></data>
+  <data name="Allergen_MUSTARD" xml:space="preserve"><value>Mustard</value></data>
+  <data name="Allergen_SESAME" xml:space="preserve"><value>Sesame seeds</value></data>
+  <data name="Allergen_SULPHITES" xml:space="preserve"><value>Sulphur dioxide &amp; sulphites</value></data>
+  <data name="Allergen_LUPIN" xml:space="preserve"><value>Lupin</value></data>
+  <data name="Allergen_MOLLUSCS" xml:space="preserve"><value>Molluscs</value></data>
+
   <!-- Menu Management -->
   <data name="MenuMgmt_PageTitle" xml:space="preserve"><value>Menu Management - SagraFacile</value></data>
   <data name="MenuMgmt_Heading" xml:space="preserve"><value>Menu Management</value></data>
@@ -290,14 +306,14 @@
   <data name="PublicMenu_NoItems" xml:space="preserve"><value>Menu not yet available.</value></data>
   <data name="PublicMenu_Allergens" xml:space="preserve"><value>Allergens</value></data>
   <data name="MenuMgmt_ManageCategories" xml:space="preserve"><value>Manage Categories</value></data>
-  <data name="MenuMgmt_CatNameEn" xml:space="preserve"><value>Name (English)</value></data>
-  <data name="MenuMgmt_CatNameIt" xml:space="preserve"><value>Name (Italian)</value></data>
+  <data name="MenuMgmt_CatNameEn" xml:space="preserve"><value>Name</value></data>
+  <data name="MenuMgmt_CatNameIt" xml:space="preserve"><value>Name</value></data>
   <data name="MenuMgmt_CatOrder" xml:space="preserve"><value>Order</value></data>
   <data name="MenuMgmt_CatAdd" xml:space="preserve"><value>Add Category</value></data>
   <data name="MenuMgmt_CatAdded" xml:space="preserve"><value>Category '{0}' added.</value></data>
   <data name="MenuMgmt_CatUpdated" xml:space="preserve"><value>Category '{0}' updated.</value></data>
   <data name="MenuMgmt_CatDeleted" xml:space="preserve"><value>Category deleted.</value></data>
-  <data name="MenuMgmt_CatNameRequired" xml:space="preserve"><value>Category name is required in both languages.</value></data>
+  <data name="MenuMgmt_CatNameRequired" xml:space="preserve"><value>Category name is required.</value></data>
   <data name="MenuMgmt_SelectCategory" xml:space="preserve"><value>Select category</value></data>
   <data name="MenuMgmt_CategoryRequired" xml:space="preserve"><value>Please select a category.</value></data>
   <data name="MenuMgmt_PriceHint" xml:space="preserve"><value>Enter decimal, e.g. 1.50</value></data>

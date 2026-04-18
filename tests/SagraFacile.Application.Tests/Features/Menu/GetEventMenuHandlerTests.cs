@@ -18,8 +18,8 @@ public class GetEventMenuHandlerTests
     [Fact]
     public async Task Handle_ReturnsItemsForGivenEventId()
     {
-        var cat1 = new MenuCategory { Id = 1, Name = "Starters", NameIt = "Antipasti" };
-        var cat2 = new MenuCategory { Id = 2, Name = "Main Course", NameIt = "Primi" };
+        var cat1 = new MenuCategory { Id = 1, Name = "Starters" };
+        var cat2 = new MenuCategory { Id = 2, Name = "Main Course" };
         var items = new List<MenuItem>
         {
             new() { Id = 1, EventId = 5, Name = "Bruschetta", PriceInCents = 400, CategoryId = 1, Category = cat1, MenuItemAllergens = new List<MenuItemAllergen>() },
@@ -36,7 +36,7 @@ public class GetEventMenuHandlerTests
     [Fact]
     public async Task Handle_MapsCategoriesCorrectly()
     {
-        var cat = new MenuCategory { Id = 4, Name = "Dessert", NameIt = "Dolci" };
+        var cat = new MenuCategory { Id = 4, Name = "Dessert" };
         var items = new List<MenuItem>
         {
             new() { Id = 1, EventId = 1, Name = "Tiramisu", PriceInCents = 500, CategoryId = 4, Category = cat, MenuItemAllergens = new List<MenuItemAllergen>() }
@@ -53,8 +53,8 @@ public class GetEventMenuHandlerTests
     [Fact]
     public async Task Handle_WithAllergens_MapsAllergenDtos()
     {
-        var allergen = new Allergen { Id = 1, Code = "GLUTEN", Name = "Gluten (cereals)", NameIt = "Glutine (cereali)", Icon = "🌾" };
-        var cat = new MenuCategory { Id = 1, Name = "Starters", NameIt = "Antipasti" };
+        var allergen = new Allergen { Id = 1, Code = "GLUTEN", Icon = "🌾" };
+        var cat = new MenuCategory { Id = 1, Name = "Starters" };
         var items = new List<MenuItem>
         {
             new()
