@@ -11,8 +11,8 @@
 
 <h1>@L["Receptionist_Heading"]</h1>
 
-<div class="row">
-    <div class="col-md-5">
+<div class="row receptionist-layout g-3">
+    <div class="col-12 col-lg-5">
         <div class="card mb-4">
             <div class="card-header bg-success text-white">
                 <h3 class="mb-0">@L["Receptionist_AvailableSeats"]</h3>
@@ -62,11 +62,11 @@
         </div>
     </div>
 
-    <div class="col-md-7">
+    <div class="col-12 col-lg-7">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3>@L["Receptionist_ActiveReservations"]</h3>
-                <div>
+                <div class="receptionist-filters">
                     <button class="btn btn-sm btn-outline-primary" @onclick="@(() => LoadReservations("Waiting"))">@L["Receptionist_FilterWaiting"]</button>
                     <button class="btn btn-sm btn-outline-secondary" @onclick="@(() => LoadReservations("Called"))">@L["Receptionist_FilterCalled"]</button>
                     <button class="btn btn-sm btn-outline-info" @onclick="@(() => LoadReservations(null))">@L["Receptionist_FilterAll"]</button>
@@ -110,7 +110,7 @@
                                             }
                                         </td>
                                         <td>@reservation.CallCount</td>
-                                        <td>
+                                        <td class="receptionist-actions">
                                             @if (reservation.Status == "Waiting" || reservation.Status == "Called")
                                             {
                                                 <button class="btn btn-sm btn-success me-1" @onclick="@(() => CallReservationAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
@@ -127,7 +127,7 @@
                         </table>
                     </div>
                     <div class="mt-3">
-                        <div class="row">
+                        <div class="row g-3 receptionist-stats">
                             <div class="col-md-4">
                                 <div class="card text-center">
                                     <div class="card-body">

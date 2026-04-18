@@ -1,0 +1,32 @@
+.headwaiter-filter-actions {
+    gap: 0.5rem;
+}
+
+.headwaiter-filter-actions .form-control {
+    min-width: 9rem;
+}
+
+@media (max-width: 991.98px) {
+    .headwaiter-layout .card-header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .headwaiter-filter-actions {
+        flex-wrap: wrap;
+    }
+
+    .headwaiter-filter-actions .form-control,
+    .headwaiter-filter-actions .btn {
+        width: 100%;
+        flex: 1 1 100%;
+    }
+
+    .headwaiter-actions .btn {
+        width: 100%;
+    }
+}

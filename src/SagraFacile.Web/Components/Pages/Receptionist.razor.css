@@ -1,0 +1,45 @@
+.receptionist-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.receptionist-filters .btn {
+    white-space: nowrap;
+}
+
+@media (max-width: 991.98px) {
+    .receptionist-layout .display-1 {
+        font-size: clamp(3rem, 15vw, 5rem);
+    }
+
+    .receptionist-filters {
+        width: 100%;
+        margin-top: 0.75rem;
+    }
+
+    .receptionist-filters .btn {
+        flex: 1 1 calc(50% - 0.5rem);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .receptionist-actions .btn {
+        width: 100%;
+        margin-right: 0 !important;
+    }
+
+    .receptionist-actions .btn + .btn {
+        margin-top: 0.4rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .receptionist-filters .btn {
+        flex-basis: 100%;
+    }
+
+    .receptionist-stats .col-md-4 {
+        width: 100%;
+    }
+}

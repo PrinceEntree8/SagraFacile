@@ -11,8 +11,8 @@
 
 <h1>@L["HeadWaiter_Heading"]</h1>
 
-<div class="row">
-    <div class="col-md-4">
+<div class="row headwaiter-layout g-3">
+    <div class="col-12 col-lg-4">
         <div class="card mb-4">
             <div class="card-header">
                 <h3>@L["HeadWaiter_AnnounceSeats"]</h3>
@@ -41,7 +41,7 @@
         </div>
     </div>
 
-    <div class="col-md-8">
+    <div class="col-12 col-lg-8">
         <div class="card">
             <div class="card-header">
                 <h3>@L["HeadWaiter_BestFit"]</h3>
@@ -57,7 +57,7 @@
             <div class="card-body">
                 <div class="mb-3">
                     <label class="form-label">@L["HeadWaiter_CoverFilter"]</label>
-                    <div class="input-group">
+                    <div class="input-group headwaiter-filter-actions">
                         <InputNumber @bind-Value="coverCountForSearch" class="form-control" placeholder="All" />
                         <button class="btn btn-outline-primary" @onclick="@SearchBestFit">@L["HeadWaiter_Filter"]</button>
                         <button class="btn btn-outline-secondary" @onclick="@ClearFilter">@L["HeadWaiter_Clear"]</button>
@@ -124,7 +124,7 @@
                                                     <span class="text-muted">@L["HeadWaiter_Never"]</span>
                                                 }
                                             </td>
-                                            <td>
+                                            <td class="headwaiter-actions">
                                                 <button class="btn btn-sm btn-primary" @onclick="@(() => SeatReservationAsync(match.Id))" disabled="@(actionInProgress == match.Id)">
                                                     @L["HeadWaiter_Seat"]
                                                 </button>
