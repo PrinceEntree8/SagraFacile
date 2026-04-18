@@ -14,15 +14,22 @@ public class MenuRepository : IMenuRepository, IAsyncDisposable
     public Task<List<MenuItem>> GetByEventIdAsync(int eventId, bool includeUnavailable, CancellationToken ct)
     {
         var query = _db.MenuItems
+            .Include(m => m.Category)
             .Include(m => m.MenuItemAllergens).ThenInclude(mia => mia.Allergen)
             .Where(m => m.EventId == eventId);
         if (!includeUnavailable)
             query = query.Where(m => m.IsAvailable);
-        return query.OrderBy(m => m.Category).ThenBy(m => m.DisplayOrder).ThenBy(m => m.Name).ToListAsync(ct);
+        return query
+            .OrderBy(m => m.Category!.DisplayOrder)
+            .ThenBy(m => m.DisplayOrder)
+            .ThenBy(m => m.Name)
+            .ToListAsync(ct);
     }
 
     public Task<MenuItem?> GetByIdAsync(int id, CancellationToken ct)
-        => _db.MenuItems.Include(m => m.MenuItemAllergens).ThenInclude(mia => mia.Allergen)
+        => _db.MenuItems
+            .Include(m => m.Category)
+            .Include(m => m.MenuItemAllergens).ThenInclude(mia => mia.Allergen)
             .FirstOrDefaultAsync(m => m.Id == id, ct);
 
     public async Task AddAsync(MenuItem item, CancellationToken ct) => await _db.MenuItems.AddAsync(item, ct);

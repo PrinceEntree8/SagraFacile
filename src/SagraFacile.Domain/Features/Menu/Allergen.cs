@@ -6,5 +6,6 @@ public class Allergen
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string NameIt { get; set; } = string.Empty;
+    public string Icon { get; set; } = string.Empty;   // emoji pictogram
     public ICollection<MenuItemAllergen> MenuItemAllergens { get; set; } = new List<MenuItemAllergen>();
 }

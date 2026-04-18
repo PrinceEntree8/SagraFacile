@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SagraFacile.Domain.Features.Menu;
+using SagraFacile.Infrastructure.Data;
 
 namespace SagraFacile.Infrastructure.Identity;
 
@@ -23,6 +25,9 @@ public static class DataSeeder
             if (!await roleManager.RoleExistsAsync(role))
                 await roleManager.CreateAsync(new IdentityRole(role));
         }
+
+        await SeedAllergensAsync(serviceProvider);
+        await SeedMenuCategoriesAsync(serviceProvider);
 
         var adminUsername = configuration["Seed:AdminUsername"] ?? "admin";
         var adminPassword = configuration["Seed:AdminPassword"];
@@ -48,36 +53,51 @@ public static class DataSeeder
             if (result.Succeeded)
                 await userManager.AddToRoleAsync(adminUser, "Admin");
         }
-
-        await SeedAllergensAsync(serviceProvider);
     }
 
     private static async Task SeedAllergensAsync(IServiceProvider serviceProvider)
     {
-        var db = serviceProvider.GetRequiredService<SagraFacile.Infrastructure.Data.ApplicationDbContext>();
+        var db = serviceProvider.GetRequiredService<ApplicationDbContext>();
         var allergens = new[]
         {
-            ("GLUTEN", "Gluten (cereals)", "Glutine (cereali)"),
-            ("CRUSTACEANS", "Crustaceans", "Crostacei"),
-            ("EGGS", "Eggs", "Uova"),
-            ("FISH", "Fish", "Pesce"),
-            ("PEANUTS", "Peanuts", "Arachidi"),
-            ("SOYBEANS", "Soybeans", "Soia"),
-            ("MILK", "Milk", "Latte"),
-            ("NUTS", "Tree nuts", "Frutta a guscio"),
-            ("CELERY", "Celery", "Sedano"),
-            ("MUSTARD", "Mustard", "Senape"),
-            ("SESAME", "Sesame seeds", "Semi di sesamo"),
-            ("SULPHITES", "Sulphur dioxide & sulphites", "Anidride solforosa e solfiti"),
-            ("LUPIN", "Lupin", "Lupino"),
-            ("MOLLUSCS", "Molluscs", "Molluschi"),
+            ("GLUTEN",      "Gluten (cereals)",              "Glutine (cereali)",            "🌾"),
+            ("CRUSTACEANS", "Crustaceans",                   "Crostacei",                    "🦐"),
+            ("EGGS",        "Eggs",                          "Uova",                         "🥚"),
+            ("FISH",        "Fish",                          "Pesce",                        "🐟"),
+            ("PEANUTS",     "Peanuts",                       "Arachidi",                     "🥜"),
+            ("SOYBEANS",    "Soybeans",                      "Soia",                         "🫘"),
+            ("MILK",        "Milk",                          "Latte",                        "🥛"),
+            ("NUTS",        "Tree nuts",                     "Frutta a guscio",              "🌰"),
+            ("CELERY",      "Celery",                        "Sedano",                       "🥬"),
+            ("MUSTARD",     "Mustard",                       "Senape",                       "🌭"),
+            ("SESAME",      "Sesame seeds",                  "Semi di sesamo",               "🌿"),
+            ("SULPHITES",   "Sulphur dioxide & sulphites",   "Anidride solforosa e solfiti", "🍷"),
+            ("LUPIN",       "Lupin",                         "Lupino",                       "🌸"),
+            ("MOLLUSCS",    "Molluscs",                      "Molluschi",                    "🐙"),
         };
-        foreach (var (code, name, nameIt) in allergens)
+        foreach (var (code, name, nameIt, icon) in allergens)
         {
             if (!await db.Allergens.AnyAsync(a => a.Code == code))
-            {
-                db.Allergens.Add(new SagraFacile.Domain.Features.Menu.Allergen { Code = code, Name = name, NameIt = nameIt });
-            }
+                db.Allergens.Add(new Allergen { Code = code, Name = name, NameIt = nameIt, Icon = icon });
+        }
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task SeedMenuCategoriesAsync(IServiceProvider serviceProvider)
+    {
+        var db = serviceProvider.GetRequiredService<ApplicationDbContext>();
+        var categories = new[]
+        {
+            ("Starters",    "Antipasti",          1),
+            ("Main Course", "Primi / Secondi",    2),
+            ("Side Dishes", "Contorni",           3),
+            ("Dessert",     "Dolci",              4),
+            ("Drinks",      "Bevande",            5),
+        };
+        foreach (var (name, nameIt, order) in categories)
+        {
+            if (!await db.MenuCategories.AnyAsync(c => c.Name == name))
+                db.MenuCategories.Add(new MenuCategory { Name = name, NameIt = nameIt, DisplayOrder = order });
         }
         await db.SaveChangesAsync();
     }

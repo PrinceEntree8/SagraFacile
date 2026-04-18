@@ -209,6 +209,11 @@ namespace SagraFacile.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -227,6 +232,34 @@ namespace SagraFacile.Infrastructure.Migrations
                     b.ToTable("Allergens");
                 });
 
+            modelBuilder.Entity("SagraFacile.Domain.Features.Menu.MenuCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DisplayOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NameIt")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("MenuCategories");
+                });
+
             modelBuilder.Entity("SagraFacile.Domain.Features.Menu.MenuItem", b =>
                 {
                     b.Property<int>("Id")
@@ -235,7 +268,7 @@ namespace SagraFacile.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Category")
+                    b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
@@ -264,13 +297,15 @@ namespace SagraFacile.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<int>("PriceInCents")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.ToTable("MenuItems");
                 });
@@ -537,6 +572,17 @@ namespace SagraFacile.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SagraFacile.Domain.Features.Menu.MenuItem", b =>
+                {
+                    b.HasOne("SagraFacile.Domain.Features.Menu.MenuCategory", "Category")
+                        .WithMany("MenuItems")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("SagraFacile.Domain.Features.Menu.MenuItemAllergen", b =>
                 {
                     b.HasOne("SagraFacile.Domain.Features.Menu.Allergen", "Allergen")
@@ -570,6 +616,11 @@ namespace SagraFacile.Infrastructure.Migrations
             modelBuilder.Entity("SagraFacile.Domain.Features.Menu.Allergen", b =>
                 {
                     b.Navigation("MenuItemAllergens");
+                });
+
+            modelBuilder.Entity("SagraFacile.Domain.Features.Menu.MenuCategory", b =>
+                {
+                    b.Navigation("MenuItems");
                 });
 
             modelBuilder.Entity("SagraFacile.Domain.Features.Menu.MenuItem", b =>

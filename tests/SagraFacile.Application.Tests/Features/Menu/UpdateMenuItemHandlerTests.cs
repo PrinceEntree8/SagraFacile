@@ -18,19 +18,16 @@ public class UpdateMenuItemHandlerTests
     [Fact]
     public async Task Handle_ExistingItem_UpdatesAndReturnsSuccess()
     {
-        // Arrange
-        var item = new MenuItem { Id = 1, EventId = 1, Name = "Old Name", Price = 5m, MenuItemAllergens = new List<MenuItemAllergen>() };
+        var item = new MenuItem { Id = 1, EventId = 1, Name = "Old Name", PriceInCents = 500, CategoryId = 1, MenuItemAllergens = new List<MenuItemAllergen>() };
         _repo.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(item);
 
-        var command = new UpdateMenuItem.Command(1, "New Name", "New desc", 10m, MenuCategory.Dessert, new List<int> { 2 }, true);
+        var command = new UpdateMenuItem.Command(1, "New Name", "New desc", 1000, 2, new List<int> { 2 }, true);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         Assert.True(result.Success);
         Assert.Equal("New Name", item.Name);
-        Assert.Equal(10m, item.Price);
+        Assert.Equal(1000, item.PriceInCents);
         Assert.Single(item.MenuItemAllergens);
         await _repo.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -38,14 +35,11 @@ public class UpdateMenuItemHandlerTests
     [Fact]
     public async Task Handle_ItemNotFound_ReturnsFalse()
     {
-        // Arrange
         _repo.GetByIdAsync(99, Arg.Any<CancellationToken>()).Returns((MenuItem?)null);
-        var command = new UpdateMenuItem.Command(99, "Name", "", 5m, MenuCategory.Starters, new List<int>(), true);
+        var command = new UpdateMenuItem.Command(99, "Name", "", 500, 1, new List<int>(), true);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         Assert.False(result.Success);
         Assert.Equal("Item not found", result.Message);
         await _repo.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -55,7 +49,7 @@ public class UpdateMenuItemHandlerTests
     public void Validator_EmptyName_Fails()
     {
         var validator = new UpdateMenuItem.Validator();
-        var command = new UpdateMenuItem.Command(1, "", "", 5m, MenuCategory.Starters, new List<int>(), true);
+        var command = new UpdateMenuItem.Command(1, "", "", 500, 1, new List<int>(), true);
         var result = validator.Validate(command);
         Assert.False(result.IsValid);
     }

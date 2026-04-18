@@ -6,39 +6,47 @@ namespace SagraFacile.Infrastructure.Tests.Repositories;
 
 public class MenuRepositoryTests
 {
+    private static async Task<MenuCategory> CreateCategoryAsync(MenuCategoryRepository catRepo)
+    {
+        var cat = new MenuCategory { Name = "Test", NameIt = "Test IT", DisplayOrder = 1 };
+        await catRepo.AddAsync(cat, CancellationToken.None);
+        await catRepo.SaveChangesAsync(CancellationToken.None);
+        return cat;
+    }
+
     [Fact]
     public async Task AddAsync_ThenGetById_ReturnsMenuItem()
     {
-        // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new MenuRepository(factory);
-        var item = new MenuItem { EventId = 1, Name = "Pizza", Price = 8m, Category = MenuCategory.MainCourse };
+        await using var catRepo = new MenuCategoryRepository(factory);
+        var cat = await CreateCategoryAsync(catRepo);
 
-        // Act
+        await using var repo = new MenuRepository(factory);
+        var item = new MenuItem { EventId = 1, Name = "Pizza", PriceInCents = 800, CategoryId = cat.Id };
+
         await repo.AddAsync(item, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
         var found = await repo.GetByIdAsync(item.Id, CancellationToken.None);
 
-        // Assert
         Assert.NotNull(found);
         Assert.Equal("Pizza", found!.Name);
-        Assert.Equal(8m, found.Price);
+        Assert.Equal(800, found.PriceInCents);
     }
 
     [Fact]
     public async Task GetByEventIdAsync_FiltersCorrectly()
     {
-        // Arrange
         using var factory = new TestDbContextFactory();
+        await using var catRepo = new MenuCategoryRepository(factory);
+        var cat = await CreateCategoryAsync(catRepo);
+
         await using var repo = new MenuRepository(factory);
-        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Item1", Price = 5m, Category = MenuCategory.Starters }, CancellationToken.None);
-        await repo.AddAsync(new MenuItem { EventId = 2, Name = "Item2", Price = 5m, Category = MenuCategory.Drinks }, CancellationToken.None);
+        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Item1", PriceInCents = 500, CategoryId = cat.Id }, CancellationToken.None);
+        await repo.AddAsync(new MenuItem { EventId = 2, Name = "Item2", PriceInCents = 500, CategoryId = cat.Id }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
-        // Act
         var items = await repo.GetByEventIdAsync(1, true, CancellationToken.None);
 
-        // Assert
         Assert.Single(items);
         Assert.Equal("Item1", items[0].Name);
     }
@@ -46,17 +54,17 @@ public class MenuRepositoryTests
     [Fact]
     public async Task GetByEventIdAsync_ExcludesUnavailableWhenFlagFalse()
     {
-        // Arrange
         using var factory = new TestDbContextFactory();
+        await using var catRepo = new MenuCategoryRepository(factory);
+        var cat = await CreateCategoryAsync(catRepo);
+
         await using var repo = new MenuRepository(factory);
-        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Available", Price = 5m, Category = MenuCategory.Starters, IsAvailable = true }, CancellationToken.None);
-        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Unavailable", Price = 5m, Category = MenuCategory.Starters, IsAvailable = false }, CancellationToken.None);
+        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Available", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = true }, CancellationToken.None);
+        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Unavailable", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = false }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
-        // Act
         var items = await repo.GetByEventIdAsync(1, false, CancellationToken.None);
 
-        // Assert
         Assert.Single(items);
         Assert.Equal("Available", items[0].Name);
     }
@@ -64,37 +72,37 @@ public class MenuRepositoryTests
     [Fact]
     public async Task GetByEventIdAsync_IncludesUnavailableWhenFlagTrue()
     {
-        // Arrange
         using var factory = new TestDbContextFactory();
+        await using var catRepo = new MenuCategoryRepository(factory);
+        var cat = await CreateCategoryAsync(catRepo);
+
         await using var repo = new MenuRepository(factory);
-        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Available", Price = 5m, Category = MenuCategory.Starters, IsAvailable = true }, CancellationToken.None);
-        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Unavailable", Price = 5m, Category = MenuCategory.Starters, IsAvailable = false }, CancellationToken.None);
+        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Available", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = true }, CancellationToken.None);
+        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Unavailable", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = false }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
-        // Act
         var items = await repo.GetByEventIdAsync(1, true, CancellationToken.None);
 
-        // Assert
         Assert.Equal(2, items.Count);
     }
 
     [Fact]
     public async Task DeleteAsync_RemovesItem()
     {
-        // Arrange
         using var factory = new TestDbContextFactory();
+        await using var catRepo = new MenuCategoryRepository(factory);
+        var cat = await CreateCategoryAsync(catRepo);
+
         await using var repo = new MenuRepository(factory);
-        var item = new MenuItem { EventId = 1, Name = "ToDelete", Price = 3m, Category = MenuCategory.Dessert };
+        var item = new MenuItem { EventId = 1, Name = "ToDelete", PriceInCents = 300, CategoryId = cat.Id };
         await repo.AddAsync(item, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
         var id = item.Id;
 
-        // Act
         await repo.DeleteAsync(id, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
         var found = await repo.GetByIdAsync(id, CancellationToken.None);
 
-        // Assert
         Assert.Null(found);
     }
 }

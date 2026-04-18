@@ -20,7 +20,6 @@
     {
         <div class="text-center mb-4">
             <h1>🍽️ @activeEvent.Name</h1>
-            <p class="text-muted">@activeEvent.CurrencySymbol @activeEvent.Currency</p>
         </div>
 
         @if (!items.Any())
@@ -29,21 +28,25 @@
         }
         else
         {
-            @foreach (var cat in Enum.GetValues<MenuCategory>())
+            @foreach (var catGroup in items
+                .GroupBy(i => new { i.CategoryId, i.CategoryName, i.CategoryNameIt })
+                .OrderBy(g => categories.FirstOrDefault(c => c.Id == g.Key.CategoryId)?.DisplayOrder ?? 999))
             {
-                var catItems = items.Where(i => i.Category == cat).ToList();
-                if (!catItems.Any()) continue;
+                var lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+                var catLabel = lang == "it" ? catGroup.Key.CategoryNameIt : catGroup.Key.CategoryName;
                 <section class="mb-5">
-                    <h2 class="border-bottom pb-2">@L[$"MenuCategory_{cat}"]</h2>
+                    <h2 class="border-bottom pb-2">@catLabel</h2>
                     <div class="row row-cols-1 row-cols-md-2 g-3 mt-1">
-                        @foreach (var item in catItems)
+                        @foreach (var item in catGroup.OrderBy(i => i.Name))
                         {
                             <div class="col">
                                 <div class="card h-100">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <h5 class="card-title mb-1">@item.Name</h5>
-                                            <span class="badge bg-primary fs-6 ms-2">@activeEvent.CurrencySymbol @item.Price.ToString("0.00")</span>
+                                            <span class="badge bg-primary fs-6 ms-2">
+                                                @activeEvent.CurrencySymbol @((item.PriceInCents / 100.0).ToString("0.00"))
+                                            </span>
                                         </div>
                                         @if (!string.IsNullOrEmpty(item.Description))
                                         {
@@ -55,7 +58,10 @@
                                                 <small class="text-muted">@L["PublicMenu_Allergens"]: </small>
                                                 @foreach (var a in item.Allergens)
                                                 {
-                                                    <span class="badge bg-warning text-dark me-1" title="@GetAllergenName(a)">@a.Code</span>
+                                                    var aName = lang == "it" ? a.NameIt : a.Name;
+                                                    <span class="badge bg-warning text-dark me-1" title="@aName">
+                                                        @a.Icon @a.Code
+                                                    </span>
                                                 }
                                             </div>
                                         }
@@ -74,6 +80,7 @@
     private bool isLoading = true;
     private GetActiveEvent.EventDto? activeEvent;
     private List<GetEventMenu.MenuItemDto> items = new();
+    private List<GetMenuCategories.CategoryDto> categories = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -81,15 +88,12 @@
         activeEvent = activeResult.ActiveEvent;
         if (activeEvent is not null)
         {
-            var menuResult = await Mediator.QueryAsync(new GetEventMenu.Query(activeEvent.Id, IncludeUnavailable: false));
-            items = menuResult.Items;
+            var catTask = Mediator.QueryAsync(new GetMenuCategories.Query());
+            var menuTask = Mediator.QueryAsync(new GetEventMenu.Query(activeEvent.Id, IncludeUnavailable: false));
+            await Task.WhenAll(catTask, menuTask);
+            categories = catTask.Result.Categories;
+            items = menuTask.Result.Items;
         }
         isLoading = false;
-    }
-
-    private string GetAllergenName(GetEventMenu.AllergenDto a)
-    {
-        var culture = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-        return culture == "it" ? a.NameIt : a.Name;
     }
 }

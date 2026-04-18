@@ -1,6 +1,5 @@
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
-using SagraFacile.Domain.Features.Menu;
 
 namespace SagraFacile.Application.Features.Menu;
 
@@ -13,12 +12,14 @@ public static class GetEventMenu
         int EventId,
         string Name,
         string Description,
-        decimal Price,
-        MenuCategory Category,
+        int PriceInCents,
+        int CategoryId,
+        string CategoryName,
+        string CategoryNameIt,
         int DisplayOrder,
         bool IsAvailable,
         List<AllergenDto> Allergens);
-    public record AllergenDto(int Id, string Code, string Name, string NameIt);
+    public record AllergenDto(int Id, string Code, string Name, string NameIt, string Icon);
 
     public class Handler : IQueryHandler<Query, Result>
     {
@@ -30,9 +31,13 @@ public static class GetEventMenu
         {
             var items = await _repo.GetByEventIdAsync(query.EventId, query.IncludeUnavailable, ct);
             var dtos = items.Select(i => new MenuItemDto(
-                i.Id, i.EventId, i.Name, i.Description, i.Price, i.Category, i.DisplayOrder, i.IsAvailable,
+                i.Id, i.EventId, i.Name, i.Description, i.PriceInCents,
+                i.CategoryId,
+                i.Category?.Name ?? string.Empty,
+                i.Category?.NameIt ?? string.Empty,
+                i.DisplayOrder, i.IsAvailable,
                 i.MenuItemAllergens.Select(mia => new AllergenDto(
-                    mia.Allergen.Id, mia.Allergen.Code, mia.Allergen.Name, mia.Allergen.NameIt)).ToList()
+                    mia.Allergen.Id, mia.Allergen.Code, mia.Allergen.Name, mia.Allergen.NameIt, mia.Allergen.Icon)).ToList()
             )).ToList();
             return new Result(dtos);
         }

@@ -7,7 +7,7 @@ namespace SagraFacile.Application.Features.Menu;
 
 public static class CreateMenuItem
 {
-    public record Command(int EventId, string Name, string Description, decimal Price, MenuCategory Category, List<int> AllergenIds, bool IsAvailable = true) : ICommand<Result>;
+    public record Command(int EventId, string Name, string Description, int PriceInCents, int CategoryId, List<int> AllergenIds, bool IsAvailable = true) : ICommand<Result>;
     public record Result(int Id, string Name);
 
     public class Validator : AbstractValidator<Command>
@@ -17,7 +17,8 @@ public static class CreateMenuItem
             RuleFor(x => x.EventId).GreaterThan(0);
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
             RuleFor(x => x.Description).MaximumLength(1000);
-            RuleFor(x => x.Price).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.PriceInCents).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.CategoryId).GreaterThan(0);
         }
     }
 
@@ -34,11 +35,13 @@ public static class CreateMenuItem
                 EventId = command.EventId,
                 Name = command.Name,
                 Description = command.Description,
-                Price = command.Price,
-                Category = command.Category,
+                PriceInCents = command.PriceInCents,
+                CategoryId = command.CategoryId,
                 IsAvailable = command.IsAvailable,
                 CreatedAt = DateTime.UtcNow,
-                MenuItemAllergens = command.AllergenIds.Select(id => new MenuItemAllergen { AllergenId = id }).ToList()
+                MenuItemAllergens = command.AllergenIds
+                    .Select(id => new MenuItemAllergen { AllergenId = id })
+                    .ToList()
             };
             await _repo.AddAsync(item, ct);
             await _repo.SaveChangesAsync(ct);

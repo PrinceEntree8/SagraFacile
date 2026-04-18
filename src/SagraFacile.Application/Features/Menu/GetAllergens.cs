@@ -7,7 +7,7 @@ public static class GetAllergens
 {
     public record Query() : IQuery<Result>;
     public record Result(List<AllergenDto> Allergens);
-    public record AllergenDto(int Id, string Code, string Name, string NameIt);
+    public record AllergenDto(int Id, string Code, string Name, string NameIt, string Icon);
 
     public class Handler : IQueryHandler<Query, Result>
     {
@@ -18,7 +18,7 @@ public static class GetAllergens
         public async Task<Result> Handle(Query query, CancellationToken ct)
         {
             var allergens = await _repo.GetAllAsync(ct);
-            return new Result(allergens.Select(a => new AllergenDto(a.Id, a.Code, a.Name, a.NameIt)).ToList());
+            return new Result(allergens.Select(a => new AllergenDto(a.Id, a.Code, a.Name, a.NameIt, a.Icon)).ToList());
         }
     }
 }

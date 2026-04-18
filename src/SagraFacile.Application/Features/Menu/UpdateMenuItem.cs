@@ -7,7 +7,7 @@ namespace SagraFacile.Application.Features.Menu;
 
 public static class UpdateMenuItem
 {
-    public record Command(int Id, string Name, string Description, decimal Price, MenuCategory Category, List<int> AllergenIds, bool IsAvailable) : ICommand<Result>;
+    public record Command(int Id, string Name, string Description, int PriceInCents, int CategoryId, List<int> AllergenIds, bool IsAvailable) : ICommand<Result>;
     public record Result(bool Success, string Message);
 
     public class Validator : AbstractValidator<Command>
@@ -17,7 +17,8 @@ public static class UpdateMenuItem
             RuleFor(x => x.Id).GreaterThan(0);
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
             RuleFor(x => x.Description).MaximumLength(1000);
-            RuleFor(x => x.Price).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.PriceInCents).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.CategoryId).GreaterThan(0);
         }
     }
 
@@ -34,8 +35,8 @@ public static class UpdateMenuItem
 
             item.Name = command.Name;
             item.Description = command.Description;
-            item.Price = command.Price;
-            item.Category = command.Category;
+            item.PriceInCents = command.PriceInCents;
+            item.CategoryId = command.CategoryId;
             item.IsAvailable = command.IsAvailable;
             item.UpdatedAt = DateTime.UtcNow;
             item.MenuItemAllergens.Clear();

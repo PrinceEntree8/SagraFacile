@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddTransient<ITableRepository, TableRepository>();
         services.AddTransient<IMenuRepository, MenuRepository>();
         services.AddTransient<IAllergenRepository, AllergenRepository>();
+        services.AddTransient<IMenuCategoryRepository, MenuCategoryRepository>();
 
         return services;
     }

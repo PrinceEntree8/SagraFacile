@@ -19,6 +19,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ReservationCall> ReservationCalls => Set<ReservationCall>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+    public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
     public DbSet<Allergen> Allergens => Set<Allergen>();
     public DbSet<MenuItemAllergen> MenuItemAllergens => Set<MenuItemAllergen>();
 

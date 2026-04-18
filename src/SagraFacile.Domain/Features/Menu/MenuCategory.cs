@@ -1,3 +1,10 @@
 namespace SagraFacile.Domain.Features.Menu;
 
-public enum MenuCategory { Starters = 0, MainCourse = 1, Side = 2, Dessert = 3, Drinks = 4 }
+public class MenuCategory
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;       // English
+    public string NameIt { get; set; } = string.Empty;     // Italian
+    public int DisplayOrder { get; set; } = 0;
+    public ICollection<MenuItem> MenuItems { get; set; } = new List<MenuItem>();
+}
