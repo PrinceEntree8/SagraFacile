@@ -72,6 +72,7 @@
   <data name="Nav_ActiveEvent" xml:space="preserve"><value>Evento Attivo</value></data>
   <data name="Nav_NoActiveEvent" xml:space="preserve"><value>Nessun evento attivo</value></data>
   <data name="Nav_Language" xml:space="preserve"><value>Lingua</value></data>
+  <data name="Nav_PublicMenu" xml:space="preserve"><value>Menù</value></data>
 
   <!-- Login -->
   <data name="Login_PageTitle" xml:space="preserve"><value>Accesso - SagraFacile</value></data>
@@ -242,4 +243,50 @@
   <!-- Home -->
   <data name="Home_Hello" xml:space="preserve"><value>Ciao, mondo!</value></data>
   <data name="Home_Welcome" xml:space="preserve"><value>Benvenuto nella tua nuova app.</value></data>
+
+  <!-- Menu Categories -->
+  <data name="MenuCategory_Starters" xml:space="preserve"><value>Antipasti</value></data>
+  <data name="MenuCategory_MainCourse" xml:space="preserve"><value>Primi / Secondi</value></data>
+  <data name="MenuCategory_Side" xml:space="preserve"><value>Contorni</value></data>
+  <data name="MenuCategory_Dessert" xml:space="preserve"><value>Dolci</value></data>
+  <data name="MenuCategory_Drinks" xml:space="preserve"><value>Bevande</value></data>
+
+  <!-- Menu Management -->
+  <data name="MenuMgmt_PageTitle" xml:space="preserve"><value>Gestione Menù - SagraFacile</value></data>
+  <data name="MenuMgmt_Heading" xml:space="preserve"><value>Gestione Menù</value></data>
+  <data name="MenuMgmt_BackToEvents" xml:space="preserve"><value>Torna agli Eventi</value></data>
+  <data name="MenuMgmt_NewItem" xml:space="preserve"><value>Nuovo Elemento Menù</value></data>
+  <data name="MenuMgmt_EditItem" xml:space="preserve"><value>Modifica Elemento Menù</value></data>
+  <data name="MenuMgmt_AllItems" xml:space="preserve"><value>Tutti gli Elementi</value></data>
+  <data name="MenuMgmt_ItemName" xml:space="preserve"><value>Nome</value></data>
+  <data name="MenuMgmt_ItemDescription" xml:space="preserve"><value>Descrizione</value></data>
+  <data name="MenuMgmt_ItemPrice" xml:space="preserve"><value>Prezzo</value></data>
+  <data name="MenuMgmt_ItemCategory" xml:space="preserve"><value>Categoria</value></data>
+  <data name="MenuMgmt_ItemAllergens" xml:space="preserve"><value>Allergeni</value></data>
+  <data name="MenuMgmt_ItemAvailable" xml:space="preserve"><value>Disponibile</value></data>
+  <data name="MenuMgmt_AddItem" xml:space="preserve"><value>Aggiungi Elemento</value></data>
+  <data name="MenuMgmt_SaveChanges" xml:space="preserve"><value>Salva Modifiche</value></data>
+  <data name="MenuMgmt_Cancel" xml:space="preserve"><value>Annulla</value></data>
+  <data name="MenuMgmt_Edit" xml:space="preserve"><value>Modifica</value></data>
+  <data name="MenuMgmt_Delete" xml:space="preserve"><value>Elimina</value></data>
+  <data name="MenuMgmt_ColName" xml:space="preserve"><value>Nome</value></data>
+  <data name="MenuMgmt_ColPrice" xml:space="preserve"><value>Prezzo</value></data>
+  <data name="MenuMgmt_ColAvailable" xml:space="preserve"><value>Disponibile</value></data>
+  <data name="MenuMgmt_ColActions" xml:space="preserve"><value>Azioni</value></data>
+  <data name="MenuMgmt_Loading" xml:space="preserve"><value>Caricamento...</value></data>
+  <data name="MenuMgmt_NoItems" xml:space="preserve"><value>Nessun elemento nel menù. Aggiungi il primo elemento.</value></data>
+  <data name="MenuMgmt_ItemAdded" xml:space="preserve"><value>'{0}' aggiunto al menù.</value></data>
+  <data name="MenuMgmt_ItemUpdated" xml:space="preserve"><value>'{0}' aggiornato.</value></data>
+  <data name="MenuMgmt_ItemDeleted" xml:space="preserve"><value>'{0}' eliminato.</value></data>
+  <data name="MenuMgmt_Error" xml:space="preserve"><value>Errore: {0}</value></data>
+  <data name="MenuMgmt_NameRequired" xml:space="preserve"><value>Il nome dell'elemento è obbligatorio.</value></data>
+  <data name="MenuMgmt_PriceInvalid" xml:space="preserve"><value>Il prezzo deve essere zero o maggiore.</value></data>
+  <data name="MenuMgmt_ManageMenu" xml:space="preserve"><value>Gestisci Menù</value></data>
+
+  <!-- Public Menu -->
+  <data name="PublicMenu_PageTitle" xml:space="preserve"><value>Menù - SagraFacile</value></data>
+  <data name="PublicMenu_Loading" xml:space="preserve"><value>Caricamento menù...</value></data>
+  <data name="PublicMenu_NoActiveEvent" xml:space="preserve"><value>Nessun evento attivo al momento.</value></data>
+  <data name="PublicMenu_NoItems" xml:space="preserve"><value>Menù non ancora disponibile.</value></data>
+  <data name="PublicMenu_Allergens" xml:space="preserve"><value>Allergeni</value></data>
 </root>

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -47,5 +48,37 @@ public static class DataSeeder
             if (result.Succeeded)
                 await userManager.AddToRoleAsync(adminUser, "Admin");
         }
+
+        await SeedAllergensAsync(serviceProvider);
+    }
+
+    private static async Task SeedAllergensAsync(IServiceProvider serviceProvider)
+    {
+        var db = serviceProvider.GetRequiredService<SagraFacile.Infrastructure.Data.ApplicationDbContext>();
+        var allergens = new[]
+        {
+            ("GLUTEN", "Gluten (cereals)", "Glutine (cereali)"),
+            ("CRUSTACEANS", "Crustaceans", "Crostacei"),
+            ("EGGS", "Eggs", "Uova"),
+            ("FISH", "Fish", "Pesce"),
+            ("PEANUTS", "Peanuts", "Arachidi"),
+            ("SOYBEANS", "Soybeans", "Soia"),
+            ("MILK", "Milk", "Latte"),
+            ("NUTS", "Tree nuts", "Frutta a guscio"),
+            ("CELERY", "Celery", "Sedano"),
+            ("MUSTARD", "Mustard", "Senape"),
+            ("SESAME", "Sesame seeds", "Semi di sesamo"),
+            ("SULPHITES", "Sulphur dioxide & sulphites", "Anidride solforosa e solfiti"),
+            ("LUPIN", "Lupin", "Lupino"),
+            ("MOLLUSCS", "Molluscs", "Molluschi"),
+        };
+        foreach (var (code, name, nameIt) in allergens)
+        {
+            if (!await db.Allergens.AnyAsync(a => a.Code == code))
+            {
+                db.Allergens.Add(new SagraFacile.Domain.Features.Menu.Allergen { Code = code, Name = name, NameIt = nameIt });
+            }
+        }
+        await db.SaveChangesAsync();
     }
 }
