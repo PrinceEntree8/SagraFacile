@@ -74,6 +74,8 @@
   <data name="Nav_Language" xml:space="preserve"><value>Lingua</value></data>
   <data name="Nav_PublicMenu" xml:space="preserve"><value>Menù</value></data>
   <data name="Nav_ToggleSidebar" xml:space="preserve"><value>Mostra/nascondi barra laterale</value></data>
+  <data name="Nav_SectionService" xml:space="preserve"><value>Servizio</value></data>
+  <data name="Nav_SectionManagement" xml:space="preserve"><value>Gestione</value></data>
 
   <!-- Login -->
   <data name="Login_PageTitle" xml:space="preserve"><value>Accesso - SagraFacile</value></data>
@@ -165,6 +167,9 @@
   <data name="Receptionist_NoReservations" xml:space="preserve"><value>Nessuna prenotazione trovata.</value></data>
   <data name="Receptionist_ReservationCreated" xml:space="preserve"><value>Prenotazione {0} creata con successo!</value></data>
   <data name="Receptionist_Error" xml:space="preserve"><value>Errore: {0}</value></data>
+  <data name="Receptionist_NameRequired" xml:space="preserve"><value>Il nome del cliente è obbligatorio.</value></data>
+  <data name="Receptionist_PartySizeMin" xml:space="preserve"><value>Il numero di persone deve essere almeno 1.</value></data>
+  <data name="Receptionist_SeatsContextFull" xml:space="preserve"><value>Nessun posto disponibile</value></data>
 
   <!-- Head Waiter -->
   <data name="HeadWaiter_PageTitle" xml:space="preserve"><value>Capo Cameriere - Posti Disponibili</value></data>

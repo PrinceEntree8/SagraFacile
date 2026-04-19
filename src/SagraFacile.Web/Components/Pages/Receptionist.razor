@@ -14,12 +14,16 @@
 <div class="row receptionist-layout g-3">
     <div class="col-12 col-lg-5">
         <div class="card mb-4">
-            <div class="card-header bg-success text-white">
+            <div class="card-header @(availableSeats > 0 ? "bg-success" : "bg-warning") @(availableSeats > 0 ? "text-white" : "text-dark")">
                 <h3 class="mb-0">@L["Receptionist_AvailableSeats"]</h3>
             </div>
             <div class="card-body text-center">
                 <h1 class="display-1">@availableSeats</h1>
                 <p class="text-muted">@L["Receptionist_AnnouncedBy"]</p>
+                @if (availableSeats == 0)
+                {
+                    <p class="text-warning fw-semibold mb-0">@L["Receptionist_SeatsContextFull"]</p>
+                }
             </div>
         </div>
 
@@ -31,12 +35,22 @@
                 <EditForm Model="@newReservation" OnValidSubmit="@CreateReservation">
                     <div class="mb-3">
                         <label class="form-label">@L["Receptionist_CustomerName"]</label>
-                        <InputText @bind-Value="newReservation.CustomerName" class="form-control" />
+                        <InputText @bind-Value="newReservation.CustomerName"
+                                   class="@GetInputClass(nameError)" />
+                        @if (nameError != string.Empty)
+                        {
+                            <div class="invalid-feedback">@nameError</div>
+                        }
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">@L["Receptionist_PartySize"]</label>
-                        <InputNumber @bind-Value="newReservation.PartySize" class="form-control" />
+                        <InputNumber @bind-Value="newReservation.PartySize"
+                                     class="@GetInputClass(partySizeError)" />
+                        @if (partySizeError != string.Empty)
+                        {
+                            <div class="invalid-feedback">@partySizeError</div>
+                        }
                     </div>
 
                     <div class="mb-3">
@@ -164,6 +178,8 @@
     private bool isLoading = true;
     private bool isCreating = false;
     private string creationMessage = string.Empty;
+    private string nameError = string.Empty;
+    private string partySizeError = string.Empty;
     private int? actionInProgress = null;
     private string? currentFilter = null;
 
@@ -242,8 +258,22 @@
 
     private async Task CreateReservation()
     {
-        isCreating = true;
+        nameError = string.Empty;
+        partySizeError = string.Empty;
         creationMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(newReservation.CustomerName))
+        {
+            nameError = L["Receptionist_NameRequired"];
+            return;
+        }
+        if (newReservation.PartySize < 1)
+        {
+            partySizeError = L["Receptionist_PartySizeMin"];
+            return;
+        }
+
+        isCreating = true;
 
         try
         {
@@ -335,6 +365,9 @@
         "Voided" => "bg-secondary",
         _ => "bg-secondary"
     };
+
+    private static string GetInputClass(string error) =>
+        string.IsNullOrEmpty(error) ? "form-control" : "form-control is-invalid";
 
     private string GetRowClass(GetReservations.ReservationDto reservation)
     {
