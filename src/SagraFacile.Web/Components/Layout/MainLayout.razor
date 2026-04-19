@@ -1,12 +1,17 @@
 ﻿@inherits LayoutComponentBase
+@inject IStringLocalizer<SharedResource> L
 
 <div class="page">
+    <input type="checkbox" id="sidebar-toggle" class="sidebar-toggle-input" title="@L["Nav_ToggleSidebar"]" />
     <div class="sidebar">
         <NavMenu />
     </div>
 
     <main>
         <div class="top-row px-4">
+            <label for="sidebar-toggle" class="sidebar-toggle-label" aria-label="@L["Nav_ToggleSidebar"]" title="@L["Nav_ToggleSidebar"]">
+                <span class="sidebar-toggle-icon" aria-hidden="true"></span>
+            </label>
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
         </div>
 

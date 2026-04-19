@@ -73,6 +73,7 @@
   <data name="Nav_NoActiveEvent" xml:space="preserve"><value>Nessun evento attivo</value></data>
   <data name="Nav_Language" xml:space="preserve"><value>Lingua</value></data>
   <data name="Nav_PublicMenu" xml:space="preserve"><value>Menù</value></data>
+  <data name="Nav_ToggleSidebar" xml:space="preserve"><value>Mostra/nascondi barra laterale</value></data>
 
   <!-- Login -->
   <data name="Login_PageTitle" xml:space="preserve"><value>Accesso - SagraFacile</value></data>
