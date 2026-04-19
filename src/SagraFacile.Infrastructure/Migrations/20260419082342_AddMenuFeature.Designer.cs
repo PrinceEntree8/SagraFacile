@@ -12,7 +12,7 @@ using SagraFacile.Infrastructure.Data;
 namespace SagraFacile.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260418181851_AddMenuFeature")]
+    [Migration("20260419082342_AddMenuFeature")]
     partial class AddMenuFeature
     {
         /// <inheritdoc />
