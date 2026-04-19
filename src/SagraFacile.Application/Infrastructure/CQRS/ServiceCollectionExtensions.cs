@@ -25,7 +25,7 @@ public static class ServiceCollectionExtensions
                              x.Interface.GetGenericTypeDefinition() == queryHandlerType));
 
             foreach (var registration in handlerRegistrations)
-                services.AddScoped(registration.Interface, registration.Type);
+                services.AddTransient(registration.Interface, registration.Type);
         }
 
         return services;
