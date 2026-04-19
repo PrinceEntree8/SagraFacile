@@ -105,10 +105,11 @@
                                         <td>
                                             @if (!ev.IsActive)
                                             {
-                                                <button class="btn btn-sm btn-success" @onclick="() => ActivateEventAsync(ev.Id)" disabled="@(activatingEventId == ev.Id)">
+                                                <button class="btn btn-sm btn-success me-1" @onclick="() => ActivateEventAsync(ev.Id)" disabled="@(activatingEventId == ev.Id)">
                                                     @L["Events_Activate"]
                                                 </button>
                                             }
+                                            <a class="btn btn-sm btn-outline-primary" href="/events/@ev.Id/menu">@L["MenuMgmt_ManageMenu"]</a>
                                         </td>
                                     </tr>
                                 }
