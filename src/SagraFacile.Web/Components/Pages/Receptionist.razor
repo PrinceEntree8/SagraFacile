@@ -79,58 +79,33 @@
                 }
                 else if (reservations != null && reservations.Any())
                 {
-                    <div class="reservation-list">
-                        <div class="row fw-semibold d-none d-md-flex border-bottom pb-2 mb-1 px-2 text-muted small text-uppercase">
-                            <div class="col-md-2">@L["Receptionist_ColQueue"]</div>
-                            <div class="col-md-2">@L["Receptionist_ColName"]</div>
-                            <div class="col-md-1">@L["Receptionist_ColParty"]</div>
-                            <div class="col-md-2">@L["Receptionist_ColStatus"]</div>
-                            <div class="col-md-2">@L["Receptionist_ColWaiting"]</div>
-                            <div class="col-md-1">@L["Receptionist_ColCalls"]</div>
-                            <div class="col-md-2">@L["Receptionist_ColActions"]</div>
-                        </div>
+                    <div class="reservation-chips">
                         @foreach (var reservation in reservations)
                         {
-                            <div class="row align-items-center py-2 border-bottom reservation-row @GetRowClass(reservation)">
-                                <div class="col-6 col-md-2 mb-1 mb-md-0">
-                                    <span class="d-block d-md-none text-muted small">@L["Receptionist_ColQueue"]</span>
-                                    <strong>@reservation.QueueNumber</strong>
-                                </div>
-                                <div class="col-6 col-md-2 mb-1 mb-md-0">
-                                    <span class="d-block d-md-none text-muted small">@L["Receptionist_ColName"]</span>
-                                    @reservation.CustomerName
-                                </div>
-                                <div class="col-4 col-md-1 mb-1 mb-md-0">
-                                    <span class="d-block d-md-none text-muted small">@L["Receptionist_ColParty"]</span>
-                                    <span class="badge bg-info">@reservation.PartySize</span>
-                                </div>
-                                <div class="col-4 col-md-2 mb-1 mb-md-0">
-                                    <span class="d-block d-md-none text-muted small">@L["Receptionist_ColStatus"]</span>
-                                    <span class="badge @GetStatusBadge(reservation.Status)">@reservation.Status</span>
-                                </div>
-                                <div class="col-4 col-md-2 mb-1 mb-md-0">
-                                    <span class="d-block d-md-none text-muted small">@L["Receptionist_ColWaiting"]</span>
+                            <div class="reservation-chip @GetRowClass(reservation)">
+                                <span class="chip-queue" title="@L["Receptionist_ColQueue"]">@reservation.QueueNumber</span>
+                                <span class="chip-name">@reservation.CustomerName</span>
+                                <span class="badge bg-info chip-party" title="@L["Receptionist_ColParty"]">@reservation.PartySize</span>
+                                <span class="badge @GetStatusBadge(reservation.Status) chip-status">@reservation.Status</span>
+                                <span class="chip-wait" title="@L["Receptionist_ColWaiting"]">
                                     @FormatTimeSpan(reservation.WaitingTime)
                                     @if (reservation.TimeSinceLastCall.HasValue)
                                     {
-                                        <br /><small class="text-muted">@string.Format(L["Receptionist_LastCall"], FormatTimeSpan(reservation.TimeSinceLastCall.Value))</small>
+                                        <small class="text-muted ms-1">(@FormatTimeSpan(reservation.TimeSinceLastCall.Value))</small>
                                     }
-                                </div>
-                                <div class="col-3 col-md-1 mb-1 mb-md-0">
-                                    <span class="d-block d-md-none text-muted small">@L["Receptionist_ColCalls"]</span>
-                                    @reservation.CallCount
-                                </div>
-                                <div class="col-9 col-md-2 mb-1 mb-md-0">
-                                    @if (reservation.Status == "Waiting" || reservation.Status == "Called")
-                                    {
-                                        <button class="btn btn-sm btn-success me-1" @onclick="@(() => CallReservationAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
+                                </span>
+                                <span class="chip-calls text-muted" title="@L["Receptionist_ColCalls"]">×@reservation.CallCount</span>
+                                @if (reservation.Status == "Waiting" || reservation.Status == "Called")
+                                {
+                                    <span class="chip-actions">
+                                        <button class="btn btn-sm btn-success" @onclick="@(() => CallReservationAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
                                             @L["Receptionist_ActionCall"]
                                         </button>
                                         <button class="btn btn-sm btn-danger" @onclick="@(() => VoidReservationAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
                                             @L["Receptionist_ActionVoid"]
                                         </button>
-                                    }
-                                </div>
+                                    </span>
+                                }
                             </div>
                         }
                     </div>
