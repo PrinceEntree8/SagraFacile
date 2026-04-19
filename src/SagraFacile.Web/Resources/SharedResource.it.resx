@@ -72,6 +72,7 @@
   <data name="Nav_ActiveEvent" xml:space="preserve"><value>Evento Attivo</value></data>
   <data name="Nav_NoActiveEvent" xml:space="preserve"><value>Nessun evento attivo</value></data>
   <data name="Nav_Language" xml:space="preserve"><value>Lingua</value></data>
+  <data name="Nav_PublicMenu" xml:space="preserve"><value>Menù</value></data>
 
   <!-- Login -->
   <data name="Login_PageTitle" xml:space="preserve"><value>Accesso - SagraFacile</value></data>
@@ -242,4 +243,78 @@
   <!-- Home -->
   <data name="Home_Hello" xml:space="preserve"><value>Ciao, mondo!</value></data>
   <data name="Home_Welcome" xml:space="preserve"><value>Benvenuto nella tua nuova app.</value></data>
+
+  <!-- Menu Categories -->
+  <data name="MenuCategory_Starters" xml:space="preserve"><value>Antipasti</value></data>
+  <data name="MenuCategory_MainCourse" xml:space="preserve"><value>Primi / Secondi</value></data>
+  <data name="MenuCategory_Side" xml:space="preserve"><value>Contorni</value></data>
+  <data name="MenuCategory_Dessert" xml:space="preserve"><value>Dolci</value></data>
+  <data name="MenuCategory_Drinks" xml:space="preserve"><value>Bevande</value></data>
+
+  <!-- Allergens (EU 14) -->
+  <data name="Allergen_GLUTEN" xml:space="preserve"><value>Glutine (cereali)</value></data>
+  <data name="Allergen_CRUSTACEANS" xml:space="preserve"><value>Crostacei</value></data>
+  <data name="Allergen_EGGS" xml:space="preserve"><value>Uova</value></data>
+  <data name="Allergen_FISH" xml:space="preserve"><value>Pesce</value></data>
+  <data name="Allergen_PEANUTS" xml:space="preserve"><value>Arachidi</value></data>
+  <data name="Allergen_SOYBEANS" xml:space="preserve"><value>Soia</value></data>
+  <data name="Allergen_MILK" xml:space="preserve"><value>Latte</value></data>
+  <data name="Allergen_NUTS" xml:space="preserve"><value>Frutta a guscio</value></data>
+  <data name="Allergen_CELERY" xml:space="preserve"><value>Sedano</value></data>
+  <data name="Allergen_MUSTARD" xml:space="preserve"><value>Senape</value></data>
+  <data name="Allergen_SESAME" xml:space="preserve"><value>Semi di sesamo</value></data>
+  <data name="Allergen_SULPHITES" xml:space="preserve"><value>Anidride solforosa e solfiti</value></data>
+  <data name="Allergen_LUPIN" xml:space="preserve"><value>Lupino</value></data>
+  <data name="Allergen_MOLLUSCS" xml:space="preserve"><value>Molluschi</value></data>
+
+  <!-- Menu Management -->
+  <data name="MenuMgmt_PageTitle" xml:space="preserve"><value>Gestione Menù - SagraFacile</value></data>
+  <data name="MenuMgmt_Heading" xml:space="preserve"><value>Gestione Menù</value></data>
+  <data name="MenuMgmt_BackToEvents" xml:space="preserve"><value>Torna agli Eventi</value></data>
+  <data name="MenuMgmt_NewItem" xml:space="preserve"><value>Nuovo Elemento Menù</value></data>
+  <data name="MenuMgmt_EditItem" xml:space="preserve"><value>Modifica Elemento Menù</value></data>
+  <data name="MenuMgmt_AllItems" xml:space="preserve"><value>Tutti gli Elementi</value></data>
+  <data name="MenuMgmt_ItemName" xml:space="preserve"><value>Nome</value></data>
+  <data name="MenuMgmt_ItemDescription" xml:space="preserve"><value>Descrizione</value></data>
+  <data name="MenuMgmt_ItemPrice" xml:space="preserve"><value>Prezzo</value></data>
+  <data name="MenuMgmt_ItemCategory" xml:space="preserve"><value>Categoria</value></data>
+  <data name="MenuMgmt_ItemAllergens" xml:space="preserve"><value>Allergeni</value></data>
+  <data name="MenuMgmt_ItemAvailable" xml:space="preserve"><value>Disponibile</value></data>
+  <data name="MenuMgmt_AddItem" xml:space="preserve"><value>Aggiungi Elemento</value></data>
+  <data name="MenuMgmt_SaveChanges" xml:space="preserve"><value>Salva Modifiche</value></data>
+  <data name="MenuMgmt_Cancel" xml:space="preserve"><value>Annulla</value></data>
+  <data name="MenuMgmt_Edit" xml:space="preserve"><value>Modifica</value></data>
+  <data name="MenuMgmt_Delete" xml:space="preserve"><value>Elimina</value></data>
+  <data name="MenuMgmt_ColName" xml:space="preserve"><value>Nome</value></data>
+  <data name="MenuMgmt_ColPrice" xml:space="preserve"><value>Prezzo</value></data>
+  <data name="MenuMgmt_ColAvailable" xml:space="preserve"><value>Disponibile</value></data>
+  <data name="MenuMgmt_ColActions" xml:space="preserve"><value>Azioni</value></data>
+  <data name="MenuMgmt_Loading" xml:space="preserve"><value>Caricamento...</value></data>
+  <data name="MenuMgmt_NoItems" xml:space="preserve"><value>Nessun elemento nel menù. Aggiungi il primo elemento.</value></data>
+  <data name="MenuMgmt_ItemAdded" xml:space="preserve"><value>'{0}' aggiunto al menù.</value></data>
+  <data name="MenuMgmt_ItemUpdated" xml:space="preserve"><value>'{0}' aggiornato.</value></data>
+  <data name="MenuMgmt_ItemDeleted" xml:space="preserve"><value>'{0}' eliminato.</value></data>
+  <data name="MenuMgmt_Error" xml:space="preserve"><value>Errore: {0}</value></data>
+  <data name="MenuMgmt_NameRequired" xml:space="preserve"><value>Il nome dell'elemento è obbligatorio.</value></data>
+  <data name="MenuMgmt_PriceInvalid" xml:space="preserve"><value>Il prezzo deve essere zero o maggiore.</value></data>
+  <data name="MenuMgmt_ManageMenu" xml:space="preserve"><value>Gestisci Menù</value></data>
+
+  <!-- Public Menu -->
+  <data name="PublicMenu_PageTitle" xml:space="preserve"><value>Menù - SagraFacile</value></data>
+  <data name="PublicMenu_Loading" xml:space="preserve"><value>Caricamento menù...</value></data>
+  <data name="PublicMenu_NoActiveEvent" xml:space="preserve"><value>Nessun evento attivo al momento.</value></data>
+  <data name="PublicMenu_NoItems" xml:space="preserve"><value>Menù non ancora disponibile.</value></data>
+  <data name="PublicMenu_Allergens" xml:space="preserve"><value>Allergeni</value></data>
+  <data name="MenuMgmt_ManageCategories" xml:space="preserve"><value>Gestisci Categorie</value></data>
+  <data name="MenuMgmt_CatNameEn" xml:space="preserve"><value>Nome</value></data>
+  <data name="MenuMgmt_CatNameIt" xml:space="preserve"><value>Nome</value></data>
+  <data name="MenuMgmt_CatOrder" xml:space="preserve"><value>Ordine</value></data>
+  <data name="MenuMgmt_CatAdd" xml:space="preserve"><value>Aggiungi Categoria</value></data>
+  <data name="MenuMgmt_CatAdded" xml:space="preserve"><value>Categoria '{0}' aggiunta.</value></data>
+  <data name="MenuMgmt_CatUpdated" xml:space="preserve"><value>Categoria '{0}' aggiornata.</value></data>
+  <data name="MenuMgmt_CatDeleted" xml:space="preserve"><value>Categoria eliminata.</value></data>
+  <data name="MenuMgmt_CatNameRequired" xml:space="preserve"><value>Il nome della categoria è obbligatorio.</value></data>
+  <data name="MenuMgmt_SelectCategory" xml:space="preserve"><value>Seleziona categoria</value></data>
+  <data name="MenuMgmt_CategoryRequired" xml:space="preserve"><value>Selezionare una categoria.</value></data>
+  <data name="MenuMgmt_PriceHint" xml:space="preserve"><value>Inserisci decimale, es. 1.50</value></data>
 </root>
