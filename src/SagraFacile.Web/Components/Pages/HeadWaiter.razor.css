@@ -39,5 +39,6 @@
     .headwaiter-filter-actions .btn {
         width: 100%;
         flex: 1 1 100%;
+        border-radius: var(--bs-border-radius) !important;
     }
 }
