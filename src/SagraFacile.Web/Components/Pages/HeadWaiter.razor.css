@@ -6,6 +6,21 @@
     min-width: 9rem;
 }
 
+.match-list {
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.match-row {
+    transition: background-color 0.15s ease;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.match-row:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
 @media (max-width: 991.98px) {
     .headwaiter-layout .card-header {
         display: flex;
@@ -24,9 +39,5 @@
     .headwaiter-filter-actions .btn {
         width: 100%;
         flex: 1 1 100%;
-    }
-
-    .headwaiter-actions .btn {
-        width: 100%;
     }
 }
