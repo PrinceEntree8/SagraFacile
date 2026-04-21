@@ -58,7 +58,7 @@
                 <div class="mb-3">
                     <label class="form-label">@L["HeadWaiter_CoverFilter"]</label>
                     <div class="input-group headwaiter-filter-actions">
-                        <InputNumber @bind-Value="coverCountForSearch" class="form-control" placeholder="All" />
+                        <InputNumber @bind-Value="coverCountForSearch" class="form-control" placeholder="@L["HeadWaiter_CoverFilterPlaceholder"]" />
                         <button class="btn btn-outline-primary" @onclick="@SearchBestFit">@L["HeadWaiter_Filter"]</button>
                         <button class="btn btn-outline-secondary" @onclick="@ClearFilter">@L["HeadWaiter_Clear"]</button>
                     </div>
@@ -134,8 +134,8 @@
                                             <span class="text-muted">@L["HeadWaiter_Never"]</span>
                                         }
                                     </div>
-                                    <div class="col-12 col-md-2 mb-1 mb-md-0">
-                                        <button class="btn btn-sm btn-primary w-100 w-md-auto" @onclick="@(() => SeatReservationAsync(match.Id))" disabled="@(actionInProgress == match.Id)">
+                                    <div class="col-12 col-md-2 mb-1 mb-md-0 d-grid d-md-block">
+                                        <button class="btn btn-sm btn-primary" @onclick="@(() => SeatReservationAsync(match.Id))" disabled="@(actionInProgress == match.Id)">
                                             @L["HeadWaiter_Seat"]
                                         </button>
                                     </div>

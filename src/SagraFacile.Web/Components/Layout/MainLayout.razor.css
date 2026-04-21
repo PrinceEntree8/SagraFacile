@@ -38,13 +38,27 @@ main {
 
 /* Sidebar toggle — hidden on mobile (mobile uses the NavMenu hamburger) */
 .sidebar-toggle-input {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    opacity: 0;
 }
 
 .sidebar-toggle-label {
     display: none;
 }
 
+.sidebar-toggle-input:focus-visible + .sidebar-toggle-label {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+}
 @media (max-width: 640.98px) {
     .top-row {
         justify-content: space-between;
