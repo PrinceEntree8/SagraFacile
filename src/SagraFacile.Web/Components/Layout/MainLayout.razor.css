@@ -36,6 +36,29 @@ main {
         text-overflow: ellipsis;
     }
 
+/* Sidebar toggle — hidden on mobile (mobile uses the NavMenu hamburger) */
+.sidebar-toggle-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    opacity: 0;
+}
+
+.sidebar-toggle-label {
+    display: none;
+}
+
+.sidebar-toggle-input:focus-visible + .sidebar-toggle-label {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+}
 @media (max-width: 640.98px) {
     .top-row {
         justify-content: space-between;
@@ -73,6 +96,39 @@ main {
     .top-row, article {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
+    }
+
+    /* Show toggle button only on desktop */
+    .sidebar-toggle-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        margin-right: auto;
+        cursor: pointer;
+        border-radius: 4px;
+        border: 1px solid #d6d5d5;
+        background-color: transparent;
+        flex-shrink: 0;
+    }
+
+    .sidebar-toggle-label:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .sidebar-toggle-icon {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23444' viewBox='0 0 16 16'%3E%3Cpath d='M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3zm5-1v12h9a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H5zM4 2H2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h2V2z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-size: cover;
+    }
+
+    /* Collapse sidebar when toggle is checked */
+    .sidebar-toggle-input:checked ~ .sidebar {
+        display: none;
     }
 }
 

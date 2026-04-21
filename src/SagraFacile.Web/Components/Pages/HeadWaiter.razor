@@ -11,8 +11,8 @@
 
 <h1>@L["HeadWaiter_Heading"]</h1>
 
-<div class="row">
-    <div class="col-md-4">
+<div class="row headwaiter-layout g-3">
+    <div class="col-12 col-lg-4">
         <div class="card mb-4">
             <div class="card-header">
                 <h3>@L["HeadWaiter_AnnounceSeats"]</h3>
@@ -41,7 +41,7 @@
         </div>
     </div>
 
-    <div class="col-md-8">
+    <div class="col-12 col-lg-8">
         <div class="card">
             <div class="card-header">
                 <h3>@L["HeadWaiter_BestFit"]</h3>
@@ -57,8 +57,8 @@
             <div class="card-body">
                 <div class="mb-3">
                     <label class="form-label">@L["HeadWaiter_CoverFilter"]</label>
-                    <div class="input-group">
-                        <InputNumber @bind-Value="coverCountForSearch" class="form-control" placeholder="All" />
+                    <div class="input-group headwaiter-filter-actions">
+                        <InputNumber @bind-Value="coverCountForSearch" class="form-control" placeholder="@L["HeadWaiter_CoverFilterPlaceholder"]" />
                         <button class="btn btn-outline-primary" @onclick="@SearchBestFit">@L["HeadWaiter_Filter"]</button>
                         <button class="btn btn-outline-secondary" @onclick="@ClearFilter">@L["HeadWaiter_Clear"]</button>
                     </div>
@@ -73,66 +73,74 @@
                 {
                     @if (bestFitResults.Any())
                     {
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>@L["HeadWaiter_ColMatch"]</th>
-                                        <th>@L["HeadWaiter_ColQueue"]</th>
-                                        <th>@L["HeadWaiter_ColName"]</th>
-                                        <th>@L["HeadWaiter_ColPartySize"]</th>
-                                        <th>@L["HeadWaiter_ColNotes"]</th>
-                                        <th>@L["HeadWaiter_ColWaiting"]</th>
-                                        <th>@L["HeadWaiter_ColCalls"]</th>
-                                        <th>@L["HeadWaiter_ColLastCall"]</th>
-                                        <th>@L["HeadWaiter_ColActions"]</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var match in bestFitResults)
-                                    {
-                                        <tr class="@GetMatchRowClass(match)">
-                                            <td>
-                                                <span class="badge @GetMatchBadge(match.MatchQuality)">
-                                                    @match.MatchQuality
-                                                </span>
-                                            </td>
-                                            <td><strong>@match.QueueNumber</strong></td>
-                                            <td>@match.CustomerName</td>
-                                            <td>
-                                                <span class="badge bg-info">@match.PartySize</span>
-                                            </td>
-                                            <td>
-                                                @if (!string.IsNullOrEmpty(match.Notes))
-                                                {
-                                                    <span class="text-muted">@match.Notes</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">-</span>
-                                                }
-                                            </td>
-                                            <td>@FormatTimeSpan(match.WaitingTime)</td>
-                                            <td>@match.CallCount</td>
-                                            <td>
-                                                @if (match.LastCalledAt.HasValue)
-                                                {
-                                                    @FormatTimeSpan(DateTime.UtcNow - match.LastCalledAt.Value)
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">@L["HeadWaiter_Never"]</span>
-                                                }
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-sm btn-primary" @onclick="@(() => SeatReservationAsync(match.Id))" disabled="@(actionInProgress == match.Id)">
-                                                    @L["HeadWaiter_Seat"]
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
+                        <div class="match-list">
+                            <div class="row fw-semibold d-none d-md-flex border-bottom pb-2 mb-1 px-2 text-muted small text-uppercase">
+                                <div class="col-md-1">@L["HeadWaiter_ColMatch"]</div>
+                                <div class="col-md-1">@L["HeadWaiter_ColQueue"]</div>
+                                <div class="col-md-2">@L["HeadWaiter_ColName"]</div>
+                                <div class="col-md-1">@L["HeadWaiter_ColPartySize"]</div>
+                                <div class="col-md-2">@L["HeadWaiter_ColNotes"]</div>
+                                <div class="col-md-1">@L["HeadWaiter_ColWaiting"]</div>
+                                <div class="col-md-1">@L["HeadWaiter_ColCalls"]</div>
+                                <div class="col-md-1">@L["HeadWaiter_ColLastCall"]</div>
+                                <div class="col-md-2">@L["HeadWaiter_ColActions"]</div>
+                            </div>
+                            @foreach (var match in bestFitResults)
+                            {
+                                <div class="row align-items-center py-2 border-bottom match-row @GetMatchRowClass(match)">
+                                    <div class="col-4 col-md-1 mb-1 mb-md-0">
+                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColMatch"]</span>
+                                        <span class="badge @GetMatchBadge(match.MatchQuality)">@match.MatchQuality</span>
+                                    </div>
+                                    <div class="col-4 col-md-1 mb-1 mb-md-0">
+                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColQueue"]</span>
+                                        <strong>@match.QueueNumber</strong>
+                                    </div>
+                                    <div class="col-4 col-md-2 mb-1 mb-md-0">
+                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColName"]</span>
+                                        @match.CustomerName
+                                    </div>
+                                    <div class="col-4 col-md-1 mb-1 mb-md-0">
+                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColPartySize"]</span>
+                                        <span class="badge bg-info">@match.PartySize</span>
+                                    </div>
+                                    <div class="col-8 col-md-2 mb-1 mb-md-0">
+                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColNotes"]</span>
+                                        @if (!string.IsNullOrEmpty(match.Notes))
+                                        {
+                                            <span class="text-muted">@match.Notes</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </div>
+                                    <div class="col-3 col-md-1 mb-1 mb-md-0">
+                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColWaiting"]</span>
+                                        @FormatTimeSpan(match.WaitingTime)
+                                    </div>
+                                    <div class="col-3 col-md-1 mb-1 mb-md-0">
+                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColCalls"]</span>
+                                        @match.CallCount
+                                    </div>
+                                    <div class="col-6 col-md-1 mb-1 mb-md-0">
+                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColLastCall"]</span>
+                                        @if (match.LastCalledAt.HasValue)
+                                        {
+                                            @FormatTimeSpan(DateTime.UtcNow - match.LastCalledAt.Value)
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">@L["HeadWaiter_Never"]</span>
+                                        }
+                                    </div>
+                                    <div class="col-12 col-md-2 mb-1 mb-md-0 d-grid d-md-block">
+                                        <button class="btn btn-sm btn-primary" @onclick="@(() => SeatReservationAsync(match.Id))" disabled="@(actionInProgress == match.Id)">
+                                            @L["HeadWaiter_Seat"]
+                                        </button>
+                                    </div>
+                                </div>
+                            }
                         </div>
 
                         <div class="alert alert-info mt-3">
@@ -307,7 +315,7 @@
     private string GetMatchRowClass(GetBestFitReservation.ReservationMatchDto match)
     {
         if (match.MatchQuality == "Perfect")
-            return "table-success";
+            return "bg-success bg-opacity-10";
         return "";
     }
 

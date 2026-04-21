@@ -28,6 +28,8 @@
 
         <AuthorizeView>
             <Authorized>
+                <div class="nav-section-header px-3">@L["Nav_SectionService"]</div>
+
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="now-calling">
                         <span class="bi bi-megaphone-fill-nav-menu" aria-hidden="true"></span> @L["Nav_NowCalling"]
@@ -56,6 +58,7 @@
 
                 <AuthorizeView Roles="Admin,Supervisore">
                     <Authorized Context="reportsCtx">
+                        <div class="nav-section-header px-3">@L["Nav_SectionManagement"]</div>
                         <div class="nav-item px-3">
                             <NavLink class="nav-link" href="reservation-report">
                                 <span class="bi bi-bar-chart-nav-menu" aria-hidden="true"></span> @L["Nav_Reports"]

@@ -73,6 +73,9 @@
   <data name="Nav_NoActiveEvent" xml:space="preserve"><value>No active event</value></data>
   <data name="Nav_Language" xml:space="preserve"><value>Language</value></data>
   <data name="Nav_PublicMenu" xml:space="preserve"><value>Menu</value></data>
+  <data name="Nav_ToggleSidebar" xml:space="preserve"><value>Toggle sidebar</value></data>
+  <data name="Nav_SectionService" xml:space="preserve"><value>Service</value></data>
+  <data name="Nav_SectionManagement" xml:space="preserve"><value>Management</value></data>
 
   <!-- Login -->
   <data name="Login_PageTitle" xml:space="preserve"><value>Login - SagraFacile</value></data>
@@ -164,6 +167,9 @@
   <data name="Receptionist_NoReservations" xml:space="preserve"><value>No reservations found.</value></data>
   <data name="Receptionist_ReservationCreated" xml:space="preserve"><value>Reservation {0} created successfully!</value></data>
   <data name="Receptionist_Error" xml:space="preserve"><value>Error: {0}</value></data>
+  <data name="Receptionist_NameRequired" xml:space="preserve"><value>Customer name is required.</value></data>
+  <data name="Receptionist_PartySizeMin" xml:space="preserve"><value>Party size must be at least 1.</value></data>
+  <data name="Receptionist_SeatsContextFull" xml:space="preserve"><value>No seats available</value></data>
 
   <!-- Head Waiter -->
   <data name="HeadWaiter_PageTitle" xml:space="preserve"><value>Head Waiter - Available Seats</value></data>

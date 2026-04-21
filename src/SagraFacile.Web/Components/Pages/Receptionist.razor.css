@@ -1,0 +1,107 @@
+.receptionist-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.receptionist-filters .btn {
+    white-space: nowrap;
+}
+
+/* Compact inline reservation chips */
+.reservation-chips {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.reservation-chip {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem;
+    background-color: #fff;
+    transition: background-color 0.15s ease;
+}
+
+.reservation-chip:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.reservation-chip.bg-danger {
+    border-color: rgba(220, 53, 69, 0.25);
+}
+
+.chip-queue {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    min-width: 3.5rem;
+    font-size: 0.95rem;
+}
+
+.chip-name {
+    flex: 1 1 8rem;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chip-party,
+.chip-status {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+}
+
+.chip-wait {
+    flex-shrink: 0;
+    font-size: 0.875rem;
+    color: #555;
+    white-space: nowrap;
+}
+
+.chip-calls {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+}
+
+.chip-actions {
+    display: flex;
+    gap: 0.375rem;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+@media (max-width: 991.98px) {
+    .receptionist-layout .display-1 {
+        font-size: clamp(3rem, 15vw, 5rem);
+    }
+
+    .receptionist-filters {
+        width: 100%;
+        margin-top: 0.75rem;
+    }
+
+    .receptionist-filters .btn {
+        flex: 1 1 calc(50% - 0.5rem);
+    }
+}
+
+@media (max-width: 575.98px) {
+    .receptionist-filters .btn {
+        flex-basis: 100%;
+    }
+
+    .receptionist-stats .col-md-4 {
+        width: 100%;
+    }
+
+    .chip-actions {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
