@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SagraFacile.Application\SagraFacile.Application.csproj" />
     <ProjectReference Include="..\SagraFacile.Infrastructure\SagraFacile.Infrastructure.csproj" />
+    <ProjectReference Include="..\SagraFacile.ServiceDefaults\SagraFacile.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

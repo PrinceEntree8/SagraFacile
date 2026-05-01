@@ -10,6 +10,8 @@ COPY src/SagraFacile.Domain/SagraFacile.Domain.csproj ./src/SagraFacile.Domain/
 COPY src/SagraFacile.Application/SagraFacile.Application.csproj ./src/SagraFacile.Application/
 COPY src/SagraFacile.Infrastructure/SagraFacile.Infrastructure.csproj ./src/SagraFacile.Infrastructure/
 COPY src/SagraFacile.Web/SagraFacile.Web.csproj ./src/SagraFacile.Web/
+COPY src/SagraFacile.ServiceDefaults/SagraFacile.ServiceDefaults.csproj ./src/SagraFacile.ServiceDefaults/
+COPY src/SagraFacile.AppHost/SagraFacile.AppHost.csproj ./src/SagraFacile.AppHost/
 COPY tests/SagraFacile.Application.Tests/SagraFacile.Application.Tests.csproj ./tests/SagraFacile.Application.Tests/
 COPY tests/SagraFacile.Infrastructure.Tests/SagraFacile.Infrastructure.Tests.csproj ./tests/SagraFacile.Infrastructure.Tests/
 
