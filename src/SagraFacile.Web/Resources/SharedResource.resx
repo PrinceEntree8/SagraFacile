@@ -246,10 +246,6 @@
   <data name="Report_SelectDateRange" xml:space="preserve"><value>Select date range and click "Generate Report" to view statistics.</value></data>
   <data name="Report_NoReservations" xml:space="preserve"><value>No reservations found for the selected date range.</value></data>
 
-  <!-- Home -->
-  <data name="Home_Hello" xml:space="preserve"><value>Hello, world!</value></data>
-  <data name="Home_Welcome" xml:space="preserve"><value>Welcome to your new app.</value></data>
-
   <!-- Menu Categories -->
   <data name="MenuCategory_Starters" xml:space="preserve"><value>Starters</value></data>
   <data name="MenuCategory_MainCourse" xml:space="preserve"><value>Main Course</value></data>

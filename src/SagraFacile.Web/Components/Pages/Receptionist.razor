@@ -322,16 +322,7 @@
         try
         {
             var command = new SeatReservation.Command(reservationId);
-            var result = await Mediator.Send(command, CancellationToken.None);
-            
-            if (result.Success)
-            {
-                var reservation = reservations.FirstOrDefault(r => r.Id == reservationId);
-                if (reservation != null && hubConnection?.State == HubConnectionState.Connected)
-                {
-                    await hubConnection.SendAsync("NotifyReservationSeated", reservationId, reservation.QueueNumber);
-                }
-            }
+            await Mediator.Send(command, CancellationToken.None);
             
             await LoadReservations(currentFilter);
         }
