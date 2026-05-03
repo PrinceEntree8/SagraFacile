@@ -32,4 +32,11 @@ public class SignalRReservationNotifier : IReservationNotifier
             .ReservationVoided(reservationId, queueNumber)
             .WaitAsync(cancellationToken);
     }
+
+    public Task NotifyReservationSeatedAsync(int reservationId, string queueNumber, CancellationToken cancellationToken)
+    {
+        return _hubContext.Clients.All
+            .ReservationSeated(reservationId, queueNumber)
+            .WaitAsync(cancellationToken);
+    }
 }

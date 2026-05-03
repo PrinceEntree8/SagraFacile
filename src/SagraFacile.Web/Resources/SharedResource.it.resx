@@ -246,10 +246,6 @@
   <data name="Report_SelectDateRange" xml:space="preserve"><value>Seleziona l'intervallo di date e clicca "Genera Report" per visualizzare le statistiche.</value></data>
   <data name="Report_NoReservations" xml:space="preserve"><value>Nessuna prenotazione trovata per l'intervallo di date selezionato.</value></data>
 
-  <!-- Home -->
-  <data name="Home_Hello" xml:space="preserve"><value>Ciao, mondo!</value></data>
-  <data name="Home_Welcome" xml:space="preserve"><value>Benvenuto nella tua nuova app.</value></data>
-
   <!-- Menu Categories -->
   <data name="MenuCategory_Starters" xml:space="preserve"><value>Antipasti</value></data>
   <data name="MenuCategory_MainCourse" xml:space="preserve"><value>Primi / Secondi</value></data>

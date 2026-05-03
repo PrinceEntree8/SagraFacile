@@ -10,11 +10,12 @@ namespace SagraFacile.Application.Tests.Features.Reservations;
 public class SeatReservationHandlerTests
 {
     private readonly IReservationRepository _repository = Substitute.For<IReservationRepository>();
+    private readonly IReservationNotifier _notifier = Substitute.For<IReservationNotifier>();
     private readonly SeatReservation.Handler _handler;
 
     public SeatReservationHandlerTests()
     {
-        _handler = new SeatReservation.Handler(_repository);
+        _handler = new SeatReservation.Handler(_repository, _notifier);
     }
 
     [Fact]
@@ -32,6 +33,7 @@ public class SeatReservationHandlerTests
         Assert.Equal("Seated", reservation.Status);
         Assert.NotNull(reservation.SeatedAt);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+        await _notifier.Received(1).NotifyReservationSeatedAsync(1, "202601010001", Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -47,6 +49,7 @@ public class SeatReservationHandlerTests
         // Assert
         Assert.False(result.Success);
         await _repository.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+        await _notifier.DidNotReceive().NotifyReservationSeatedAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -62,6 +65,7 @@ public class SeatReservationHandlerTests
         // Assert
         Assert.False(result.Success);
         await _repository.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+        await _notifier.DidNotReceive().NotifyReservationSeatedAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -79,5 +83,6 @@ public class SeatReservationHandlerTests
         // Assert
         Assert.False(result.Success);
         Assert.Contains("modified by another user", result.Message);
+        await _notifier.DidNotReceive().NotifyReservationSeatedAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 }

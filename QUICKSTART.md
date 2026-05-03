@@ -2,141 +2,164 @@
 
 ## Prerequisites
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) or
-- [Docker](https://www.docker.com/get-started) (Docker-only option)
+- [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/) (v2.x or later)
+- Git
 
-## Option 1: Quick Start with Docker (Recommended)
+---
 
-The fastest way to get started is using Docker Compose:
+## Deploying with Docker Compose
+
+SagraFacile ships with three Docker Compose files to cover the most common deployment scenarios:
+
+| File | Purpose |
+|---|---|
+| `docker-compose.yml` | Local development (builds image from source) |
+| `docker-compose.release.yml` | Production / internet-facing |
+| `docker-compose.lan.yml` | LAN / offline events (HTTP only, no HTTPS redirect) |
+
+### 1. Clone the repository
 
 ```bash
-# Clone the repository
 git clone https://github.com/PrinceEntree8/SagraFacile.git
 cd SagraFacile
-
-# Start the entire stack (database + web app)
-docker compose up -d
-
-# Wait a few seconds for the containers to start
-# Access the application at http://localhost:5000
 ```
 
+### 2. Create your environment file
+
+Copy the example and edit the values before the first run:
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and set at least:
+
+```env
+POSTGRES_PASSWORD=<strong-db-password>
+Jwt__Key=<long-random-string-at-least-32-characters>
+Seed__AdminPassword=<initial-admin-password>
+```
+
+> **Security note**: Never leave the default placeholder values in a production or LAN deployment.
+
+---
+
+## Linux deployment
+
+### Development (build from source)
+
+```bash
+docker compose up -d
+```
+
+The app is available at **http://localhost:5000**.
+
 To stop:
+
 ```bash
 docker compose down
 ```
 
-## Option 2: Local Development
-
-If you prefer to run the application locally:
-
-### 1. Start PostgreSQL with Docker
+### Production (internet-facing, from pre-built image)
 
 ```bash
-docker compose up -d postgres
-```
-
-### 2. Apply Database Migrations
-
-```bash
-cd src/SagraFacile.Web/SagraFacile.Web
-dotnet ef database update
-```
-
-### 3. Run the Application
-
-```bash
-dotnet run
-```
-
-The application will be available at https://localhost:5254 (or http://localhost:5254)
-
-### Configuration Notes
-
-- **Local Development**: Uses `appsettings.Development.json` with `Host=localhost`
-- **Docker Environment**: Uses `Host=postgres` (Docker service name)
-- The application auto-detects the environment and uses the appropriate connection string
-
-## Project Structure
-
-```
-SagraFacile/
-├── src/
-│   └── SagraFacile.Web/
-│       ├── SagraFacile.Web/              # Server project (ASP.NET Core)
-│       │   ├── Data/                      # Database context
-│       │   ├── Features/                  # Vertical slices
-│       │   │   └── Orders/                # Example: Orders feature
-│       │   ├── Hubs/                      # SignalR hubs
-│       │   └── Components/                # Blazor components
-│       └── SagraFacile.Web.Client/       # WebAssembly project
-├── docs/                                  # Documentation
-├── docker-compose.yml                     # Development environment
-├── docker-compose.release.yml             # Production environment
-└── Dockerfile
-```
-
-## Key Features
-
-✅ **Blazor Web App** - Auto interactivity (Server + WebAssembly)  
-✅ **Vertical Slice Architecture** - Feature-focused organization  
-✅ **PostgreSQL** - Robust relational database  
-✅ **Entity Framework Core** - Modern ORM  
-✅ **Wolverine** - CQRS pattern implementation  
-✅ **SignalR** - Real-time communication  
-✅ **Docker** - Containerized deployment  
-✅ **FluentValidation** - Request validation  
-
-## What's Included
-
-### Example Feature: Orders
-
-The project includes a complete Orders feature demonstrating the vertical slice architecture:
-
-- **Order Entity** - Domain model with EF Core configuration
-- **CreateOrder Command** - Create new orders with validation
-- **GetOrders Query** - Retrieve paginated orders
-- **Orders Page** - Blazor UI demonstrating CRUD operations
-- **OrderHub** - SignalR hub for real-time updates
-
-### Database
-
-- PostgreSQL 17 Alpine
-- Automatic migrations
-- Configured with Entity Framework Core
-- Health checks in Docker setup
-
-### Development Tools
-
-- Hot reload enabled
-- Structured logging
-- Docker development environment
-- Production-ready Docker Compose configuration
-
-## Next Steps
-
-1. **Explore the Code**: Check out `src/SagraFacile.Web/SagraFacile.Web/Features/Orders/` for the example feature
-2. **Read the Docs**: See `docs/DEVELOPMENT.md` for detailed development guide
-3. **Add Your Features**: Follow the vertical slice pattern to add new features
-4. **Customize**: Modify the Orders feature or create new ones
-
-## Getting Help
-
-- **Development Guide**: See `docs/DEVELOPMENT.md`
-- **Issues**: Open an issue on GitHub
-- **README**: Full README in `README.md`
-
-## Production Deployment
-
-For production, use the release compose file:
-
-```bash
-# Set environment variables (optional)
-export POSTGRES_PASSWORD=your_secure_password
-export WEB_PORT=80
-
-# Start production stack
 docker compose -f docker-compose.release.yml up -d
 ```
 
-See `README.md` for complete production deployment instructions.
+The app listens on `WEB_PORT` (default **80**). Place a reverse proxy (nginx, Caddy, Traefik) in front for TLS termination.
+
+To stop:
+
+```bash
+docker compose -f docker-compose.release.yml down
+```
+
+### LAN / offline events (HTTP only)
+
+Use this when the server and all tablets/phones are on the same local network with no internet access:
+
+```bash
+docker compose -f docker-compose.lan.yml up -d
+```
+
+All devices on the network can reach the app at `http://<server-ip>:<WEB_PORT>` (default port **80**).
+
+---
+
+## Windows deployment
+
+The commands are identical to Linux. Run them in **PowerShell** or **Command Prompt** with [Docker Desktop](https://docs.docker.com/desktop/install/windows-install/) installed.
+
+### Development (build from source)
+
+```powershell
+docker compose up -d
+```
+
+The app is available at **http://localhost:5000**.
+
+To stop:
+
+```powershell
+docker compose down
+```
+
+### Production
+
+```powershell
+docker compose -f docker-compose.release.yml up -d
+```
+
+### LAN / offline events
+
+```powershell
+docker compose -f docker-compose.lan.yml up -d
+```
+
+> **Windows firewall**: If other devices on your network cannot reach the server, add an inbound firewall rule to allow TCP traffic on `WEB_PORT` (default 80).
+
+---
+
+## First-run setup
+
+1. Wait for the health-check to pass (usually 10–20 seconds).
+2. Open a browser and navigate to the app URL.
+3. Log in with the admin credentials you set in `.env` (`Seed__AdminUsername` / `Seed__AdminPassword`).
+4. Go to **Events** → create an event and activate it.
+5. Go to **Menu Management** → add menu categories and items.
+6. The home page (`/`) now shows the active event's menu to visitors.
+
+---
+
+## Viewing logs
+
+```bash
+# All services
+docker compose logs -f
+
+# Web app only
+docker compose logs -f web
+
+# PostgreSQL only
+docker compose logs -f postgres
+```
+
+---
+
+## Upgrading
+
+```bash
+# Pull the latest image (production)
+docker compose -f docker-compose.release.yml pull
+docker compose -f docker-compose.release.yml up -d
+```
+
+Database migrations run automatically on startup.
+
+---
+
+## Getting Help
+
+- **Development guide**: `docs/DEVELOPMENT.md`
+- **Issues**: Open an issue on GitHub
+- **README**: `README.md`

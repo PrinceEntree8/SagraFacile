@@ -334,16 +334,6 @@
             var command = new SeatReservation.Command(reservationId);
             await Mediator.Send(command, CancellationToken.None);
             
-            // Notify via SignalR
-            if (hubConnection?.State == HubConnectionState.Connected)
-            {
-                var match = bestFitResults.FirstOrDefault(r => r.Id == reservationId);
-                if (match != null)
-                {
-                    await hubConnection.SendAsync("NotifyReservationSeated", reservationId, match.QueueNumber);
-                }
-            }
-            
             // Refresh the best fit results
             if (coverCountForSearch > 0)
             {
