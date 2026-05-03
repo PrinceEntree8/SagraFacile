@@ -88,8 +88,8 @@
             var catTask = Mediator.QueryAsync(new GetMenuCategories.Query());
             var menuTask = Mediator.QueryAsync(new GetEventMenu.Query(activeEvent.Id, IncludeUnavailable: false));
             await Task.WhenAll(catTask, menuTask);
-            categories = catTask.Result.Categories;
-            items = menuTask.Result.Items;
+            categories = (await catTask).Categories;
+            items = (await menuTask).Items;
         }
         isLoading = false;
     }
