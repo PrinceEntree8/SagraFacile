@@ -115,4 +115,131 @@ public class ReservationRepositoryTests
         Assert.True(call.Id > 0);
         Assert.Equal(reservation.Id, call.TableReservationId);
     }
+
+    [Fact]
+    public async Task GetByDateRangeAsync_NoBounds_ReturnsAll()
+    {
+        // Arrange
+        using var factory = new TestDbContextFactory();
+        await using var repo = new ReservationRepository(factory);
+        var now = DateTime.UtcNow;
+
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = now.AddDays(-5) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260102", QueueNumber = "0001", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = now.AddDays(-3) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260103", QueueNumber = "0001", CustomerName = "C", PartySize = 3, Status = "Voided", CreatedAt = now.AddDays(-1) }, CancellationToken.None);
+        await repo.SaveChangesAsync(CancellationToken.None);
+
+        // Act
+        var items = await repo.GetByDateRangeAsync(null, null, CancellationToken.None);
+
+        // Assert — no filter returns all
+        Assert.Equal(3, items.Count);
+    }
+
+    [Fact]
+    public async Task GetByDateRangeAsync_WithStartDate_ExcludesOlderReservations()
+    {
+        // Arrange
+        using var factory = new TestDbContextFactory();
+        await using var repo = new ReservationRepository(factory);
+        var now = DateTime.UtcNow;
+        var cutoff = now.AddDays(-2);
+
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "Old", PartySize = 1, Status = "Waiting", CreatedAt = now.AddDays(-5) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260102", QueueNumber = "0001", CustomerName = "New", PartySize = 2, Status = "Waiting", CreatedAt = now.AddDays(-1) }, CancellationToken.None);
+        await repo.SaveChangesAsync(CancellationToken.None);
+
+        // Act
+        var items = await repo.GetByDateRangeAsync(cutoff, null, CancellationToken.None);
+
+        // Assert
+        Assert.Single(items);
+        Assert.Equal("New", items[0].CustomerName);
+    }
+
+    [Fact]
+    public async Task GetByDateRangeAsync_WithEndDate_ExcludesNewerReservations()
+    {
+        // Arrange
+        using var factory = new TestDbContextFactory();
+        await using var repo = new ReservationRepository(factory);
+        var now = DateTime.UtcNow;
+        var cutoff = now.AddDays(-2);
+
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "Old", PartySize = 1, Status = "Waiting", CreatedAt = now.AddDays(-5) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260102", QueueNumber = "0001", CustomerName = "New", PartySize = 2, Status = "Waiting", CreatedAt = now.AddDays(-1) }, CancellationToken.None);
+        await repo.SaveChangesAsync(CancellationToken.None);
+
+        // Act
+        var items = await repo.GetByDateRangeAsync(null, cutoff, CancellationToken.None);
+
+        // Assert
+        Assert.Single(items);
+        Assert.Equal("Old", items[0].CustomerName);
+    }
+
+    [Fact]
+    public async Task GetByDateRangeAsync_WithBothBounds_ReturnsOnlyInRange()
+    {
+        // Arrange
+        using var factory = new TestDbContextFactory();
+        await using var repo = new ReservationRepository(factory);
+        var now = DateTime.UtcNow;
+
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "TooOld", PartySize = 1, Status = "Waiting", CreatedAt = now.AddDays(-10) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260102", QueueNumber = "0001", CustomerName = "InRange", PartySize = 2, Status = "Seated", CreatedAt = now.AddDays(-3) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260103", QueueNumber = "0001", CustomerName = "TooNew", PartySize = 3, Status = "Voided", CreatedAt = now.AddDays(-1) }, CancellationToken.None);
+        await repo.SaveChangesAsync(CancellationToken.None);
+
+        // Act
+        var items = await repo.GetByDateRangeAsync(now.AddDays(-5), now.AddDays(-2), CancellationToken.None);
+
+        // Assert
+        Assert.Single(items);
+        Assert.Equal("InRange", items[0].CustomerName);
+    }
+
+    [Fact]
+    public async Task GetByDateRangeAsync_ReturnsOrderedByCreatedAt()
+    {
+        // Arrange
+        using var factory = new TestDbContextFactory();
+        await using var repo = new ReservationRepository(factory);
+        var now = DateTime.UtcNow;
+
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0003", CustomerName = "Third", PartySize = 1, Status = "Waiting", CreatedAt = now.AddMinutes(-1) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "First", PartySize = 2, Status = "Waiting", CreatedAt = now.AddMinutes(-30) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0002", CustomerName = "Second", PartySize = 3, Status = "Waiting", CreatedAt = now.AddMinutes(-15) }, CancellationToken.None);
+        await repo.SaveChangesAsync(CancellationToken.None);
+
+        // Act
+        var items = await repo.GetByDateRangeAsync(null, null, CancellationToken.None);
+
+        // Assert — ordered by CreatedAt ascending
+        Assert.Equal(3, items.Count);
+        Assert.Equal("First", items[0].CustomerName);
+        Assert.Equal("Second", items[1].CustomerName);
+        Assert.Equal("Third", items[2].CustomerName);
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_WithExplicitStatusFilter_ReturnsOnlyMatchingStatus()
+    {
+        // Arrange
+        using var factory = new TestDbContextFactory();
+        await using var repo = new ReservationRepository(factory);
+
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0002", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0003", CustomerName = "C", PartySize = 3, Status = "Called", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+        await repo.SaveChangesAsync(CancellationToken.None);
+
+        // Act — explicit status "Seated"
+        var (items, total) = await repo.GetPagedAsync("Seated", 1, 50, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(1, total);
+        Assert.Single(items);
+        Assert.Equal("Seated", items[0].Status);
+    }
 }
