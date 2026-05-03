@@ -50,7 +50,7 @@ public class UpdateTableCoverHandlerTests
         _repository.When(r => r.AddAsync(Arg.Any<Table>(), Arg.Any<CancellationToken>()))
             .Do(ci => { added = ci.Arg<Table>(); added.Id = 99; });
 
-        var result = await _handler.Handle(new UpdateTableCover.Command(null, "T99", 4), CancellationToken.None);
+        await _handler.Handle(new UpdateTableCover.Command(null, "T99", 4), CancellationToken.None);
 
         Assert.NotNull(added);
         Assert.Equal("T99", added!.TableNumber);
