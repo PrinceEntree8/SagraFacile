@@ -226,7 +226,14 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        await hubConnection.StartAsync();
+        try
+        {
+            await hubConnection.StartAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DEBUG_LOG] SignalR initialization failed: {ex}");
+        }
     }
 
     private async Task LoadReservations(string? status)

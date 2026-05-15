@@ -78,6 +78,18 @@ builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddControllers();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("SignalRPolicy", policy =>
+    {
+        policy.AllowAnyHeader()
+            .AllowAnyMethod()
+            .SetIsOriginAllowed(_ => true) 
+            .AllowCredentials();
+    });
+});
+
+
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
@@ -114,6 +126,8 @@ if (!allowHttp)
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseCors("SignalRPolicy");
+
 var supportedCultures = new[] { "it", "en" };
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
@@ -133,10 +147,9 @@ app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapControllers();
+app.MapHub<ReservationHub>("/hubs/reservations").DisableAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-
-app.MapHub<ReservationHub>("/hubs/reservations");
 
 app.MapPost("/logout", async (HttpContext context) =>
 {

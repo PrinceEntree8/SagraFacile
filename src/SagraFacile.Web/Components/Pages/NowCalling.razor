@@ -180,13 +180,21 @@
                 await InvokeAsync(StateHasChanged);
             });
 
-        await hubConnection.StartAsync();
-        isConnected = hubConnection.State == HubConnectionState.Connected;
+        try
+        {
+            await hubConnection.StartAsync();
+            isConnected = hubConnection.State == HubConnectionState.Connected;
 
-        // Join the "NOW_CALLING" SignalR group so the server can target
-        // display-board clients specifically.
-        if (isConnected)
-            await hubConnection.SendAsync("JoinReservationGroup", "NOW_CALLING");
+            // Join the "NOW_CALLING" SignalR group so the server can target
+            // display-board clients specifically.
+            if (isConnected)
+                await hubConnection.SendAsync("JoinReservationGroup", "NOW_CALLING");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DEBUG_LOG] SignalR initialization failed: {ex}");
+            isConnected = false;
+        }
     }
 
     public async ValueTask DisposeAsync()
