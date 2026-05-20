@@ -1,5 +1,5 @@
 @page "/receptionist"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@attribute [Authorize]
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
 @inject IMediator Mediator
@@ -13,19 +13,6 @@
 
 <div class="row receptionist-layout g-3">
     <div class="col-12 col-lg-5">
-        <div class="card mb-4">
-            <div class="card-header @(availableSeats > 0 ? "bg-success" : "bg-warning") @(availableSeats > 0 ? "text-white" : "text-dark")">
-                <h3 class="mb-0">@L["Receptionist_AvailableSeats"]</h3>
-            </div>
-            <div class="card-body text-center">
-                <h1 class="display-1">@availableSeats</h1>
-                <p class="text-muted">@L["Receptionist_AnnouncedBy"]</p>
-                @if (availableSeats == 0)
-                {
-                    <p class="text-warning fw-semibold mb-0">@L["Receptionist_SeatsContextFull"]</p>
-                }
-            </div>
-        </div>
 
         <div class="card mb-4">
             <div class="card-header">
@@ -36,7 +23,8 @@
                     <div class="mb-3">
                         <label class="form-label">@L["Receptionist_CustomerName"]</label>
                         <InputText @bind-Value="newReservation.CustomerName"
-                                   class="@GetInputClass(nameError)" />
+                                   class="@GetInputClass(nameError)"
+                                   autofocus autocomplete="off"/>
                         @if (nameError != string.Empty)
                         {
                             <div class="invalid-feedback">@nameError</div>
@@ -46,7 +34,7 @@
                     <div class="mb-3">
                         <label class="form-label">@L["Receptionist_PartySize"]</label>
                         <InputNumber @bind-Value="newReservation.PartySize"
-                                     class="@GetInputClass(partySizeError)" />
+                                     class="@GetInputClass(partySizeError)"/>
                         @if (partySizeError != string.Empty)
                         {
                             <div class="invalid-feedback">@partySizeError</div>
@@ -55,7 +43,7 @@
 
                     <div class="mb-3">
                         <label class="form-label">@L["Receptionist_Notes"]</label>
-                        <InputTextArea @bind-Value="newReservation.Notes" class="form-control" rows="3" />
+                        <InputTextArea @bind-Value="newReservation.Notes" class="form-control" rows="3"/>
                         <small class="form-text text-muted">@L["Receptionist_NotesHint"]</small>
                     </div>
 
@@ -71,6 +59,20 @@
                 @if (!string.IsNullOrEmpty(creationMessage))
                 {
                     <div class="alert alert-success mt-3">@creationMessage</div>
+                }
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header @(availableSeats > 0 ? "bg-success" : "bg-warning") @(availableSeats > 0 ? "text-white" : "text-dark")">
+                <h3 class="mb-0">@L["Receptionist_AvailableSeats"]</h3>
+            </div>
+            <div class="card-body text-center">
+                <h1 class="display-1">@availableSeats</h1>
+                <p class="text-muted">@L["Receptionist_AnnouncedBy"]</p>
+                @if (availableSeats == 0)
+                {
+                    <p class="text-warning fw-semibold mb-0">@L["Receptionist_SeatsContextFull"]</p>
                 }
             </div>
         </div>

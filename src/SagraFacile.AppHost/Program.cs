@@ -4,6 +4,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 // as ConnectionStrings__DefaultConnection, matching the key used in appsettings.json.
 var postgres = builder.AddPostgres("DefaultConnection")
     .WithDataVolume("sagrafacile-data")
+    .WithPassword(builder.AddParameter("postgres-password", "postgres"))
     .WithPgAdmin();
 
 builder.AddProject<Projects.SagraFacile_Web>("web")
