@@ -56,6 +56,9 @@ public static class SeatReservation
 
             await _notifier.NotifyReservationSeatedAsync(reservation.Id, reservation.QueueNumber, cancellationToken);
 
+            var counters = await _repository.GetCountersAsync(cancellationToken);
+            await _notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
+
             return new Result(true, $"Reservation {reservation.QueueNumber} seated successfully");
         }
     }

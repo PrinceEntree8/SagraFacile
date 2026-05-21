@@ -85,6 +85,9 @@ public static class CallReservation
                 reservation.CallCount,
                 cancellationToken);
 
+            var counters = await _repository.GetCountersAsync(cancellationToken);
+            await _notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
+
             return new Result(true, $"Reservation {reservation.QueueNumber} called successfully (call #{reservation.CallCount})");
         }
     }

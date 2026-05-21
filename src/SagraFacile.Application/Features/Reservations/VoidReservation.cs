@@ -59,6 +59,9 @@ public static class VoidReservation
                 reservation.QueueNumber,
                 cancellationToken);
 
+            var counters = await _repository.GetCountersAsync(cancellationToken);
+            await _notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
+
             return new Result(true, $"Reservation {reservation.QueueNumber} voided successfully");
         }
     }

@@ -160,7 +160,7 @@
   <data name="Receptionist_ActionVoid" xml:space="preserve"><value>Annulla</value></data>
   <data name="Receptionist_LastCall" xml:space="preserve"><value>Ultima chiamata: {0}</value></data>
   <data name="Receptionist_ToBeSeated" xml:space="preserve"><value>Da Sedere</value></data>
-  <data name="Receptionist_Served" xml:space="preserve"><value>Serviti</value></data>
+  <data name="Receptionist_Seated" xml:space="preserve"><value>Accomodati</value></data>
   <data name="Receptionist_Total" xml:space="preserve"><value>Totale</value></data>
   <data name="Receptionist_Reservations" xml:space="preserve"><value>{0} prenotazioni</value></data>
   <data name="Receptionist_People" xml:space="preserve"><value>{0} persone</value></data>
@@ -319,4 +319,16 @@
   <data name="MenuMgmt_SelectCategory" xml:space="preserve"><value>Seleziona categoria</value></data>
   <data name="MenuMgmt_CategoryRequired" xml:space="preserve"><value>Selezionare una categoria.</value></data>
   <data name="MenuMgmt_PriceHint" xml:space="preserve"><value>Inserisci decimale, es. 1.50</value></data>
+  <data name="Reservation_Status_Seated" xml:space="preserve">
+    <value>Accomodata</value>
+  </data>
+  <data name="Reservation_Status_Voided" xml:space="preserve">
+    <value>Annullata</value>
+  </data>
+  <data name="Reservation_Status_Called" xml:space="preserve">
+    <value>Chiamata</value>
+  </data>
+  <data name="Reservation_Status_Waiting" xml:space="preserve">
+    <value>In Attesa</value>
+  </data>
 </root>

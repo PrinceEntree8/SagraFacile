@@ -1,3 +1,4 @@
+using SagraFacile.Application.Features.Reservations;
 using Microsoft.AspNetCore.SignalR;
 using SagraFacile.Application.Interfaces;
 
@@ -37,6 +38,13 @@ public class SignalRReservationNotifier : IReservationNotifier
     {
         return _hubContext.Clients.All
             .ReservationSeated(reservationId, queueNumber)
+            .WaitAsync(cancellationToken);
+    }
+
+    public Task NotifyCountersUpdatedAsync(List<GetCounters.ReservationCounter> counters, CancellationToken cancellationToken)
+    {
+        return _hubContext.Clients.All
+            .CountersUpdated(counters)
             .WaitAsync(cancellationToken);
     }
 }

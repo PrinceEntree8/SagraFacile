@@ -1,3 +1,5 @@
+using SagraFacile.Application.Features.Reservations;
+
 namespace SagraFacile.Web.Hubs;
 
 public interface IReservationHubClient
@@ -7,4 +9,5 @@ public interface IReservationHubClient
     Task ReservationVoided(int reservationId, string queueNumber);
     Task ReservationSeated(int reservationId, string queueNumber);
     Task AvailableSeatsUpdated(int availableSeats);
+    Task CountersUpdated(List<GetCounters.ReservationCounter> counters);
 }

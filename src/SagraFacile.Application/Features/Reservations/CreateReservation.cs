@@ -40,12 +40,11 @@ public static class CreateReservation
         public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
         {
             var date = DateTime.UtcNow.ToString("yyyyMMdd");
-            var queueNumber = await GenerateQueueNumberAsync(date, cancellationToken);
+            var queueNumber = await GenerateQueueNumberAsync(DateTime.Today, cancellationToken);
 
             var reservation = new TableReservation
             {
-                Date = date,
-                QueueNumber = queueNumber,
+                ReservationId = queueNumber.ToString(),
                 CustomerName = command.CustomerName,
                 PartySize = command.PartySize,
                 Notes = command.Notes,
@@ -62,10 +61,13 @@ public static class CreateReservation
                 reservation.PartySize,
                 cancellationToken);
 
+            var counters = await _repository.GetCountersAsync(cancellationToken);
+            await _notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
+
             return new Result(reservation.Id, reservation.QueueNumber);
         }
 
-        private async Task<string> GenerateQueueNumberAsync(string date, CancellationToken cancellationToken)
+        private async Task<int> GenerateQueueNumberAsync(DateTime date, CancellationToken cancellationToken)
         {
             var last = await _repository.GetLastByDatePrefixAsync(date, cancellationToken);
 
@@ -73,7 +75,7 @@ public static class CreateReservation
             if (last != null && int.TryParse(last.QueueNumber, out var num))
                 sequence = num + 1;
 
-            return sequence.ToString($"D{SequencePadding}");
+            return sequence;
         }
     }
 }
