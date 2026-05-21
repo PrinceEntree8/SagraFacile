@@ -1,3 +1,4 @@
+using SagraFacile.Application.Features.Reservations;
 using Microsoft.EntityFrameworkCore;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Interfaces;
@@ -17,7 +18,7 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
     public Task<TableReservation?> GetByIdAsync(int id, CancellationToken cancellationToken)
         => GetByIdInternalAsync(id, cancellationToken);
 
-    public Task<TableReservation?> GetLastByDatePrefixAsync(string datePrefix, CancellationToken cancellationToken)
+    public Task<TableReservation?> GetLastByDatePrefixAsync(DateTime datePrefix, CancellationToken cancellationToken)
         => GetLastByDatePrefixInternalAsync(datePrefix, cancellationToken);
 
     public async Task<(List<TableReservation> Items, int TotalCount)> GetPagedAsync(
@@ -35,9 +36,6 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
-
-        foreach (var item in items)
-            MapFromReservationId(item);
 
         return (items, totalCount);
     }
@@ -57,15 +55,28 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
             query = query.Where(r => r.CreatedAt <= endDateUtc.Value);
 
         var items = await query.OrderBy(r => r.CreatedAt).ToListAsync(cancellationToken);
-        foreach (var item in items)
-            MapFromReservationId(item);
 
         return items;
     }
 
+    public async Task<List<GetCounters.ReservationCounter>> GetCountersAsync(CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        var todayPrefix = now.ToString("yyyyMMdd");
+
+        return await _db.TableReservations
+            .Where(r => r.ReservationId.StartsWith(todayPrefix))
+            .GroupBy(r => r.Status)
+            .Select(g => new GetCounters.ReservationCounter(
+                g.Key,
+                g.Count(),
+                g.Sum(r => r.PartySize)
+            ))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(TableReservation reservation, CancellationToken cancellationToken)
     {
-        MapToReservationId(reservation);
         await _db.TableReservations.AddAsync(reservation, cancellationToken);
     }
 
@@ -94,17 +105,17 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
     private async Task<TableReservation?> GetByIdInternalAsync(int id, CancellationToken cancellationToken)
     {
         var reservation = await _db.TableReservations.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
-        return reservation is null ? null : MapFromReservationId(reservation);
+        return reservation;
     }
 
-    private async Task<TableReservation?> GetLastByDatePrefixInternalAsync(string datePrefix, CancellationToken cancellationToken)
+    private async Task<TableReservation?> GetLastByDatePrefixInternalAsync(DateTime datePrefix, CancellationToken cancellationToken)
     {
         var reservation = await _db.TableReservations
-            .Where(r => r.ReservationId.StartsWith(datePrefix))
+            .Where(r => r.CreatedAt.Date >= datePrefix.ToUniversalTime() && r.CreatedAt.Date <= datePrefix.ToUniversalTime().AddDays(1))
             .OrderByDescending(r => r.ReservationId)
             .FirstOrDefaultAsync(cancellationToken);
 
-        return reservation is null ? null : MapFromReservationId(reservation);
+        return reservation;
     }
 
     private async Task<List<TableReservation>> GetCalledReservationsOrderedByCreatedAtInternalAsync(CancellationToken cancellationToken)
@@ -114,59 +125,6 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
             .OrderBy(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        foreach (var reservation in reservations)
-            MapFromReservationId(reservation);
-
         return reservations;
-    }
-
-    private static TableReservation MapFromReservationId(TableReservation reservation)
-    {
-        var (date, queueNumber) = SplitReservationId(reservation.ReservationId);
-        reservation.Date = date;
-        reservation.QueueNumber = queueNumber;
-        return reservation;
-    }
-
-    private static void MapToReservationId(TableReservation reservation)
-    {
-        var reservationId = BuildReservationId(reservation.Date, reservation.QueueNumber);
-        if (!string.IsNullOrWhiteSpace(reservationId))
-        {
-            reservation.ReservationId = reservationId;
-            var (date, queueNumber) = SplitReservationId(reservationId);
-            reservation.Date = date;
-            reservation.QueueNumber = queueNumber;
-        }
-    }
-
-    private static string BuildReservationId(string? date, string? queueNumber)
-    {
-        var normalizedDate = (date ?? string.Empty).Trim();
-        var normalizedQueueNumber = (queueNumber ?? string.Empty).Trim();
-
-        if (normalizedDate.Length == DatePrefixLength && normalizedDate.All(char.IsDigit) && !string.IsNullOrWhiteSpace(normalizedQueueNumber))
-            return normalizedDate + normalizedQueueNumber.PadLeft(4, '0');
-
-        if (!string.IsNullOrWhiteSpace(normalizedQueueNumber))
-            return normalizedQueueNumber;
-
-        return string.Empty;
-    }
-
-    private static (string Date, string QueueNumber) SplitReservationId(string? reservationId)
-    {
-        var normalizedReservationId = (reservationId ?? string.Empty).Trim();
-
-        if (normalizedReservationId.Length > DatePrefixLength)
-        {
-            var date = normalizedReservationId[..DatePrefixLength];
-            var queueNumber = normalizedReservationId[DatePrefixLength..];
-
-            if (date.All(char.IsDigit) && queueNumber.All(char.IsDigit))
-                return (date, queueNumber);
-        }
-
-        return (string.Empty, normalizedReservationId);
     }
 }

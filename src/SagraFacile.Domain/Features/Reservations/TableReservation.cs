@@ -3,8 +3,8 @@ namespace SagraFacile.Domain.Features.Reservations;
 public class TableReservation
 {
     public int Id { get; set; }
-    public string Date { get; set; } = string.Empty;
-    public string QueueNumber { get; set; } = string.Empty;
+    public string Date => CreatedAt.ToString("yyyyMMdd");
+    public string QueueNumber => ReservationId;
     public string ReservationId { get; set; } = string.Empty;
     public string CustomerName { get; set; } = string.Empty;
     public int PartySize { get; set; }
