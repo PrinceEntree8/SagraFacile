@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using SagraFacile.Domain.Features.Events;
 using SagraFacile.Infrastructure.Data;
 
 namespace SagraFacile.Infrastructure.Tests;
@@ -19,6 +20,13 @@ public sealed class TestDbContextFactory : IDbContextFactory<ApplicationDbContex
         _connection.Open();
         using var ctx = CreateDbContext();
         ctx.Database.EnsureCreated();
+
+        // Seed test events so FK constraints on Reservation.EventId are satisfied.
+        ctx.Events.AddRange(
+            new Event { Id = 1, Name = "Test Event 1" },
+            new Event { Id = 2, Name = "Test Event 2" }
+        );
+        ctx.SaveChanges();
     }
 
     public ApplicationDbContext CreateDbContext()

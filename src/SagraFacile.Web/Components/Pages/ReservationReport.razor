@@ -148,7 +148,7 @@ else if (reports != null && reports.Any())
                         @foreach (var report in reports)
                         {
                             <tr>
-                                <td><strong>@report.QueueNumber</strong></td>
+                                <td><strong>@report.SequenceNumber</strong></td>
                                 <td>@report.CustomerName</td>
                                 <td><span class="badge bg-info">@report.PartySize</span></td>
                                 <td><span class="badge @GetStatusBadge(report.Status)">@report.Status</span></td>
@@ -206,6 +206,7 @@ else
 }
 
 @code {
+    private int activeEventId = 1; // TODO: replace with session-backed active event store
     private DateTime? startDate = null;
     private DateTime? endDate = null;
     private List<GetReservationReport.ReportDto> reports = new();
@@ -222,7 +223,7 @@ else
         isLoading = true;
         try
         {
-            var query = new GetReservationReport.Query(startDate, endDate);
+            var query = new GetReservationReport.Query(activeEventId, startDate, endDate);
             var result = await Mediator.Send(query, CancellationToken.None);
             reports = result.Reports;
             statistics = result.Statistics;

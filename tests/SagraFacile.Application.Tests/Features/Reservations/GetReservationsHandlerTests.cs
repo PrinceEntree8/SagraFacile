@@ -19,15 +19,15 @@ public class GetReservationsHandlerTests
     public async Task Handle_ReturnsPagedResultsWithCorrectTotalCount()
     {
         var now = DateTime.UtcNow;
-        var reservations = new List<TableReservation>
+        var reservations = new List<Reservation>
         {
-            new() { Id = 1, ReservationId = "0001", CustomerName = "Mario", PartySize = 4, Status = "Waiting", Notes = "", CreatedAt = now.AddMinutes(-10) },
-            new() { Id = 2, ReservationId = "0002", CustomerName = "Luigi", PartySize = 2, Status = "Called", Notes = "Birthday", CreatedAt = now.AddMinutes(-5) },
+            new() { Id = 1, EventId = 1, SequenceNumber = 1, CustomerName = "Mario", PartySize = 4, Status = ReservationStatus.Waiting, CreatedAt = now.AddMinutes(-10) },
+            new() { Id = 2, EventId = 1, SequenceNumber = 2, CustomerName = "Luigi", PartySize = 2, Status = ReservationStatus.Called, Notes = "Birthday", CreatedAt = now.AddMinutes(-5) },
         };
-        _repository.GetPagedAsync(null, 1, 50, Arg.Any<CancellationToken>())
+        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<CancellationToken>())
             .Returns((reservations, 2));
 
-        var result = await _handler.Handle(new GetReservations.Query(), CancellationToken.None);
+        var result = await _handler.Handle(new GetReservations.Query(1), CancellationToken.None);
 
         Assert.Equal(2, result.TotalCount);
         Assert.Equal(2, result.Reservations.Count);
@@ -38,14 +38,14 @@ public class GetReservationsHandlerTests
     {
         var now = DateTime.UtcNow;
         var created = now.AddMinutes(-15);
-        var reservations = new List<TableReservation>
+        var reservations = new List<Reservation>
         {
-            new() { Id = 1, ReservationId = "0001", CustomerName = "Test", PartySize = 2, Status = "Waiting", Notes = "", CreatedAt = created },
+            new() { Id = 1, EventId = 1, SequenceNumber = 1, CustomerName = "Test", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = created },
         };
-        _repository.GetPagedAsync(null, 1, 50, Arg.Any<CancellationToken>())
+        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<CancellationToken>())
             .Returns((reservations, 1));
 
-        var result = await _handler.Handle(new GetReservations.Query(), CancellationToken.None);
+        var result = await _handler.Handle(new GetReservations.Query(1), CancellationToken.None);
 
         var dto = result.Reservations[0];
         // WaitingTime = now - CreatedAt; should be approximately 15 minutes
@@ -58,19 +58,19 @@ public class GetReservationsHandlerTests
     {
         var now = DateTime.UtcNow;
         var lastCalled = now.AddMinutes(-3);
-        var reservations = new List<TableReservation>
+        var reservations = new List<Reservation>
         {
             new()
             {
-                Id = 1, ReservationId = "0001", CustomerName = "Test", PartySize = 2,
-                Status = "Called", Notes = "", CreatedAt = now.AddMinutes(-10),
+                Id = 1, EventId = 1, SequenceNumber = 1, CustomerName = "Test", PartySize = 2,
+                Status = ReservationStatus.Called, CreatedAt = now.AddMinutes(-10),
                 LastCalledAt = lastCalled, CallCount = 1
             },
         };
-        _repository.GetPagedAsync(null, 1, 50, Arg.Any<CancellationToken>())
+        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<CancellationToken>())
             .Returns((reservations, 1));
 
-        var result = await _handler.Handle(new GetReservations.Query(), CancellationToken.None);
+        var result = await _handler.Handle(new GetReservations.Query(1), CancellationToken.None);
 
         var dto = result.Reservations[0];
         Assert.NotNull(dto.TimeSinceLastCall);
@@ -82,14 +82,14 @@ public class GetReservationsHandlerTests
     [Fact]
     public async Task Handle_WithoutLastCalledAt_TimeSinceLastCallIsNull()
     {
-        var reservations = new List<TableReservation>
+        var reservations = new List<Reservation>
         {
-            new() { Id = 1, ReservationId = "0001", CustomerName = "Test", PartySize = 2, Status = "Waiting", Notes = "", CreatedAt = DateTime.UtcNow },
+            new() { Id = 1, EventId = 1, SequenceNumber = 1, CustomerName = "Test", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow },
         };
-        _repository.GetPagedAsync(null, 1, 50, Arg.Any<CancellationToken>())
+        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<CancellationToken>())
             .Returns((reservations, 1));
 
-        var result = await _handler.Handle(new GetReservations.Query(), CancellationToken.None);
+        var result = await _handler.Handle(new GetReservations.Query(1), CancellationToken.None);
 
         Assert.Null(result.Reservations[0].TimeSinceLastCall);
     }
@@ -97,23 +97,23 @@ public class GetReservationsHandlerTests
     [Fact]
     public async Task Handle_PassesStatusFilterToRepository()
     {
-        _repository.GetPagedAsync("Called", 1, 50, Arg.Any<CancellationToken>())
-            .Returns((new List<TableReservation>(), 0));
+        _repository.GetPagedAsync(1, "Called", 1, 50, Arg.Any<CancellationToken>())
+            .Returns((new List<Reservation>(), 0));
 
-        await _handler.Handle(new GetReservations.Query(Status: "Called"), CancellationToken.None);
+        await _handler.Handle(new GetReservations.Query(1, Status: "Called"), CancellationToken.None);
 
-        await _repository.Received(1).GetPagedAsync("Called", 1, 50, Arg.Any<CancellationToken>());
+        await _repository.Received(1).GetPagedAsync(1, "Called", 1, 50, Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Handle_PassesPaginationToRepository()
     {
-        _repository.GetPagedAsync(null, 2, 10, Arg.Any<CancellationToken>())
-            .Returns((new List<TableReservation>(), 0));
+        _repository.GetPagedAsync(1, null, 2, 10, Arg.Any<CancellationToken>())
+            .Returns((new List<Reservation>(), 0));
 
-        await _handler.Handle(new GetReservations.Query(Page: 2, PageSize: 10), CancellationToken.None);
+        await _handler.Handle(new GetReservations.Query(1, Page: 2, PageSize: 10), CancellationToken.None);
 
-        await _repository.Received(1).GetPagedAsync(null, 2, 10, Arg.Any<CancellationToken>());
+        await _repository.Received(1).GetPagedAsync(1, null, 2, 10, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -122,23 +122,23 @@ public class GetReservationsHandlerTests
         var now = DateTime.UtcNow;
         var firstCalled = now.AddMinutes(-8);
         var lastCalled = now.AddMinutes(-2);
-        var reservations = new List<TableReservation>
+        var reservations = new List<Reservation>
         {
             new()
             {
-                Id = 7, ReservationId = "0007", CustomerName = "Franco", PartySize = 6,
-                Status = "Called", Notes = "High chair needed", CreatedAt = now.AddMinutes(-10),
+                Id = 7, EventId = 1, SequenceNumber = 7, CustomerName = "Franco", PartySize = 6,
+                Status = ReservationStatus.Called, Notes = "High chair needed", CreatedAt = now.AddMinutes(-10),
                 FirstCalledAt = firstCalled, LastCalledAt = lastCalled, CallCount = 2
             },
         };
-        _repository.GetPagedAsync(null, 1, 50, Arg.Any<CancellationToken>())
+        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<CancellationToken>())
             .Returns((reservations, 1));
 
-        var result = await _handler.Handle(new GetReservations.Query(), CancellationToken.None);
+        var result = await _handler.Handle(new GetReservations.Query(1), CancellationToken.None);
 
         var dto = result.Reservations[0];
         Assert.Equal(7, dto.Id);
-        Assert.Equal("0007", dto.QueueNumber);
+        Assert.Equal(7, dto.SequenceNumber);
         Assert.Equal("Franco", dto.CustomerName);
         Assert.Equal(6, dto.PartySize);
         Assert.Equal("Called", dto.Status);

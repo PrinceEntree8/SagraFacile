@@ -1,0 +1,30 @@
+using SagraFacile.Domain.Features.Events;
+
+namespace SagraFacile.Domain.Features.Reservations;
+
+public class Reservation
+{
+    public int Id { get; set; }
+    public int EventId { get; set; }
+    public int SequenceNumber { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
+    public int PartySize { get; set; }
+    public ReservationStatus Status { get; set; } = ReservationStatus.Waiting;
+    public string? Notes { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? FirstCalledAt { get; set; }
+    public DateTime? LastCalledAt { get; set; }
+    public DateTime? SeatedAt { get; set; }
+    public DateTime? VoidedAt { get; set; }
+    public int CallCount { get; set; } = 0;
+
+    /// <summary>
+    /// Optimistic concurrency token. Incremented automatically by the repository on every write.
+    /// EF Core includes this in the WHERE clause of UPDATE statements; if another transaction has
+    /// already committed a change (bumping the version), SaveChanges throws DbUpdateConcurrencyException.
+    /// </summary>
+    public long Version { get; set; } = 0;
+
+    public Event Event { get; set; } = null!;
+    public ICollection<ReservationCall> Calls { get; set; } = new List<ReservationCall>();
+}

@@ -3,10 +3,10 @@ namespace SagraFacile.Domain.Features.Reservations;
 public class ReservationCall
 {
     public int Id { get; set; }
-    public int TableReservationId { get; set; }
-    public DateTime CalledAt { get; set; } = DateTime.UtcNow;
+    public int ReservationId { get; set; }
+    public DateTime CalledAt { get; set; }
     public string CalledBy { get; set; } = "System";
-    public string Notes { get; set; } = string.Empty;
+    public string? Notes { get; set; }
 
-    public TableReservation TableReservation { get; set; } = null!;
+    public Reservation Reservation { get; set; } = null!;
 }

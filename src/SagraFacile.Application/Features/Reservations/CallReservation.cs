@@ -8,7 +8,7 @@ namespace SagraFacile.Application.Features.Reservations;
 
 public static class CallReservation
 {
-    public record Command(int ReservationId, string CalledBy = "Receptionist", string Notes = "")
+    public record Command(int ReservationId, string CalledBy = "Receptionist", string? Notes = null)
         : ICommand<Result>;
     public record Result(bool Success, string Message);
 
@@ -44,10 +44,10 @@ public static class CallReservation
             if (reservation == null)
                 return new Result(false, "Reservation not found");
 
-            if (reservation.Status == "Voided")
+            if (reservation.Status == ReservationStatus.Voided)
                 return new Result(false, "Cannot call a voided reservation");
 
-            if (reservation.Status == "Seated")
+            if (reservation.Status == ReservationStatus.Seated)
                 return new Result(false, "Reservation is already seated");
 
             var now = DateTime.UtcNow;
@@ -57,11 +57,11 @@ public static class CallReservation
 
             reservation.LastCalledAt = now;
             reservation.CallCount++;
-            reservation.Status = "Called";
+            reservation.Status = ReservationStatus.Called;
 
             var call = new ReservationCall
             {
-                TableReservationId = reservation.Id,
+                ReservationId = reservation.Id,
                 CalledAt = now,
                 CalledBy = command.CalledBy,
                 Notes = command.Notes
@@ -79,16 +79,16 @@ public static class CallReservation
 
             await _notifier.NotifyReservationCalledAsync(
                 reservation.Id,
-                reservation.QueueNumber,
+                reservation.SequenceNumber,
                 reservation.CustomerName,
                 reservation.PartySize,
                 reservation.CallCount,
                 cancellationToken);
 
-            var counters = await _repository.GetCountersAsync(cancellationToken);
+            var counters = await _repository.GetCountersAsync(reservation.EventId, cancellationToken);
             await _notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
 
-            return new Result(true, $"Reservation {reservation.QueueNumber} called successfully (call #{reservation.CallCount})");
+            return new Result(true, $"Reservation {reservation.SequenceNumber} called successfully (call #{reservation.CallCount})");
         }
     }
 }

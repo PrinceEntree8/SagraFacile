@@ -39,10 +39,11 @@ public class EventRepositoryTests
         // Act
         var events = await repo.GetAllOrderedByDateDescAsync(CancellationToken.None);
 
-        // Assert
-        Assert.Equal(2, events.Count);
-        Assert.Equal("New", events[0].Name);
-        Assert.Equal("Old", events[1].Name);
+        // Assert — seeded events are also present; check ordering among the two added ones
+        var added = events.Where(e => e.Name is "Old" or "New").ToList();
+        Assert.Equal(2, added.Count);
+        Assert.Equal("New", added[0].Name);
+        Assert.Equal("Old", added[1].Name);
     }
 
     [Fact]

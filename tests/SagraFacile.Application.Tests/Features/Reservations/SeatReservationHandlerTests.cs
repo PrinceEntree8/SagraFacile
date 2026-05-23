@@ -22,7 +22,7 @@ public class SeatReservationHandlerTests
     public async Task Handle_CalledReservation_SetsStatusToSeated()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 1, ReservationId = "202601010001", Status = "Called" };
+        var reservation = new Reservation { Id = 1, EventId = 1, SequenceNumber = 1, Status = ReservationStatus.Called };
         _repository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(reservation);
 
         // Act
@@ -30,17 +30,17 @@ public class SeatReservationHandlerTests
 
         // Assert
         Assert.True(result.Success);
-        Assert.Equal("Seated", reservation.Status);
+        Assert.Equal(ReservationStatus.Seated, reservation.Status);
         Assert.NotNull(reservation.SeatedAt);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
-        await _notifier.Received(1).NotifyReservationSeatedAsync(1, "202601010001", Arg.Any<CancellationToken>());
+        await _notifier.Received(1).NotifyReservationSeatedAsync(1, 1, Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Handle_AlreadySeatedReservation_ReturnsFailure()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 2, Status = "Seated" };
+        var reservation = new Reservation { Id = 2, EventId = 1, SequenceNumber = 2, Status = ReservationStatus.Seated };
         _repository.GetByIdAsync(2, Arg.Any<CancellationToken>()).Returns(reservation);
 
         // Act
@@ -49,14 +49,14 @@ public class SeatReservationHandlerTests
         // Assert
         Assert.False(result.Success);
         await _repository.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
-        await _notifier.DidNotReceive().NotifyReservationSeatedAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _notifier.DidNotReceive().NotifyReservationSeatedAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Handle_VoidedReservation_ReturnsFailure()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 3, Status = "Voided" };
+        var reservation = new Reservation { Id = 3, EventId = 1, SequenceNumber = 3, Status = ReservationStatus.Voided };
         _repository.GetByIdAsync(3, Arg.Any<CancellationToken>()).Returns(reservation);
 
         // Act
@@ -65,14 +65,14 @@ public class SeatReservationHandlerTests
         // Assert
         Assert.False(result.Success);
         await _repository.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
-        await _notifier.DidNotReceive().NotifyReservationSeatedAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _notifier.DidNotReceive().NotifyReservationSeatedAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Handle_ConcurrentModification_ReturnsFailure()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 1, ReservationId = "202601010001", Status = "Called" };
+        var reservation = new Reservation { Id = 1, EventId = 1, SequenceNumber = 1, Status = ReservationStatus.Called };
         _repository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(reservation);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>())
             .ThrowsAsync(new RepositoryConcurrencyException());
@@ -83,6 +83,6 @@ public class SeatReservationHandlerTests
         // Assert
         Assert.False(result.Success);
         Assert.Contains("modified by another user", result.Message);
-        await _notifier.DidNotReceive().NotifyReservationSeatedAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _notifier.DidNotReceive().NotifyReservationSeatedAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 }

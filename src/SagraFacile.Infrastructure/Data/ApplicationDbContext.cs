@@ -14,7 +14,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
     }
 
-    public DbSet<TableReservation> TableReservations => Set<TableReservation>();
+    public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<Table> Tables => Set<Table>();
     public DbSet<ReservationCall> ReservationCalls => Set<ReservationCall>();
     public DbSet<Event> Events => Set<Event>();

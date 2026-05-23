@@ -43,8 +43,8 @@
             var latest = calledEntries[0];
             <section class="nc-current" aria-label="Current call" aria-live="assertive">
                 <div class="nc-current-label">@L["NowCalling_CurrentCall"]</div>
-                <div class="nc-current-queue" aria-label="Queue number @latest.QueueNumber">
-                    @latest.QueueNumber
+                <div class="nc-current-queue" aria-label="Queue number @latest.SequenceNumber">
+                    @latest.SequenceNumber
                 </div>
                 <div class="nc-current-name">@latest.CustomerName</div>
                 <div class="nc-current-party">
@@ -61,7 +61,7 @@
                         @foreach (var entry in calledEntries.Skip(1))
                         {
                             <li class="nc-history-item" role="listitem">
-                                <span class="nc-history-queue">@entry.QueueNumber</span>
+                                <span class="nc-history-queue">@entry.SequenceNumber</span>
                                 <span class="nc-history-name">@entry.CustomerName</span>
                                 <span class="nc-history-party">👥 @entry.PartySize</span>
                             </li>
@@ -86,6 +86,7 @@
     /// <summary>Maximum number of entries kept in the LIFO list.</summary>
     private const int MaxEntries = 10;
 
+    private int activeEventId = 1; // TODO: replace with session-backed active event store
     private bool initialLoadFailed;
 
     // ── Lifecycle ──────────────────────────────────────────────────────
@@ -106,7 +107,7 @@
     {
         try
         {
-            var query = new GetReservations.Query(Status: "Called", Page: 1, PageSize: MaxEntries);
+            var query = new GetReservations.Query(EventId: activeEventId, Status: "Called", Page: 1, PageSize: MaxEntries);
             var result = await Mediator.Send(query, CancellationToken.None);
 
             // Sort descending by LastCalledAt so the most recently called is first.
@@ -119,7 +120,7 @@
             {
                 calledEntries.Add(new CalledEntry(
                     r.Id,
-                    r.QueueNumber,
+                    r.SequenceNumber,
                     r.CustomerName,
                     r.PartySize,
                     r.LastCalledAt!.Value));
@@ -161,11 +162,11 @@
         };
 
         // Listen for new reservation calls (LIFO prepend).
-        hubConnection.On<int, string, string, int, int>(
+        hubConnection.On<int, int, string, int, int>(
             "ReservationCalled",
-            async (id, queueNumber, customerName, partySize, callCount) =>
+            async (id, sequenceNumber, customerName, partySize, callCount) =>
             {
-                var entry = new CalledEntry(id, queueNumber, customerName, partySize, DateTime.UtcNow);
+                var entry = new CalledEntry(id, sequenceNumber, customerName, partySize, DateTime.UtcNow);
 
                 // Remove any existing entry for the same reservation (re-call scenario).
                 calledEntries.RemoveAll(e => e.Id == id);
@@ -206,5 +207,5 @@
     // ── Local model ────────────────────────────────────────────────────
 
     /// <summary>Lightweight record for a single "Now Calling" entry.</summary>
-    private record CalledEntry(int Id, string QueueNumber, string CustomerName, int PartySize, DateTime CalledAt);
+    private record CalledEntry(int Id, int SequenceNumber, string CustomerName, int PartySize, DateTime CalledAt);
 }

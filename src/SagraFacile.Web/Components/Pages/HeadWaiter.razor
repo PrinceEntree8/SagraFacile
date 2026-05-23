@@ -79,7 +79,7 @@
                                 @* Desktop row *@
                                 <div class="row align-items-center py-2 px-2 d-none d-md-flex">
                                     <div class="col-md-2">
-                                        <strong>@match.QueueNumber</strong>
+                                        <strong>@match.SequenceNumber</strong>
                                     </div>
                                     <div class="col-md-2">
                                         <span class="badge bg-info">@match.PartySize</span>
@@ -111,7 +111,7 @@
                                 @* Mobile summary row (accordion trigger) *@
                                 <div class="d-flex d-md-none align-items-center justify-content-between px-2 py-2" style="cursor:pointer" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false">
                                     <div class="d-flex align-items-center gap-2">
-                                        <strong>@match.QueueNumber - @match.CustomerName</strong>
+                                        <strong>@match.SequenceNumber - @match.CustomerName</strong>
                                     </div>
                                     <span class="badge bg-info float-end">@match.PartySize <i class="bi bi-people"></i></span>
                                 </div>
@@ -143,7 +143,7 @@
                     </div>
 
                     <div class="alert alert-info mt-3">
-                        <strong>@string.Format(L["HeadWaiter_BestRecommendation"], bestFitResults.First().QueueNumber, bestFitResults.First().CustomerName, bestFitResults.First().PartySize)</strong>
+                        <strong>@string.Format(L["HeadWaiter_BestRecommendation"], bestFitResults.First().SequenceNumber, bestFitResults.First().CustomerName, bestFitResults.First().PartySize)</strong>
                     </div>
                 }
                 else
@@ -238,6 +238,7 @@
     private bool isSearching = false;
 
     // Manual Seat modal state
+    private int activeEventId = 1; // TODO: replace with session-backed active event store
     private string manualSeatQueueNumber = string.Empty;
     private string manualSeatError = string.Empty;
     private string manualSeatSuccess = string.Empty;
@@ -258,7 +259,7 @@
             .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.On<int, string, string, int>("ReservationCreated", async (id, queueNumber, name, size) =>
+        hubConnection.On<int, int, string, int>("ReservationCreated", async (id, sequenceNumber, name, size) =>
         {
             if (coverCountForSearch > 0)
                 await SearchBestFit();
@@ -267,7 +268,7 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<int, string, string, int, int>("ReservationCalled", async (id, queueNumber, customerName, partySize, callCount) =>
+        hubConnection.On<int, int, string, int, int>("ReservationCalled", async (id, sequenceNumber, customerName, partySize, callCount) =>
         {
             if (coverCountForSearch > 0)
                 await SearchBestFit();
@@ -276,7 +277,7 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<int, string>("ReservationVoided", async (id, queueNumber) =>
+        hubConnection.On<int, int>("ReservationVoided", async (id, sequenceNumber) =>
         {
             if (coverCountForSearch > 0)
                 await SearchBestFit();
@@ -285,7 +286,7 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<int, string>("ReservationSeated", async (id, queueNumber) =>
+        hubConnection.On<int, int>("ReservationSeated", async (id, sequenceNumber) =>
         {
             if (coverCountForSearch > 0)
                 await SearchBestFit();
@@ -310,7 +311,7 @@
         isSearching = true;
         try
         {
-            var query = new GetBestFitReservation.Query(0);
+            var query = new GetBestFitReservation.Query(activeEventId, 0);
             var result = await Mediator.Send(query, CancellationToken.None);
             bestFitResults = result.Matches.ToList();
         }
@@ -362,7 +363,7 @@
         isSearching = true;
         try
         {
-            var query = new GetBestFitReservation.Query(coverCountForSearch);
+            var query = new GetBestFitReservation.Query(activeEventId, coverCountForSearch);
             var result = await Mediator.Send(query, CancellationToken.None);
             bestFitResults = result.Matches;
         }
@@ -426,7 +427,12 @@
         isManualSeating = true;
         try
         {
-            var command = new CallAndSeatReservation.Command(manualSeatQueueNumber.Trim());
+            if (!int.TryParse(manualSeatQueueNumber.Trim(), out var seqNum))
+            {
+                manualSeatError = L["HeadWaiter_ManualSeatQueueRequired"];
+                return;
+            }
+            var command = new CallAndSeatReservation.Command(activeEventId, seqNum);
             var result = await Mediator.Send(command, CancellationToken.None);
 
             if (result.Success)

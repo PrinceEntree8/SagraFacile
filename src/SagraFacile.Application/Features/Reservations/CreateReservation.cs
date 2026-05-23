@@ -1,4 +1,5 @@
 using FluentValidation;
+using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
 using SagraFacile.Domain.Features.Reservations;
@@ -7,13 +8,15 @@ namespace SagraFacile.Application.Features.Reservations;
 
 public static class CreateReservation
 {
-    public record Command(string CustomerName, int PartySize, string Notes = "") : ICommand<Result>;
-    public record Result(int Id, string QueueNumber);
+    public record Command(int EventId, string CustomerName, int PartySize, string? Notes = null) : ICommand<Result>;
+    public record Result(int Id, int SequenceNumber);
 
     public class Validator : AbstractValidator<Command>
     {
         public Validator()
         {
+            RuleFor(x => x.EventId)
+                .GreaterThan(0).WithMessage("EventId must be greater than 0");
             RuleFor(x => x.CustomerName)
                 .NotEmpty().WithMessage("Customer name is required")
                 .MaximumLength(200).WithMessage("Customer name must not exceed 200 characters");
@@ -21,7 +24,8 @@ public static class CreateReservation
                 .GreaterThan(0).WithMessage("Party size must be greater than 0")
                 .LessThanOrEqualTo(50).WithMessage("Party size must not exceed 50");
             RuleFor(x => x.Notes)
-                .MaximumLength(500).WithMessage("Notes must not exceed 500 characters");
+                .MaximumLength(500).WithMessage("Notes must not exceed 500 characters")
+                .When(x => x.Notes != null);
         }
     }
 
@@ -38,43 +42,45 @@ public static class CreateReservation
 
         public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
         {
-            var date = DateTime.UtcNow.ToString("yyyyMMdd");
-            var queueNumber = await GenerateQueueNumberAsync(DateTime.Today, cancellationToken);
-
-            var reservation = new TableReservation
+            const int maxRetries = 5;
+            for (int attempt = 0; attempt < maxRetries; attempt++)
             {
-                ReservationId = queueNumber.ToString(),
-                CustomerName = command.CustomerName,
-                PartySize = command.PartySize,
-                Notes = command.Notes,
-                Status = "Waiting",
-                CreatedAt = DateTime.UtcNow
-            };
+                var sequenceNumber = await _repository.GetNextSequenceNumberAsync(command.EventId, cancellationToken);
+                var reservation = new Reservation
+                {
+                    EventId        = command.EventId,
+                    SequenceNumber = sequenceNumber,
+                    CustomerName   = command.CustomerName,
+                    PartySize      = command.PartySize,
+                    Notes          = command.Notes,
+                    Status         = ReservationStatus.Waiting,
+                    CreatedAt      = DateTime.UtcNow
+                };
 
-            await _repository.AddAsync(reservation, cancellationToken);
-            await _repository.SaveChangesAsync(cancellationToken);
-            await _notifier.NotifyReservationCreatedAsync(
-                reservation.Id,
-                reservation.QueueNumber,
-                reservation.CustomerName,
-                reservation.PartySize,
-                cancellationToken);
+                try
+                {
+                    await _repository.AddAsync(reservation, cancellationToken);
+                    await _repository.SaveChangesAsync(cancellationToken);
 
-            var counters = await _repository.GetCountersAsync(cancellationToken);
-            await _notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
+                    await _notifier.NotifyReservationCreatedAsync(
+                        reservation.Id,
+                        reservation.SequenceNumber,
+                        reservation.CustomerName,
+                        reservation.PartySize,
+                        cancellationToken);
 
-            return new Result(reservation.Id, reservation.QueueNumber);
-        }
+                    var counters = await _repository.GetCountersAsync(command.EventId, cancellationToken);
+                    await _notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
 
-        private async Task<int> GenerateQueueNumberAsync(DateTime date, CancellationToken cancellationToken)
-        {
-            var last = await _repository.GetLastByDatePrefixAsync(date, cancellationToken);
+                    return new Result(reservation.Id, reservation.SequenceNumber);
+                }
+                catch (RepositoryUniqueConstraintException)
+                {
+                    if (attempt == maxRetries - 1) throw;
+                }
+            }
 
-            var sequence = 1;
-            if (last != null && int.TryParse(last.QueueNumber, out var num))
-                sequence = num + 1;
-
-            return sequence;
+            throw new InvalidOperationException("Failed to create reservation after maximum retries.");
         }
     }
 }

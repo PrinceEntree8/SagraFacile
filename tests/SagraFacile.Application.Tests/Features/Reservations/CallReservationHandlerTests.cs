@@ -22,7 +22,7 @@ public class CallReservationHandlerTests
     public async Task Handle_WaitingReservation_SetsStatusToCalledAndIncrementsCount()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 1, ReservationId = "202601010001", Status = "Waiting", CallCount = 0 };
+        var reservation = new Reservation { Id = 1, EventId = 1, SequenceNumber = 1, Status = ReservationStatus.Waiting, CallCount = 0 };
         _repository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(reservation);
 
         // Act
@@ -30,7 +30,7 @@ public class CallReservationHandlerTests
 
         // Assert
         Assert.True(result.Success);
-        Assert.Equal("Called", reservation.Status);
+        Assert.Equal(ReservationStatus.Called, reservation.Status);
         Assert.Equal(1, reservation.CallCount);
         Assert.NotNull(reservation.FirstCalledAt);
         Assert.NotNull(reservation.LastCalledAt);
@@ -38,7 +38,7 @@ public class CallReservationHandlerTests
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
         await _notifier.Received(1).NotifyReservationCalledAsync(
             reservation.Id,
-            reservation.QueueNumber,
+            reservation.SequenceNumber,
             reservation.CustomerName,
             reservation.PartySize,
             reservation.CallCount,
@@ -50,9 +50,9 @@ public class CallReservationHandlerTests
     {
         // Arrange
         var firstCall = DateTime.UtcNow.AddMinutes(-5);
-        var reservation = new TableReservation
+        var reservation = new Reservation
         {
-            Id = 2, ReservationId = "202601010002", Status = "Called",
+            Id = 2, EventId = 1, SequenceNumber = 2, Status = ReservationStatus.Called,
             CallCount = 1, FirstCalledAt = firstCall
         };
         _repository.GetByIdAsync(2, Arg.Any<CancellationToken>()).Returns(reservation);
@@ -69,7 +69,7 @@ public class CallReservationHandlerTests
     public async Task Handle_VoidedReservation_ReturnsFailure()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 3, Status = "Voided" };
+        var reservation = new Reservation { Id = 3, EventId = 1, SequenceNumber = 3, Status = ReservationStatus.Voided };
         _repository.GetByIdAsync(3, Arg.Any<CancellationToken>()).Returns(reservation);
 
         // Act
@@ -84,7 +84,7 @@ public class CallReservationHandlerTests
     public async Task Handle_SeatedReservation_ReturnsFailure()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 4, Status = "Seated" };
+        var reservation = new Reservation { Id = 4, EventId = 1, SequenceNumber = 4, Status = ReservationStatus.Seated };
         _repository.GetByIdAsync(4, Arg.Any<CancellationToken>()).Returns(reservation);
 
         // Act
@@ -99,7 +99,7 @@ public class CallReservationHandlerTests
     public async Task Handle_NonExistentReservation_ReturnsFailure()
     {
         // Arrange
-        _repository.GetByIdAsync(99, Arg.Any<CancellationToken>()).Returns((TableReservation?)null);
+        _repository.GetByIdAsync(99, Arg.Any<CancellationToken>()).Returns((Reservation?)null);
 
         // Act
         var result = await _handler.Handle(new CallReservation.Command(99), CancellationToken.None);
@@ -113,7 +113,7 @@ public class CallReservationHandlerTests
     public async Task Handle_ConcurrentModification_ReturnsFailure()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 1, ReservationId = "202601010001", Status = "Waiting", CallCount = 0 };
+        var reservation = new Reservation { Id = 1, EventId = 1, SequenceNumber = 1, Status = ReservationStatus.Waiting, CallCount = 0 };
         _repository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(reservation);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>())
             .ThrowsAsync(new RepositoryConcurrencyException());
@@ -126,7 +126,7 @@ public class CallReservationHandlerTests
         Assert.Contains("modified by another user", result.Message);
         await _notifier.DidNotReceive().NotifyReservationCalledAsync(
             Arg.Any<int>(),
-            Arg.Any<string>(),
+            Arg.Any<int>(),
             Arg.Any<string>(),
             Arg.Any<int>(),
             Arg.Any<int>(),

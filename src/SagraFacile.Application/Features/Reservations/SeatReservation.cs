@@ -2,6 +2,7 @@ using FluentValidation;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Domain.Features.Reservations;
 
 namespace SagraFacile.Application.Features.Reservations;
 
@@ -36,13 +37,21 @@ public static class SeatReservation
             if (reservation == null)
                 return new Result(false, "Reservation not found");
 
-            if (reservation.Status == "Voided")
-                return new Result(false, "Cannot seat a voided reservation");
+            switch (reservation.Status)
+            {
+                case ReservationStatus.Voided:
+                    return new Result(false, "Cannot seat a voided reservation");
+                case ReservationStatus.Waiting:
+                    return new Result(false, "Cannot seat a waiting reservation");
+                case ReservationStatus.Seated:
+                    return new Result(false, "Reservation is already seated");
+                case ReservationStatus.Called:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(reservation), reservation.Status, null);
+            }
 
-            if (reservation.Status == "Seated")
-                return new Result(false, "Reservation is already seated");
-
-            reservation.Status = "Seated";
+            reservation.Status = ReservationStatus.Seated;
             reservation.SeatedAt = DateTime.UtcNow;
 
             try
@@ -54,12 +63,12 @@ public static class SeatReservation
                 return new Result(false, "This reservation was modified by another user. Please refresh and try again.");
             }
 
-            await _notifier.NotifyReservationSeatedAsync(reservation.Id, reservation.QueueNumber, cancellationToken);
+            await _notifier.NotifyReservationSeatedAsync(reservation.Id, reservation.SequenceNumber, cancellationToken);
 
-            var counters = await _repository.GetCountersAsync(cancellationToken);
+            var counters = await _repository.GetCountersAsync(reservation.EventId, cancellationToken);
             await _notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
 
-            return new Result(true, $"Reservation {reservation.QueueNumber} seated successfully");
+            return new Result(true, $"Reservation {reservation.SequenceNumber} seated successfully");
         }
     }
 }

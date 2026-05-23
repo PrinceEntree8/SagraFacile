@@ -10,6 +10,6 @@ public class ReservationCallConfiguration : IEntityTypeConfiguration<Reservation
     {
         entity.HasKey(e => e.Id);
         entity.Property(e => e.CalledBy).IsRequired().HasMaxLength(200);
-        entity.Property(e => e.Notes).IsRequired().HasMaxLength(500);
+        entity.Property(e => e.Notes).HasMaxLength(500);
     }
 }
