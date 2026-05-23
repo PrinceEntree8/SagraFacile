@@ -60,3 +60,5 @@ nunit-*.xml
 
 [Bb]in*/
 .junie/
+
+.DS_Store
