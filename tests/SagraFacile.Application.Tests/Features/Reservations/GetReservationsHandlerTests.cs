@@ -21,8 +21,8 @@ public class GetReservationsHandlerTests
         var now = DateTime.UtcNow;
         var reservations = new List<TableReservation>
         {
-            new() { Id = 1, QueueNumber = "0001", CustomerName = "Mario", PartySize = 4, Status = "Waiting", Notes = "", CreatedAt = now.AddMinutes(-10) },
-            new() { Id = 2, QueueNumber = "0002", CustomerName = "Luigi", PartySize = 2, Status = "Called", Notes = "Birthday", CreatedAt = now.AddMinutes(-5) },
+            new() { Id = 1, ReservationId = "0001", CustomerName = "Mario", PartySize = 4, Status = "Waiting", Notes = "", CreatedAt = now.AddMinutes(-10) },
+            new() { Id = 2, ReservationId = "0002", CustomerName = "Luigi", PartySize = 2, Status = "Called", Notes = "Birthday", CreatedAt = now.AddMinutes(-5) },
         };
         _repository.GetPagedAsync(null, 1, 50, Arg.Any<CancellationToken>())
             .Returns((reservations, 2));
@@ -40,7 +40,7 @@ public class GetReservationsHandlerTests
         var created = now.AddMinutes(-15);
         var reservations = new List<TableReservation>
         {
-            new() { Id = 1, QueueNumber = "0001", CustomerName = "Test", PartySize = 2, Status = "Waiting", Notes = "", CreatedAt = created },
+            new() { Id = 1, ReservationId = "0001", CustomerName = "Test", PartySize = 2, Status = "Waiting", Notes = "", CreatedAt = created },
         };
         _repository.GetPagedAsync(null, 1, 50, Arg.Any<CancellationToken>())
             .Returns((reservations, 1));
@@ -62,7 +62,7 @@ public class GetReservationsHandlerTests
         {
             new()
             {
-                Id = 1, QueueNumber = "0001", CustomerName = "Test", PartySize = 2,
+                Id = 1, ReservationId = "0001", CustomerName = "Test", PartySize = 2,
                 Status = "Called", Notes = "", CreatedAt = now.AddMinutes(-10),
                 LastCalledAt = lastCalled, CallCount = 1
             },
@@ -84,7 +84,7 @@ public class GetReservationsHandlerTests
     {
         var reservations = new List<TableReservation>
         {
-            new() { Id = 1, QueueNumber = "0001", CustomerName = "Test", PartySize = 2, Status = "Waiting", Notes = "", CreatedAt = DateTime.UtcNow },
+            new() { Id = 1, ReservationId = "0001", CustomerName = "Test", PartySize = 2, Status = "Waiting", Notes = "", CreatedAt = DateTime.UtcNow },
         };
         _repository.GetPagedAsync(null, 1, 50, Arg.Any<CancellationToken>())
             .Returns((reservations, 1));
@@ -126,7 +126,7 @@ public class GetReservationsHandlerTests
         {
             new()
             {
-                Id = 7, QueueNumber = "0007", CustomerName = "Franco", PartySize = 6,
+                Id = 7, ReservationId = "0007", CustomerName = "Franco", PartySize = 6,
                 Status = "Called", Notes = "High chair needed", CreatedAt = now.AddMinutes(-10),
                 FirstCalledAt = firstCalled, LastCalledAt = lastCalled, CallCount = 2
             },

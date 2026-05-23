@@ -12,7 +12,7 @@ public class ReservationRepositoryTests
         // Arrange
         using var factory = new TestDbContextFactory();
         await using var repo = new ReservationRepository(factory);
-        var r = new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "Mario", PartySize = 4, Status = "Waiting", CreatedAt = DateTime.UtcNow };
+        var r = new TableReservation { ReservationId = "1", CustomerName = "Mario", PartySize = 4, Status = "Waiting", CreatedAt = DateTime.UtcNow };
 
         // Act
         await repo.AddAsync(r, CancellationToken.None);
@@ -22,10 +22,10 @@ public class ReservationRepositoryTests
 
         // Assert
         Assert.NotNull(found);
-        Assert.Equal("Mario", found!.CustomerName);
-        Assert.Equal("20260101", found.Date);
-        Assert.Equal("0001", found.QueueNumber);
-        Assert.Equal("202601010001", found.ReservationId);
+        Assert.Equal("Mario", found.CustomerName);
+        Assert.Equal(r.CreatedAt.ToString("yyyyMMdd"), found.Date);
+        Assert.Equal("1", found.QueueNumber);
+        Assert.Equal(r.ReservationId, found.ReservationId);
     }
 
     [Fact]
@@ -34,11 +34,11 @@ public class ReservationRepositoryTests
         // Arrange
         using var factory = new TestDbContextFactory();
         await using var repo = new ReservationRepository(factory);
-        var today = "20260815";
+        var today = DateTime.Today;
 
-        await repo.AddAsync(new TableReservation { Date = today, QueueNumber = "0001", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = today, QueueNumber = "0003", CustomerName = "B", PartySize = 2, Status = "Waiting", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = today, QueueNumber = "0002", CustomerName = "C", PartySize = 3, Status = "Waiting", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "1", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = today }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "3", CustomerName = "B", PartySize = 2, Status = "Waiting", CreatedAt = today }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "2", CustomerName = "C", PartySize = 3, Status = "Waiting", CreatedAt = today }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act
@@ -46,8 +46,8 @@ public class ReservationRepositoryTests
 
         // Assert
         Assert.NotNull(last);
-        Assert.Equal(today, last!.Date);
-        Assert.Equal("0003", last.QueueNumber);
+        Assert.Equal(today.ToString("yyyyMMdd"), last!.Date);
+        Assert.Equal("3", last.QueueNumber);
     }
 
     [Fact]
@@ -57,10 +57,10 @@ public class ReservationRepositoryTests
         using var factory = new TestDbContextFactory();
         await using var repo = new ReservationRepository(factory);
 
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0002", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0003", CustomerName = "C", PartySize = 3, Status = "Voided", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0004", CustomerName = "D", PartySize = 2, Status = "Called", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "1", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "2", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = new DateTime(2026, 1, 1, 10, 5, 0, DateTimeKind.Utc) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "3", CustomerName = "C", PartySize = 3, Status = "Voided", CreatedAt = new DateTime(2026, 1, 1, 10, 10, 0, DateTimeKind.Utc) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "4", CustomerName = "D", PartySize = 2, Status = "Called", CreatedAt = new DateTime(2026, 1, 1, 10, 15, 0, DateTimeKind.Utc) }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act — null status = default (exclude Seated + Voided)
@@ -80,9 +80,9 @@ public class ReservationRepositoryTests
         await using var repo = new ReservationRepository(factory);
         var now = DateTime.UtcNow;
 
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0002", CustomerName = "B", PartySize = 2, Status = "Called", CreatedAt = now }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "A", PartySize = 3, Status = "Called", CreatedAt = now.AddMinutes(-5) }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0003", CustomerName = "C", PartySize = 1, Status = "Waiting", CreatedAt = now.AddMinutes(-10) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "2", CustomerName = "B", PartySize = 2, Status = "Called", CreatedAt = now }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "1", CustomerName = "A", PartySize = 3, Status = "Called", CreatedAt = now.AddMinutes(-5) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "3", CustomerName = "C", PartySize = 1, Status = "Waiting", CreatedAt = now.AddMinutes(-10) }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act
@@ -90,8 +90,8 @@ public class ReservationRepositoryTests
 
         // Assert
         Assert.Equal(2, called.Count);
-        Assert.Equal("0001", called[0].QueueNumber); // Older one first
-        Assert.Equal("0002", called[1].QueueNumber);
+        Assert.Equal("1", called[0].QueueNumber); // Older one first
+        Assert.Equal("2", called[1].QueueNumber);
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public class ReservationRepositoryTests
         using var factory = new TestDbContextFactory();
         await using var repo = new ReservationRepository(factory);
 
-        var reservation = new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = DateTime.UtcNow };
+        var reservation = new TableReservation { ReservationId = "1", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = DateTime.UtcNow };
         await repo.AddAsync(reservation, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
@@ -124,9 +124,9 @@ public class ReservationRepositoryTests
         await using var repo = new ReservationRepository(factory);
         var now = DateTime.UtcNow;
 
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = now.AddDays(-5) }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260102", QueueNumber = "0001", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = now.AddDays(-3) }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260103", QueueNumber = "0001", CustomerName = "C", PartySize = 3, Status = "Voided", CreatedAt = now.AddDays(-1) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "1", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = now.AddDays(-5) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "2", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = now.AddDays(-3) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "3", CustomerName = "C", PartySize = 3, Status = "Voided", CreatedAt = now.AddDays(-1) }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act
@@ -145,8 +145,8 @@ public class ReservationRepositoryTests
         var now = DateTime.UtcNow;
         var cutoff = now.AddDays(-2);
 
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "Old", PartySize = 1, Status = "Waiting", CreatedAt = now.AddDays(-5) }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260102", QueueNumber = "0001", CustomerName = "New", PartySize = 2, Status = "Waiting", CreatedAt = now.AddDays(-1) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "1", CustomerName = "Old", PartySize = 1, Status = "Waiting", CreatedAt = now.AddDays(-5) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "2", CustomerName = "New", PartySize = 2, Status = "Waiting", CreatedAt = now.AddDays(-1) }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act
@@ -166,8 +166,8 @@ public class ReservationRepositoryTests
         var now = DateTime.UtcNow;
         var cutoff = now.AddDays(-2);
 
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "Old", PartySize = 1, Status = "Waiting", CreatedAt = now.AddDays(-5) }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260102", QueueNumber = "0001", CustomerName = "New", PartySize = 2, Status = "Waiting", CreatedAt = now.AddDays(-1) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "1", CustomerName = "Old", PartySize = 1, Status = "Waiting", CreatedAt = now.AddDays(-5) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "2", CustomerName = "New", PartySize = 2, Status = "Waiting", CreatedAt = now.AddDays(-1) }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act
@@ -186,9 +186,9 @@ public class ReservationRepositoryTests
         await using var repo = new ReservationRepository(factory);
         var now = DateTime.UtcNow;
 
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "TooOld", PartySize = 1, Status = "Waiting", CreatedAt = now.AddDays(-10) }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260102", QueueNumber = "0001", CustomerName = "InRange", PartySize = 2, Status = "Seated", CreatedAt = now.AddDays(-3) }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260103", QueueNumber = "0001", CustomerName = "TooNew", PartySize = 3, Status = "Voided", CreatedAt = now.AddDays(-1) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "1", CustomerName = "TooOld", PartySize = 1, Status = "Waiting", CreatedAt = now.AddDays(-10) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "2", CustomerName = "InRange", PartySize = 2, Status = "Seated", CreatedAt = now.AddDays(-3) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "3", CustomerName = "TooNew", PartySize = 3, Status = "Voided", CreatedAt = now.AddDays(-1) }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act
@@ -207,9 +207,9 @@ public class ReservationRepositoryTests
         await using var repo = new ReservationRepository(factory);
         var now = DateTime.UtcNow;
 
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0003", CustomerName = "Third", PartySize = 1, Status = "Waiting", CreatedAt = now.AddMinutes(-1) }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "First", PartySize = 2, Status = "Waiting", CreatedAt = now.AddMinutes(-30) }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0002", CustomerName = "Second", PartySize = 3, Status = "Waiting", CreatedAt = now.AddMinutes(-15) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "3", CustomerName = "Third", PartySize = 1, Status = "Waiting", CreatedAt = now.AddMinutes(-1) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "1", CustomerName = "First", PartySize = 2, Status = "Waiting", CreatedAt = now.AddMinutes(-30) }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "2", CustomerName = "Second", PartySize = 3, Status = "Waiting", CreatedAt = now.AddMinutes(-15) }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act
@@ -229,9 +229,9 @@ public class ReservationRepositoryTests
         using var factory = new TestDbContextFactory();
         await using var repo = new ReservationRepository(factory);
 
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0001", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0002", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
-        await repo.AddAsync(new TableReservation { Date = "20260101", QueueNumber = "0003", CustomerName = "C", PartySize = 3, Status = "Called", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "1", CustomerName = "A", PartySize = 1, Status = "Waiting", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "2", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+        await repo.AddAsync(new TableReservation { ReservationId = "3", CustomerName = "C", PartySize = 3, Status = "Called", CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act — explicit status "Seated"

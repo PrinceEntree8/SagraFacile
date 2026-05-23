@@ -20,7 +20,7 @@ public class CreateReservationHandlerTests
     public async Task Handle_FirstReservationOfDay_GeneratesQueueNumberWithSequence0001()
     {
         // Arrange
-        var today = DateTime.UtcNow.ToString("yyyyMMdd");
+        var today = DateTime.Today;
         _repository.GetLastByDatePrefixAsync(today, Arg.Any<CancellationToken>()).Returns((TableReservation?)null);
 
         TableReservation? saved = null;
@@ -33,8 +33,8 @@ public class CreateReservationHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal("0001", result.QueueNumber);
-        Assert.Equal(today, saved!.Date);
+        Assert.Equal("1", result.QueueNumber);
+        Assert.Equal(today.ToString("yyyyMMdd"), saved!.Date);
         Assert.Equal(1, result.Id);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
         await _notifier.Received(1).NotifyReservationCreatedAsync(
@@ -49,8 +49,8 @@ public class CreateReservationHandlerTests
     public async Task Handle_SubsequentReservation_IncrementsSequenceNumber()
     {
         // Arrange
-        var today = DateTime.UtcNow.ToString("yyyyMMdd");
-        var last = new TableReservation { Date = today, QueueNumber = "0005" };
+        var today = DateTime.Today;
+        var last = new TableReservation { CreatedAt = today, ReservationId = "5" };
         _repository.GetLastByDatePrefixAsync(today, Arg.Any<CancellationToken>()).Returns(last);
 
         _repository.When(r => r.AddAsync(Arg.Any<TableReservation>(), Arg.Any<CancellationToken>()))
@@ -62,14 +62,14 @@ public class CreateReservationHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal("0006", result.QueueNumber);
+        Assert.Equal("6", result.QueueNumber);
     }
 
     [Fact]
     public async Task Handle_SetsStatusToWaiting()
     {
         // Arrange
-        var today = DateTime.UtcNow.ToString("yyyyMMdd");
+        var today = DateTime.Today;
         _repository.GetLastByDatePrefixAsync(today, Arg.Any<CancellationToken>()).Returns((TableReservation?)null);
 
         TableReservation? saved = null;

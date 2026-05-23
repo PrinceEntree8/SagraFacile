@@ -22,7 +22,7 @@ public class CallReservationHandlerTests
     public async Task Handle_WaitingReservation_SetsStatusToCalledAndIncrementsCount()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 1, QueueNumber = "202601010001", Status = "Waiting", CallCount = 0 };
+        var reservation = new TableReservation { Id = 1, ReservationId = "202601010001", Status = "Waiting", CallCount = 0 };
         _repository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(reservation);
 
         // Act
@@ -52,7 +52,7 @@ public class CallReservationHandlerTests
         var firstCall = DateTime.UtcNow.AddMinutes(-5);
         var reservation = new TableReservation
         {
-            Id = 2, QueueNumber = "202601010002", Status = "Called",
+            Id = 2, ReservationId = "202601010002", Status = "Called",
             CallCount = 1, FirstCalledAt = firstCall
         };
         _repository.GetByIdAsync(2, Arg.Any<CancellationToken>()).Returns(reservation);
@@ -113,7 +113,7 @@ public class CallReservationHandlerTests
     public async Task Handle_ConcurrentModification_ReturnsFailure()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 1, QueueNumber = "202601010001", Status = "Waiting", CallCount = 0 };
+        var reservation = new TableReservation { Id = 1, ReservationId = "202601010001", Status = "Waiting", CallCount = 0 };
         _repository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(reservation);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>())
             .ThrowsAsync(new RepositoryConcurrencyException());

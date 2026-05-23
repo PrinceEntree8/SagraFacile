@@ -22,7 +22,7 @@ public class SeatReservationHandlerTests
     public async Task Handle_CalledReservation_SetsStatusToSeated()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 1, QueueNumber = "202601010001", Status = "Called" };
+        var reservation = new TableReservation { Id = 1, ReservationId = "202601010001", Status = "Called" };
         _repository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(reservation);
 
         // Act
@@ -72,7 +72,7 @@ public class SeatReservationHandlerTests
     public async Task Handle_ConcurrentModification_ReturnsFailure()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 1, QueueNumber = "202601010001", Status = "Called" };
+        var reservation = new TableReservation { Id = 1, ReservationId = "202601010001", Status = "Called" };
         _repository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(reservation);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>())
             .ThrowsAsync(new RepositoryConcurrencyException());

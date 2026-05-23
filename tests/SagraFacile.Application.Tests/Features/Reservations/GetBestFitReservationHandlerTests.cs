@@ -21,7 +21,7 @@ public class GetBestFitReservationHandlerTests
         // Arrange
         var reservations = new List<TableReservation>
         {
-            new() { Id = 1, QueueNumber = "001", CustomerName = "Mario", PartySize = 4, Status = "Called", CreatedAt = DateTime.UtcNow.AddMinutes(-10) }
+            new() { Id = 1, ReservationId = "001", CustomerName = "Mario", PartySize = 4, Status = "Called", CreatedAt = DateTime.UtcNow.AddMinutes(-10) }
         };
         _repository.GetCalledReservationsOrderedByCreatedAtAsync(Arg.Any<CancellationToken>()).Returns(reservations);
 
@@ -39,7 +39,7 @@ public class GetBestFitReservationHandlerTests
         // Arrange
         var reservations = new List<TableReservation>
         {
-            new() { Id = 1, QueueNumber = "001", CustomerName = "Mario", PartySize = 3, Status = "Called", CreatedAt = DateTime.UtcNow }
+            new() { Id = 1, ReservationId = "001", CustomerName = "Mario", PartySize = 3, Status = "Called", CreatedAt = DateTime.UtcNow }
         };
         _repository.GetCalledReservationsOrderedByCreatedAtAsync(Arg.Any<CancellationToken>()).Returns(reservations);
 
@@ -57,8 +57,8 @@ public class GetBestFitReservationHandlerTests
         // Arrange
         var reservations = new List<TableReservation>
         {
-            new() { Id = 1, PartySize = 2, Status = "Called", QueueNumber = "001", CreatedAt = DateTime.UtcNow },
-            new() { Id = 2, PartySize = 6, Status = "Called", QueueNumber = "002", CreatedAt = DateTime.UtcNow }
+            new() { Id = 1, PartySize = 2, Status = "Called", ReservationId = "001", CreatedAt = DateTime.UtcNow },
+            new() { Id = 2, PartySize = 6, Status = "Called", ReservationId = "002", CreatedAt = DateTime.UtcNow }
         };
         _repository.GetCalledReservationsOrderedByCreatedAtAsync(Arg.Any<CancellationToken>()).Returns(reservations);
 
@@ -76,7 +76,7 @@ public class GetBestFitReservationHandlerTests
         // Arrange
         var reservations = new List<TableReservation>
         {
-            new() { Id = 1, PartySize = 6, Status = "Called", QueueNumber = "001", CreatedAt = DateTime.UtcNow }
+            new() { Id = 1, PartySize = 6, Status = "Called", ReservationId = "001", CreatedAt = DateTime.UtcNow }
         };
         _repository.GetCalledReservationsOrderedByCreatedAtAsync(Arg.Any<CancellationToken>()).Returns(reservations);
 
