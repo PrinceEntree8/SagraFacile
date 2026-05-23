@@ -59,6 +59,9 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
 
+  <!-- Common -->
+  <data name="Common_Close" xml:space="preserve"><value>Chiudi</value></data>
+
   <!-- Navigation -->
   <data name="Nav_Home" xml:space="preserve"><value>Home</value></data>
   <data name="Nav_NowCalling" xml:space="preserve"><value>In Chiamata</value></data>
@@ -202,6 +205,17 @@
   <data name="HeadWaiter_Announced" xml:space="preserve"><value>Annunciati {0} posti disponibili alla Reception.</value></data>
   <data name="HeadWaiter_Error" xml:space="preserve"><value>Errore: {0}</value></data>
   <data name="HeadWaiter_ErrorSeating" xml:space="preserve"><value>Errore nell'accomodare la prenotazione: {0}</value></data>
+  <data name="HeadWaiter_SignalRError" xml:space="preserve"><value>Gli aggiornamenti in tempo reale non sono disponibili. La pagina non rifletterà le modifiche in diretta.</value></data>
+  <data name="HeadWaiter_ManualSeat" xml:space="preserve"><value>Accomodamento Manuale</value></data>
+  <data name="HeadWaiter_ManualSeatTitle" xml:space="preserve"><value>Accomodamento Manuale per Numero di Coda</value></data>
+  <data name="HeadWaiter_ManualSeatHint" xml:space="preserve"><value>Inserisci il numero di coda dell'ospite arrivato al tavolo. Verrà chiamato (se necessario) e accomodato in modo atomico.</value></data>
+  <data name="HeadWaiter_QueueNumber" xml:space="preserve"><value>Numero di Coda</value></data>
+  <data name="HeadWaiter_QueueNumberPlaceholder" xml:space="preserve"><value>es. 20260523-001</value></data>
+  <data name="HeadWaiter_CallAndSeat" xml:space="preserve"><value>Chiama &amp; Accomoda</value></data>
+  <data name="HeadWaiter_ManualSeatQueueRequired" xml:space="preserve"><value>Il numero di coda è obbligatorio.</value></data>
+  <data name="HeadWaiter_AnnounceSeatsTitle" xml:space="preserve"><value>Annuncia Posti Disponibili</value></data>
+  <data name="HeadWaiter_ColWaitTime" xml:space="preserve"><value>Attesa</value></data>
+  <data name="HeadWaiter_Actions" xml:space="preserve"><value>Azioni</value></data>
 
   <!-- Now Calling -->
   <data name="NowCalling_PageTitle" xml:space="preserve"><value>In Chiamata – SagraFacile</value></data>

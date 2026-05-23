@@ -6,6 +6,7 @@ namespace SagraFacile.Application.Interfaces;
 public interface IReservationRepository
 {
     Task<TableReservation?> GetByIdAsync(int id, CancellationToken cancellationToken);
+    Task<TableReservation?> GetByQueueNumberTodayAsync(string queueNumber, CancellationToken cancellationToken);
     Task<TableReservation?> GetLastByDatePrefixAsync(DateTime datePrefix, CancellationToken cancellationToken);
     Task<(List<TableReservation> Items, int TotalCount)> GetPagedAsync(
         string? status, int page, int pageSize, CancellationToken cancellationToken);

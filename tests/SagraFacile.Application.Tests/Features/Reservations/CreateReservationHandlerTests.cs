@@ -20,7 +20,7 @@ public class CreateReservationHandlerTests
     public async Task Handle_FirstReservationOfDay_GeneratesQueueNumberWithSequence0001()
     {
         // Arrange
-        var today = DateTime.Today;
+        var today = DateTime.UtcNow.Date;
         _repository.GetLastByDatePrefixAsync(today, Arg.Any<CancellationToken>()).Returns((TableReservation?)null);
 
         TableReservation? saved = null;
@@ -52,6 +52,7 @@ public class CreateReservationHandlerTests
         var today = DateTime.Today;
         var last = new TableReservation { CreatedAt = today, ReservationId = "5" };
         _repository.GetLastByDatePrefixAsync(today, Arg.Any<CancellationToken>()).Returns(last);
+        var today = DateTime.UtcNow.Date;
 
         _repository.When(r => r.AddAsync(Arg.Any<TableReservation>(), Arg.Any<CancellationToken>()))
             .Do(ci => ci.Arg<TableReservation>().Id = 2);
@@ -69,8 +70,7 @@ public class CreateReservationHandlerTests
     public async Task Handle_SetsStatusToWaiting()
     {
         // Arrange
-        var today = DateTime.Today;
-        _repository.GetLastByDatePrefixAsync(today, Arg.Any<CancellationToken>()).Returns((TableReservation?)null);
+        _repository.GetLastByDatePrefixAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns((TableReservation?)null);
 
         TableReservation? saved = null;
         _repository.When(r => r.AddAsync(Arg.Any<TableReservation>(), Arg.Any<CancellationToken>()))

@@ -27,7 +27,6 @@ public static class CreateReservation
 
     public class Handler : ICommandHandler<Command, Result>
     {
-        private const int SequencePadding = 4;
         private readonly IReservationRepository _repository;
         private readonly IReservationNotifier _notifier;
 

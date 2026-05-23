@@ -5,126 +5,89 @@
 @inject IMediator Mediator
 @inject NavigationManager Navigation
 @inject IStringLocalizer<SharedResource> L
+@inject ILogger<HeadWaiter> Logger
 @implements IAsyncDisposable
 
 <PageTitle>@L["HeadWaiter_PageTitle"]</PageTitle>
 
-<h1>@L["HeadWaiter_Heading"]</h1>
-
-<div class="row headwaiter-layout g-3">
-    <div class="col-12 col-lg-4">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h3>@L["HeadWaiter_AnnounceSeats"]</h3>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label">@L["HeadWaiter_NumberOfSeats"]</label>
-                    <div class="input-group">
-                        <InputNumber @bind-Value="availableSeatsToAnnounce" class="form-control" min="0" />
-                        <button class="btn btn-primary" @onclick="@AnnounceAvailableSeats" disabled="@(isAnnouncing || actionInProgress != null)">
-                            @if (isAnnouncing)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2"></span>
-                            }
-                            @L["HeadWaiter_Announce"]
-                        </button>
-                    </div>
-                    <small class="text-muted">@L["HeadWaiter_ShownAtReception"]</small>
-                </div>
-
-                @if (!string.IsNullOrEmpty(announcementMessage))
-                {
-                    <div class="alert alert-success mt-3">@announcementMessage</div>
-                }
-            </div>
-        </div>
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <h1 class="mb-0">@L["HeadWaiter_Heading"]</h1>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#announceModal">
+            @L["HeadWaiter_AnnounceSeats"]
+        </button>
+        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#manualSeatModal">
+            @L["HeadWaiter_ManualSeat"]
+        </button>
     </div>
+</div>
 
-    <div class="col-12 col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <h3>@L["HeadWaiter_BestFit"]</h3>
-                @if (coverCountForSearch > 0)
-                {
-                    <p class="mb-0">@string.Format(L["HeadWaiter_ForSeats"], coverCountForSearch)</p>
-                }
-                else
-                {
-                    <p class="mb-0">@L["HeadWaiter_AllCalled"]</p>
-                }
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label">@L["HeadWaiter_CoverFilter"]</label>
-                    <div class="input-group headwaiter-filter-actions">
-                        <InputNumber @bind-Value="coverCountForSearch" class="form-control" placeholder="@L["HeadWaiter_CoverFilterPlaceholder"]" />
-                        <button class="btn btn-outline-primary" @onclick="@SearchBestFit">@L["HeadWaiter_Filter"]</button>
-                        <button class="btn btn-outline-secondary" @onclick="@ClearFilter">@L["HeadWaiter_Clear"]</button>
-                    </div>
-                    <small class="text-muted">@L["HeadWaiter_FilterHint"]</small>
+<div class="col-12">
+    <div class="card">
+        <div class="card-header">
+            <h3>@L["HeadWaiter_BestFit"]</h3>
+            @if (coverCountForSearch > 0)
+            {
+                <p class="mb-0">@string.Format(L["HeadWaiter_ForSeats"], coverCountForSearch)</p>
+            }
+            else
+            {
+                <p class="mb-0">@L["HeadWaiter_AllCalled"]</p>
+            }
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">@L["HeadWaiter_CoverFilter"]</label>
+                <div class="input-group headwaiter-filter-actions">
+                    <InputNumber @bind-Value="coverCountForSearch" class="form-control" placeholder="@L["HeadWaiter_CoverFilterPlaceholder"]" />
+                    <button class="btn btn-outline-primary" @onclick="@SearchBestFit">@L["HeadWaiter_Filter"]</button>
+                    <button class="btn btn-outline-secondary" @onclick="@ClearFilter">@L["HeadWaiter_Clear"]</button>
                 </div>
+                <small class="text-muted">@L["HeadWaiter_FilterHint"]</small>
+            </div>
 
-                @if (isSearching)
+            @if (!string.IsNullOrEmpty(signalRError))
+            {
+                <div class="alert alert-warning">@signalRError</div>
+            }
+            @if (!string.IsNullOrEmpty(seatError))
+            {
+                <div class="alert alert-danger">@seatError</div>
+            }
+            @if (isSearching)
+            {
+                <p><em>@L["HeadWaiter_Searching"]</em></p>
+            }
+            else if (bestFitResults != null)
+            {
+                @if (bestFitResults.Any())
                 {
-                    <p><em>@L["HeadWaiter_Searching"]</em></p>
-                }
-                else if (bestFitResults != null)
-                {
-                    @if (bestFitResults.Any())
-                    {
-                        <div class="match-list">
-                            <div class="row fw-semibold d-none d-md-flex border-bottom pb-2 mb-1 px-2 text-muted small text-uppercase">
-                                <div class="col-md-1">@L["HeadWaiter_ColMatch"]</div>
-                                <div class="col-md-1">@L["HeadWaiter_ColQueue"]</div>
-                                <div class="col-md-2">@L["HeadWaiter_ColName"]</div>
-                                <div class="col-md-1">@L["HeadWaiter_ColPartySize"]</div>
-                                <div class="col-md-2">@L["HeadWaiter_ColNotes"]</div>
-                                <div class="col-md-1">@L["HeadWaiter_ColWaiting"]</div>
-                                <div class="col-md-1">@L["HeadWaiter_ColCalls"]</div>
-                                <div class="col-md-1">@L["HeadWaiter_ColLastCall"]</div>
-                                <div class="col-md-2">@L["HeadWaiter_ColActions"]</div>
-                            </div>
-                            @foreach (var match in bestFitResults)
-                            {
-                                <div class="row align-items-center py-2 border-bottom match-row @GetMatchRowClass(match)">
-                                    <div class="col-4 col-md-1 mb-1 mb-md-0">
-                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColMatch"]</span>
-                                        <span class="badge @GetMatchBadge(match.MatchQuality)">@match.MatchQuality</span>
-                                    </div>
-                                    <div class="col-4 col-md-1 mb-1 mb-md-0">
-                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColQueue"]</span>
+                    <div class="match-list" id="headwaiter-mobile-accordion">
+                        @* Desktop header *@
+                        <div class="row fw-semibold d-none d-md-flex border-bottom pb-2 mb-1 px-2 text-muted small text-uppercase">
+                            <div class="col-md-2"><i class="bi bi-list-ul"></i></div>
+                            <div class="col-md-2"><i class="bi bi-people"></i></div>
+                            <div class="col-md-4">@L["HeadWaiter_ColName"]</div>
+                            <div class="col-md-2">@L["HeadWaiter_ColWaitTime"]</div>
+                            <div class="col-md-2">@L["HeadWaiter_Actions"]</div>
+                        </div>
+
+                        @foreach (var match in bestFitResults)
+                        {
+                            var collapseId = $"accordion-{match.Id}";
+                            <div class="border-bottom @GetMatchRowClass(match)">
+                                @* Desktop row *@
+                                <div class="row align-items-center py-2 px-2 d-none d-md-flex">
+                                    <div class="col-md-2">
                                         <strong>@match.QueueNumber</strong>
                                     </div>
-                                    <div class="col-4 col-md-2 mb-1 mb-md-0">
-                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColName"]</span>
-                                        @match.CustomerName
-                                    </div>
-                                    <div class="col-4 col-md-1 mb-1 mb-md-0">
-                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColPartySize"]</span>
+                                    <div class="col-md-2">
                                         <span class="badge bg-info">@match.PartySize</span>
                                     </div>
-                                    <div class="col-8 col-md-2 mb-1 mb-md-0">
-                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColNotes"]</span>
-                                        @if (!string.IsNullOrEmpty(match.Notes))
-                                        {
-                                            <span class="text-muted">@match.Notes</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">-</span>
-                                        }
+                                    <div class="col-md-4">
+                                        @match.CustomerName
                                     </div>
-                                    <div class="col-3 col-md-1 mb-1 mb-md-0">
-                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColWaiting"]</span>
-                                        @FormatTimeSpan(match.WaitingTime)
-                                    </div>
-                                    <div class="col-3 col-md-1 mb-1 mb-md-0">
-                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColCalls"]</span>
-                                        @match.CallCount
-                                    </div>
-                                    <div class="col-6 col-md-1 mb-1 mb-md-0">
-                                        <span class="d-block d-md-none text-muted small">@L["HeadWaiter_ColLastCall"]</span>
+                                    <div class="col-md-2">
                                         @if (match.LastCalledAt.HasValue)
                                         {
                                             @FormatTimeSpan(DateTime.UtcNow - match.LastCalledAt.Value)
@@ -134,26 +97,131 @@
                                             <span class="text-muted">@L["HeadWaiter_Never"]</span>
                                         }
                                     </div>
-                                    <div class="col-12 col-md-2 mb-1 mb-md-0 d-grid d-md-block">
+                                    <div class="col-md-2">
                                         <button class="btn btn-sm btn-primary" @onclick="@(() => SeatReservationAsync(match.Id))" disabled="@(actionInProgress == match.Id)">
+                                            @if (actionInProgress == match.Id)
+                                            {
+                                                <span class="spinner-border spinner-border-sm me-1"></span>
+                                            }
                                             @L["HeadWaiter_Seat"]
                                         </button>
                                     </div>
                                 </div>
-                            }
-                        </div>
 
-                        <div class="alert alert-info mt-3">
-                            <strong>@string.Format(L["HeadWaiter_BestRecommendation"], bestFitResults.First().QueueNumber, bestFitResults.First().CustomerName, bestFitResults.First().PartySize)</strong>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="alert alert-warning">
-                            @L["HeadWaiter_NoMatch"]
-                        </div>
-                    }
+                                @* Mobile summary row (accordion trigger) *@
+                                <div class="d-flex d-md-none align-items-center justify-content-between px-2 py-2" style="cursor:pointer" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <strong>@match.QueueNumber - @match.CustomerName</strong>
+                                    </div>
+                                    <span class="badge bg-info float-end">@match.PartySize <i class="bi bi-people"></i></span>
+                                </div>
+
+                                @* Mobile accordion detail *@
+                                <div class="collapse d-md-none px-2 pb-2" id="@collapseId" data-bs-parent="#headwaiter-mobile-accordion">
+                                    <div class="mb-1"><span class="text-muted small">@L["HeadWaiter_ColName"]: </span>@match.CustomerName</div>
+                                    <div class="mb-2">
+                                        <span class="text-muted small">@L["HeadWaiter_ColWaitTime"]: </span>
+                                        @if (match.LastCalledAt.HasValue)
+                                        {
+                                            @FormatTimeSpan(DateTime.UtcNow - match.LastCalledAt.Value)
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">@L["HeadWaiter_Never"]</span>
+                                        }
+                                    </div>
+                                    <button class="btn btn-sm btn-primary w-100" @onclick="@(() => SeatReservationAsync(match.Id))" disabled="@(actionInProgress == match.Id)">
+                                        @if (actionInProgress == match.Id)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-1"></span>
+                                        }
+                                        @L["HeadWaiter_Seat"]
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                        <strong>@string.Format(L["HeadWaiter_BestRecommendation"], bestFitResults.First().QueueNumber, bestFitResults.First().CustomerName, bestFitResults.First().PartySize)</strong>
+                    </div>
                 }
+                else
+                {
+                    <div class="alert alert-warning">
+                        @L["HeadWaiter_NoMatch"]
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@* Announce Modal *@
+<div class="modal fade" id="announceModal" tabindex="-1" aria-labelledby="announceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="announceModalLabel">@L["HeadWaiter_AnnounceSeatsTitle"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">@L["HeadWaiter_NumberOfSeats"]</label>
+                    <InputNumber @bind-Value="availableSeatsToAnnounce" class="form-control" min="0" />
+                    <small class="text-muted">@L["HeadWaiter_ShownAtReception"]</small>
+                </div>
+                @if (!string.IsNullOrEmpty(announcementMessage))
+                {
+                    <div class="alert alert-success">@announcementMessage</div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@L["Common_Close"]</button>
+                <button class="btn btn-primary" @onclick="@AnnounceAvailableSeats" disabled="@isAnnouncing">
+                    @if (isAnnouncing)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    @L["HeadWaiter_Announce"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Manual Seat Modal *@
+<div class="modal fade" id="manualSeatModal" tabindex="-1" aria-labelledby="manualSeatModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="manualSeatModalLabel">@L["HeadWaiter_ManualSeatTitle"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">@L["HeadWaiter_ManualSeatHint"]</p>
+                <div class="mb-3">
+                    <label class="form-label">@L["HeadWaiter_QueueNumber"]</label>
+                    <input type="text" class="form-control" @bind="manualSeatQueueNumber" placeholder="@L["HeadWaiter_QueueNumberPlaceholder"]" />
+                </div>
+                @if (!string.IsNullOrEmpty(manualSeatError))
+                {
+                    <div class="alert alert-danger">@manualSeatError</div>
+                }
+                @if (!string.IsNullOrEmpty(manualSeatSuccess))
+                {
+                    <div class="alert alert-success">@manualSeatSuccess</div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@L["Common_Close"]</button>
+                <button class="btn btn-warning" @onclick="@CallAndSeatAsync" data-bs-dismiss="modal" disabled="@isManualSeating">
+                    @if (isManualSeating)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    @L["HeadWaiter_CallAndSeat"]
+                </button>
             </div>
         </div>
     </div>
@@ -167,10 +235,19 @@
     private bool isAnnouncing = false;
     private string announcementMessage = string.Empty;
     private int? actionInProgress = null;
+    private bool isSearching = false;
+
+    // Manual Seat modal state
+    private string manualSeatQueueNumber = string.Empty;
+    private string manualSeatError = string.Empty;
+    private string manualSeatSuccess = string.Empty;
+    private bool isManualSeating = false;
+    private string seatError = string.Empty;
+    private string signalRError = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAllCalledReservations(); // Load all Called reservations by default
+        await LoadAllCalledReservations();
         await InitializeSignalR();
     }
 
@@ -184,48 +261,36 @@
         hubConnection.On<int, string, string, int>("ReservationCreated", async (id, queueNumber, name, size) =>
         {
             if (coverCountForSearch > 0)
-            {
                 await SearchBestFit();
-            }
             else
-            {
-                await LoadAllCalledReservations(); // Refresh the default view
-            }
+                await LoadAllCalledReservations();
             await InvokeAsync(StateHasChanged);
         });
 
         hubConnection.On<int, string, string, int, int>("ReservationCalled", async (id, queueNumber, customerName, partySize, callCount) =>
         {
             if (coverCountForSearch > 0)
-            {
                 await SearchBestFit();
-            }
             else
-            {
-                await LoadAllCalledReservations(); // Refresh the default view
-            }
+                await LoadAllCalledReservations();
             await InvokeAsync(StateHasChanged);
         });
 
         hubConnection.On<int, string>("ReservationVoided", async (id, queueNumber) =>
         {
             if (coverCountForSearch > 0)
-            {
                 await SearchBestFit();
-            }
             else
-            {
-                await LoadAllCalledReservations(); // Refresh the default view
-            }
+                await LoadAllCalledReservations();
             await InvokeAsync(StateHasChanged);
         });
 
         hubConnection.On<int, string>("ReservationSeated", async (id, queueNumber) =>
         {
             if (coverCountForSearch > 0)
-            {
                 await SearchBestFit();
-            }
+            else
+                await LoadAllCalledReservations();
             await InvokeAsync(StateHasChanged);
         });
 
@@ -235,7 +300,8 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[DEBUG_LOG] SignalR initialization failed: {ex}");
+            Logger.LogError(ex, "SignalR initialization failed");
+            signalRError = L["HeadWaiter_SignalRError"];
         }
     }
 
@@ -244,8 +310,7 @@
         isSearching = true;
         try
         {
-            // Load all Called reservations without a specific cover count filter
-            var query = new GetBestFitReservation.Query(0); // Use 0 to indicate "all"
+            var query = new GetBestFitReservation.Query(0);
             var result = await Mediator.Send(query, CancellationToken.None);
             bestFitResults = result.Matches.ToList();
         }
@@ -264,9 +329,8 @@
             if (hubConnection?.State == HubConnectionState.Connected)
             {
                 await hubConnection.SendAsync("NotifyAvailableSeatsUpdated", availableSeatsToAnnounce);
-            announcementMessage = string.Format(L["HeadWaiter_Announced"], availableSeatsToAnnounce);
-                
-                // Also update the filter to show who fits
+                announcementMessage = string.Format(L["HeadWaiter_Announced"], availableSeatsToAnnounce);
+
                 coverCountForSearch = availableSeatsToAnnounce;
                 await SearchBestFit();
             }
@@ -308,23 +372,14 @@
         }
     }
 
-    private bool isSearching = false;
-
-    private string GetMatchBadge(string matchQuality) => matchQuality switch
+    private string GetMatchRowClass(GetBestFitReservation.ReservationMatchDto match) => match.MatchQuality switch
     {
-        "Perfect" => "bg-success",
-        "Good" => "bg-primary",
-        "Acceptable" => "bg-info",
-        "Fits" => "bg-secondary",
-        _ => "bg-secondary"
+        "Perfect" => "bg-success bg-opacity-10",
+        "Good" => "bg-primary bg-opacity-10",
+        "Acceptable" => "bg-info bg-opacity-10",
+        "Fits" => "bg-secondary bg-opacity-10",
+        _ => ""
     };
-
-    private string GetMatchRowClass(GetBestFitReservation.ReservationMatchDto match)
-    {
-        if (match.MatchQuality == "Perfect")
-            return "bg-success bg-opacity-10";
-        return "";
-    }
 
     private string FormatTimeSpan(TimeSpan timeSpan)
     {
@@ -336,24 +391,20 @@
     private async Task SeatReservationAsync(int reservationId)
     {
         actionInProgress = reservationId;
+        seatError = string.Empty;
         try
         {
             var command = new SeatReservation.Command(reservationId);
             await Mediator.Send(command, CancellationToken.None);
-            
-            // Refresh the best fit results
+
             if (coverCountForSearch > 0)
-            {
                 await SearchBestFit();
-            }
             else
-            {
                 await LoadAllCalledReservations();
-            }
         }
         catch (Exception ex)
         {
-            announcementMessage = string.Format(L["HeadWaiter_ErrorSeating"], ex.Message);
+            seatError = string.Format(L["HeadWaiter_ErrorSeating"], ex.Message);
         }
         finally
         {
@@ -361,11 +412,51 @@
         }
     }
 
+    private async Task CallAndSeatAsync()
+    {
+        manualSeatError = string.Empty;
+        manualSeatSuccess = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(manualSeatQueueNumber))
+        {
+            manualSeatError = L["HeadWaiter_ManualSeatQueueRequired"];
+            return;
+        }
+
+        isManualSeating = true;
+        try
+        {
+            var command = new CallAndSeatReservation.Command(manualSeatQueueNumber.Trim());
+            var result = await Mediator.Send(command, CancellationToken.None);
+
+            if (result.Success)
+            {
+                manualSeatSuccess = result.Message;
+                manualSeatQueueNumber = string.Empty;
+
+                if (coverCountForSearch > 0)
+                    await SearchBestFit();
+                else
+                    await LoadAllCalledReservations();
+            }
+            else
+            {
+                manualSeatError = result.Message;
+            }
+        }
+        catch (Exception ex)
+        {
+            manualSeatError = string.Format(L["HeadWaiter_Error"], ex.Message);
+        }
+        finally
+        {
+            isManualSeating = false;
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (hubConnection is not null)
-        {
             await hubConnection.DisposeAsync();
-        }
     }
 }

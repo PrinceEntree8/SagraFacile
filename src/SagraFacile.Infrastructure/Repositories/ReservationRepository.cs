@@ -18,6 +18,13 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
     public Task<TableReservation?> GetByIdAsync(int id, CancellationToken cancellationToken)
         => GetByIdInternalAsync(id, cancellationToken);
 
+    public Task<TableReservation?> GetByQueueNumberTodayAsync(string queueNumber, CancellationToken cancellationToken)
+    {
+        var todayPrefix = DateTime.UtcNow.ToString("yyyyMMdd");
+        return _db.TableReservations
+            .FirstOrDefaultAsync(r => r.ReservationId == queueNumber && r.ReservationId.StartsWith(todayPrefix), cancellationToken);
+    }
+
     public Task<TableReservation?> GetLastByDatePrefixAsync(DateTime datePrefix, CancellationToken cancellationToken)
         => GetLastByDatePrefixInternalAsync(datePrefix, cancellationToken);
 
@@ -110,8 +117,11 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
 
     private async Task<TableReservation?> GetLastByDatePrefixInternalAsync(DateTime datePrefix, CancellationToken cancellationToken)
     {
+        var startUtc = datePrefix.ToUniversalTime().Date;
+        var endUtc = startUtc.AddDays(1);
+
         var reservation = await _db.TableReservations
-            .Where(r => r.CreatedAt.Date >= datePrefix.ToUniversalTime() && r.CreatedAt.Date <= datePrefix.ToUniversalTime().AddDays(1))
+            .Where(r => r.CreatedAt >= startUtc && r.CreatedAt < endUtc)
             .OrderByDescending(r => r.ReservationId)
             .FirstOrDefaultAsync(cancellationToken);
 
