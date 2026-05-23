@@ -25,6 +25,7 @@ public class GetReservationReportHandlerTests
 
         await _repository.Received(1).GetByDateRangeAsync(null, null, Arg.Any<CancellationToken>());
         Assert.Empty(result.Reports);
+        Assert.Equal(0, result.Statistics.TotalPeople);
     }
 
     [Fact]
@@ -72,6 +73,7 @@ public class GetReservationReportHandlerTests
         var result = await _handler.Handle(new GetReservationReport.Query(), CancellationToken.None);
 
         Assert.Equal(2, result.Statistics.TotalReservations);
+        Assert.Equal(6, result.Statistics.TotalPeople);
         Assert.Equal(2, result.Statistics.SeatedCount);
         Assert.Equal(0, result.Statistics.VoidedCount);
         Assert.Equal(0, result.Statistics.WaitingCount);
@@ -120,6 +122,7 @@ public class GetReservationReportHandlerTests
         var result = await _handler.Handle(new GetReservationReport.Query(), CancellationToken.None);
 
         Assert.Equal(1, result.Statistics.WaitingCount);
+        Assert.Equal(3, result.Statistics.TotalPeople);
     }
 
     [Fact]

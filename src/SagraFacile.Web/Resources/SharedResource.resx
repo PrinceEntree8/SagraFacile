@@ -222,6 +222,7 @@
   <data name="Report_Generate" xml:space="preserve"><value>Generate Report</value></data>
   <data name="Report_Clear" xml:space="preserve"><value>Clear</value></data>
   <data name="Report_TotalReservations" xml:space="preserve"><value>Total Reservations</value></data>
+  <data name="Report_TotalPeople" xml:space="preserve"><value>Total People</value></data>
   <data name="Report_Seated" xml:space="preserve"><value>Seated</value></data>
   <data name="Report_Waiting" xml:space="preserve"><value>Waiting</value></data>
   <data name="Report_Voided" xml:space="preserve"><value>Voided</value></data>
