@@ -25,6 +25,7 @@ public static class GetReservationReport
 
     public record StatisticsDto(
         int TotalReservations,
+        int TotalPeople,
         int SeatedCount,
         int VoidedCount,
         int WaitingCount,
@@ -94,6 +95,7 @@ public static class GetReservationReport
 
             var stats = new StatisticsDto(
                 TotalReservations: reservations.Count,
+                TotalPeople: reservations.Sum(r => r.PartySize),
                 SeatedCount: reservations.Count(r => r.Status == ReservationStatus.Seated),
                 VoidedCount: reservations.Count(r => r.Status == ReservationStatus.Voided),
                 WaitingCount: reservations.Count(r => r.Status is ReservationStatus.Waiting or ReservationStatus.Called),
