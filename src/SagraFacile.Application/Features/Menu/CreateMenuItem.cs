@@ -22,12 +22,8 @@ public static class CreateMenuItem
         }
     }
 
-    public class Handler : ICommandHandler<Command, Result>
+    public class Handler(IMenuRepository repo, IMenuCacheService cache) : ICommandHandler<Command, Result>
     {
-        private readonly IMenuRepository _repo;
-
-        public Handler(IMenuRepository repo) => _repo = repo;
-
         public async Task<Result> Handle(Command command, CancellationToken ct)
         {
             var item = new MenuItem
@@ -43,8 +39,9 @@ public static class CreateMenuItem
                     .Select(id => new MenuItemAllergen { AllergenId = id })
                     .ToList()
             };
-            await _repo.AddAsync(item, ct);
-            await _repo.SaveChangesAsync(ct);
+            await repo.AddAsync(item, ct);
+            await repo.SaveChangesAsync(ct);
+            cache.InvalidateMenu(command.EventId);
             return new Result(item.Id, item.Name);
         }
     }

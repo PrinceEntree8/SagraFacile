@@ -19,6 +19,14 @@
     }
     else
     {
+        @if (!string.IsNullOrWhiteSpace(menuDetails?.WarningMessage))
+        {
+            <div class="alert alert-warning">@((MarkupString)menuDetails.WarningMessage)</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(menuDetails?.Header))
+        {
+            <div class="menu-header mb-4">@((MarkupString)menuDetails.Header)</div>
+        }
         <div class="text-center mb-4">
             <h1>🍽️ @activeEvent.Name</h1>
         </div>
@@ -71,6 +79,10 @@
                 </section>
             }
         }
+        @if (!string.IsNullOrWhiteSpace(menuDetails?.Footer))
+        {
+            <div class="menu-footer mt-4">@((MarkupString)menuDetails.Footer)</div>
+        }
     }
 </div>
 
@@ -79,6 +91,7 @@
     private GetActiveEvent.EventDto? activeEvent;
     private List<GetEventMenu.MenuItemDto> items = new();
     private List<GetMenuCategories.CategoryDto> categories = new();
+    private GetMenuDetails.MenuDetailsDto? menuDetails;
 
     protected override async Task OnInitializedAsync()
     {
@@ -88,9 +101,11 @@
         {
             var catTask = Mediator.QueryAsync(new GetMenuCategories.Query());
             var menuTask = Mediator.QueryAsync(new GetEventMenu.Query(activeEvent.Id, IncludeUnavailable: false));
-            await Task.WhenAll(catTask, menuTask);
+            var detailsTask = Mediator.QueryAsync(new GetMenuDetails.Query(activeEvent.Id));
+            await Task.WhenAll(catTask, menuTask, detailsTask);
             categories = (await catTask).Categories;
             items = (await menuTask).Items;
+            menuDetails = (await detailsTask).Details;
         }
         isLoading = false;
     }

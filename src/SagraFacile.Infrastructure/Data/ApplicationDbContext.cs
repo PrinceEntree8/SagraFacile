@@ -22,6 +22,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
     public DbSet<Allergen> Allergens => Set<Allergen>();
     public DbSet<MenuItemAllergen> MenuItemAllergens => Set<MenuItemAllergen>();
+    public DbSet<MenuDetails> MenuDetails => Set<MenuDetails>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -8,19 +8,17 @@ public static class DeleteMenuItem
     public record Command(int Id) : ICommand<Result>;
     public record Result(bool Success, string Message);
 
-    public class Handler : ICommandHandler<Command, Result>
+    public class Handler(IMenuRepository repo, IMenuCacheService cache) : ICommandHandler<Command, Result>
     {
-        private readonly IMenuRepository _repo;
-
-        public Handler(IMenuRepository repo) => _repo = repo;
-
         public async Task<Result> Handle(Command command, CancellationToken ct)
         {
-            var item = await _repo.GetByIdAsync(command.Id, ct);
+            var item = await repo.GetByIdAsync(command.Id, ct);
             if (item is null) return new Result(false, "Item not found");
 
-            await _repo.DeleteAsync(command.Id, ct);
-            await _repo.SaveChangesAsync(ct);
+            var eventId = item.EventId;
+            await repo.DeleteAsync(command.Id, ct);
+            await repo.SaveChangesAsync(ct);
+            cache.InvalidateMenu(eventId);
             return new Result(true, $"'{item.Name}' deleted");
         }
     }

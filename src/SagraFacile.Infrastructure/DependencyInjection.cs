@@ -5,6 +5,7 @@ using SagraFacile.Application.Interfaces;
 using SagraFacile.Infrastructure.Data;
 using SagraFacile.Infrastructure.Identity;
 using SagraFacile.Infrastructure.Repositories;
+using SagraFacile.Infrastructure.Services;
 
 namespace SagraFacile.Infrastructure;
 
@@ -39,6 +40,9 @@ public static class DependencyInjection
         services.AddTransient<IMenuRepository, MenuRepository>();
         services.AddTransient<IAllergenRepository, AllergenRepository>();
         services.AddTransient<IMenuCategoryRepository, MenuCategoryRepository>();
+        services.AddTransient<IMenuDetailsRepository, MenuDetailsRepository>();
+        services.AddMemoryCache();
+        services.AddSingleton<IMenuCacheService, MenuCacheService>();
 
         return services;
     }

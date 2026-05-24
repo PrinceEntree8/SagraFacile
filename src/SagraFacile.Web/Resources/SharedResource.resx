@@ -345,4 +345,22 @@
   <data name="Reservation_Status_Waiting" xml:space="preserve">
     <value>Waiting</value>
   </data>
+  <data name="MenuAppearance_Section" xml:space="preserve">
+    <value>Menu Appearance</value>
+  </data>
+  <data name="MenuAppearance_WarningMessage" xml:space="preserve">
+    <value>Warning Message</value>
+  </data>
+  <data name="MenuAppearance_Header" xml:space="preserve">
+    <value>Header</value>
+  </data>
+  <data name="MenuAppearance_Footer" xml:space="preserve">
+    <value>Footer</value>
+  </data>
+  <data name="MenuAppearance_Saved" xml:space="preserve">
+    <value>Appearance saved.</value>
+  </data>
+  <data name="MenuAppearance_HtmlHint" xml:space="preserve">
+    <value>Supports HTML.</value>
+  </data>
 </root>
