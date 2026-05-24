@@ -61,9 +61,12 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
             .ToListAsync(cancellationToken);
 
     public async Task<List<Reservation>> GetByDateRangeAsync(
-        int eventId, DateTime? startDateUtc, DateTime? endDateUtc, CancellationToken cancellationToken)
+        int? eventId, DateTime? startDateUtc, DateTime? endDateUtc, CancellationToken cancellationToken)
     {
-        var query = _db.Reservations.Where(r => r.EventId == eventId);
+        var query = _db.Reservations.AsQueryable();
+
+        if (eventId.HasValue)
+            query = query.Where(r => r.EventId == eventId.Value);
 
         if (startDateUtc.HasValue)
             query = query.Where(r => r.CreatedAt >= startDateUtc.Value);

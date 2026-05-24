@@ -12,7 +12,7 @@ public interface IReservationRepository
         int eventId, string? status, int page, int pageSize, CancellationToken cancellationToken);
     Task<List<Reservation>> GetCalledReservationsOrderedByCreatedAtAsync(int eventId, CancellationToken cancellationToken);
     Task<List<Reservation>> GetByDateRangeAsync(
-        int eventId, DateTime? startDateUtc, DateTime? endDateUtc, CancellationToken cancellationToken);
+        int? eventId, DateTime? startDateUtc, DateTime? endDateUtc, CancellationToken cancellationToken);
     Task<List<GetCounters.ReservationCounter>> GetCountersAsync(int eventId, CancellationToken cancellationToken);
     Task AddAsync(Reservation reservation, CancellationToken cancellationToken);
     Task AddCallAsync(ReservationCall call, CancellationToken cancellationToken);
