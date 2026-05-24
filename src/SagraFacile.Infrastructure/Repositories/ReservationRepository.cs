@@ -1,5 +1,6 @@
 using SagraFacile.Application.Features.Reservations;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Interfaces;
 using SagraFacile.Domain.Features.Reservations;
@@ -9,26 +10,39 @@ namespace SagraFacile.Infrastructure.Repositories;
 
 public class ReservationRepository : IReservationRepository, IAsyncDisposable
 {
-    private const int DatePrefixLength = 8;
     private readonly ApplicationDbContext _db;
 
     public ReservationRepository(IDbContextFactory<ApplicationDbContext> factory)
         => _db = factory.CreateDbContext();
 
-    public Task<TableReservation?> GetByIdAsync(int id, CancellationToken cancellationToken)
-        => GetByIdInternalAsync(id, cancellationToken);
+    public Task<Reservation?> GetByIdAsync(int id, CancellationToken cancellationToken)
+        => _db.Reservations.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
-    public Task<TableReservation?> GetLastByDatePrefixAsync(DateTime datePrefix, CancellationToken cancellationToken)
-        => GetLastByDatePrefixInternalAsync(datePrefix, cancellationToken);
+    public Task<Reservation?> GetByEventAndSequenceAsync(int eventId, int sequenceNumber, CancellationToken cancellationToken)
+        => _db.Reservations.FirstOrDefaultAsync(r => r.EventId == eventId && r.SequenceNumber == sequenceNumber, cancellationToken);
 
-    public async Task<(List<TableReservation> Items, int TotalCount)> GetPagedAsync(
-        string? status, int page, int pageSize, CancellationToken cancellationToken)
+    public async Task<int> GetNextSequenceNumberAsync(int eventId, CancellationToken cancellationToken)
     {
-        var query = _db.TableReservations.AsQueryable();
+        var last = await _db.Reservations
+            .Where(r => r.EventId == eventId)
+            .MaxAsync(r => (int?)r.SequenceNumber, cancellationToken);
 
-        query = string.IsNullOrEmpty(status)
-            ? query.Where(r => r.Status != "Seated" && r.Status != "Voided")
-            : query.Where(r => r.Status == status);
+        return (last ?? 0) + 1;
+    }
+
+    public async Task<(List<Reservation> Items, int TotalCount)> GetPagedAsync(
+        int eventId, string? status, int page, int pageSize, CancellationToken cancellationToken)
+    {
+        var query = _db.Reservations.Where(r => r.EventId == eventId);
+
+        if (string.IsNullOrEmpty(status))
+        {
+            query = query.Where(r => r.Status != ReservationStatus.Seated && r.Status != ReservationStatus.Voided);
+        }
+        else if (Enum.TryParse<ReservationStatus>(status, ignoreCase: true, out var parsedStatus))
+        {
+            query = query.Where(r => r.Status == parsedStatus);
+        }
 
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query
@@ -40,13 +54,19 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
         return (items, totalCount);
     }
 
-    public Task<List<TableReservation>> GetCalledReservationsOrderedByCreatedAtAsync(CancellationToken cancellationToken)
-        => GetCalledReservationsOrderedByCreatedAtInternalAsync(cancellationToken);
+    public Task<List<Reservation>> GetCalledReservationsOrderedByCreatedAtAsync(int eventId, CancellationToken cancellationToken)
+        => _db.Reservations
+            .Where(r => r.EventId == eventId && r.Status == ReservationStatus.Called)
+            .OrderBy(r => r.CreatedAt)
+            .ToListAsync(cancellationToken);
 
-    public async Task<List<TableReservation>> GetByDateRangeAsync(
-        DateTime? startDateUtc, DateTime? endDateUtc, CancellationToken cancellationToken)
+    public async Task<List<Reservation>> GetByDateRangeAsync(
+        int? eventId, DateTime? startDateUtc, DateTime? endDateUtc, CancellationToken cancellationToken)
     {
-        var query = _db.TableReservations.AsQueryable();
+        var query = _db.Reservations.AsQueryable();
+
+        if (eventId.HasValue)
+            query = query.Where(r => r.EventId == eventId.Value);
 
         if (startDateUtc.HasValue)
             query = query.Where(r => r.CreatedAt >= startDateUtc.Value);
@@ -54,30 +74,25 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
         if (endDateUtc.HasValue)
             query = query.Where(r => r.CreatedAt <= endDateUtc.Value);
 
-        var items = await query.OrderBy(r => r.CreatedAt).ToListAsync(cancellationToken);
-
-        return items;
+        return await query.OrderBy(r => r.CreatedAt).ToListAsync(cancellationToken);
     }
 
-    public async Task<List<GetCounters.ReservationCounter>> GetCountersAsync(CancellationToken cancellationToken)
+    public async Task<List<GetCounters.ReservationCounter>> GetCountersAsync(int eventId, CancellationToken cancellationToken)
     {
-        var now = DateTime.UtcNow;
-        var todayPrefix = now.ToString("yyyyMMdd");
-
-        return await _db.TableReservations
-            .Where(r => r.ReservationId.StartsWith(todayPrefix))
+        return await _db.Reservations
+            .Where(r => r.EventId == eventId)
             .GroupBy(r => r.Status)
             .Select(g => new GetCounters.ReservationCounter(
-                g.Key,
+                g.Key.ToString(),
                 g.Count(),
                 g.Sum(r => r.PartySize)
             ))
             .ToListAsync(cancellationToken);
     }
 
-    public async Task AddAsync(TableReservation reservation, CancellationToken cancellationToken)
+    public async Task AddAsync(Reservation reservation, CancellationToken cancellationToken)
     {
-        await _db.TableReservations.AddAsync(reservation, cancellationToken);
+        await _db.Reservations.AddAsync(reservation, cancellationToken);
     }
 
     public async Task AddCallAsync(ReservationCall call, CancellationToken cancellationToken)
@@ -85,11 +100,6 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
 
     public async Task SaveChangesAsync(CancellationToken cancellationToken)
     {
-        foreach (var entry in _db.ChangeTracker.Entries<TableReservation>())
-        {
-            if (entry.State == EntityState.Modified)
-                entry.Entity.Version++;
-        }
         try
         {
             await _db.SaveChangesAsync(cancellationToken);
@@ -98,33 +108,11 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
         {
             throw new RepositoryConcurrencyException();
         }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23505")
+        {
+            throw new RepositoryUniqueConstraintException("A unique constraint violation occurred.", ex);
+        }
     }
 
     public ValueTask DisposeAsync() => _db.DisposeAsync();
-
-    private async Task<TableReservation?> GetByIdInternalAsync(int id, CancellationToken cancellationToken)
-    {
-        var reservation = await _db.TableReservations.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
-        return reservation;
-    }
-
-    private async Task<TableReservation?> GetLastByDatePrefixInternalAsync(DateTime datePrefix, CancellationToken cancellationToken)
-    {
-        var reservation = await _db.TableReservations
-            .Where(r => r.CreatedAt.Date >= datePrefix.ToUniversalTime() && r.CreatedAt.Date <= datePrefix.ToUniversalTime().AddDays(1))
-            .OrderByDescending(r => r.ReservationId)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        return reservation;
-    }
-
-    private async Task<List<TableReservation>> GetCalledReservationsOrderedByCreatedAtInternalAsync(CancellationToken cancellationToken)
-    {
-        var reservations = await _db.TableReservations
-            .Where(r => r.Status == "Called")
-            .OrderBy(r => r.CreatedAt)
-            .ToListAsync(cancellationToken);
-
-        return reservations;
-    }
 }

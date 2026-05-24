@@ -5,7 +5,7 @@ namespace SagraFacile.Application.Features.Reservations;
 
 public static class GetCounters
 {
-    public record Query() : IQuery<Result>;
+    public record Query(int EventId) : IQuery<Result>;
     public record Result(List<ReservationCounter> Counters);
     public record ReservationCounter(string Status, int Count, int TotalPeople);
 
@@ -17,7 +17,7 @@ public static class GetCounters
 
         public async Task<Result> Handle(Query query, CancellationToken cancellationToken)
         {
-            var counters = await _repository.GetCountersAsync(cancellationToken).ConfigureAwait(false);
+            var counters = await _repository.GetCountersAsync(query.EventId, cancellationToken).ConfigureAwait(false);
             return new Result(counters);
         }
     }

@@ -1,16 +1,17 @@
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Domain.Features.Reservations;
 
 namespace SagraFacile.Application.Features.Reservations;
 
 public static class GetReservationReport
 {
-    public record Query(DateTime? StartDate = null, DateTime? EndDate = null) : IQuery<Result>;
+    public record Query(int? EventId = null) : IQuery<Result>;
     public record Result(List<ReportDto> Reports, StatisticsDto Statistics);
 
     public record ReportDto(
         int Id,
-        string QueueNumber,
+        int SequenceNumber,
         string CustomerName,
         int PartySize,
         string Status,
@@ -24,6 +25,7 @@ public static class GetReservationReport
 
     public record StatisticsDto(
         int TotalReservations,
+        int TotalPeople,
         int SeatedCount,
         int VoidedCount,
         int WaitingCount,
@@ -35,16 +37,29 @@ public static class GetReservationReport
     public class Handler : IQueryHandler<Query, Result>
     {
         private readonly IReservationRepository _repository;
+        private readonly IEventRepository _eventRepository;
 
-        public Handler(IReservationRepository repository) => _repository = repository;
+        public Handler(IReservationRepository repository, IEventRepository eventRepository)
+        {
+            _repository = repository;
+            _eventRepository = eventRepository;
+        }
 
         public async Task<Result> Handle(Query query, CancellationToken cancellationToken)
         {
-            // Normalise dates to UTC before delegating to the repository
-            DateTime? startUtc = NormaliseToUtc(query.StartDate);
-            DateTime? endUtc = NormaliseToUtc(query.EndDate);
+            DateTime? startUtc = null;
+            DateTime? endUtc = null;
 
-            var reservations = await _repository.GetByDateRangeAsync(startUtc, endUtc, cancellationToken);
+            if (query.EventId.HasValue)
+            {
+                var selectedEvent = await _eventRepository.GetByIdAsync(query.EventId.Value, cancellationToken);
+                if (selectedEvent is not null)
+                {
+                    (startUtc, endUtc) = GetUtcDayRange(selectedEvent.Date);
+                }
+            }
+
+            var reservations = await _repository.GetByDateRangeAsync(query.EventId, startUtc, endUtc, cancellationToken);
 
             var reports = reservations.Select(r =>
             {
@@ -61,13 +76,13 @@ public static class GetReservationReport
                     totalWait = null;
 
                 return new ReportDto(
-                    r.Id, r.QueueNumber, r.CustomerName, r.PartySize, r.Status,
+                    r.Id, r.SequenceNumber, r.CustomerName, r.PartySize, r.Status.ToString(),
                     r.CreatedAt, r.FirstCalledAt, r.SeatedAt, r.VoidedAt,
                     r.CallCount, waitUntilFirstCall, totalWait);
             }).ToList();
 
             var waitTimes = reports
-                .Where(r => r.Status == "Seated" && r.TotalWaitTime.HasValue)
+                .Where(r => r.Status == ReservationStatus.Seated.ToString() && r.TotalWaitTime.HasValue)
                 .Select(r => r.TotalWaitTime!.Value)
                 .ToList();
 
@@ -93,9 +108,10 @@ public static class GetReservationReport
 
             var stats = new StatisticsDto(
                 TotalReservations: reservations.Count,
-                SeatedCount: reservations.Count(r => r.Status == "Seated"),
-                VoidedCount: reservations.Count(r => r.Status == "Voided"),
-                WaitingCount: reservations.Count(r => r.Status is "Waiting" or "Called"),
+                TotalPeople: reservations.Sum(r => r.PartySize),
+                SeatedCount: reservations.Count(r => r.Status == ReservationStatus.Seated),
+                VoidedCount: reservations.Count(r => r.Status == ReservationStatus.Voided),
+                WaitingCount: reservations.Count(r => r.Status is ReservationStatus.Waiting or ReservationStatus.Called),
                 AverageWaitTime: averageWaitTime,
                 MedianWaitTime: medianWaitTime,
                 MaxWaitTime: maxWaitTime,
@@ -117,12 +133,14 @@ public static class GetReservationReport
             return sorted[count / 2];
         }
 
-        private static DateTime? NormaliseToUtc(DateTime? dt)
+        private static (DateTime StartUtc, DateTime EndUtc) GetUtcDayRange(DateTime day)
         {
-            if (!dt.HasValue) return null;
-            return dt.Value.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(dt.Value, DateTimeKind.Utc)
-                : dt.Value.ToUniversalTime();
+            var dateOnly = day.Date;
+            var startUtc = day.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(dateOnly, DateTimeKind.Utc)
+                : dateOnly.ToUniversalTime();
+            var endUtc = startUtc.AddDays(1).AddTicks(-1);
+            return (startUtc, endUtc);
         }
     }
 }

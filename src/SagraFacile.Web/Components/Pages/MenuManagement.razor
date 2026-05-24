@@ -215,6 +215,34 @@
     </div>
 </div>
 
+<!-- Menu Appearance card -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">🎨 @L["MenuAppearance_Section"]</h5>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <label class="form-label">@L["MenuAppearance_WarningMessage"]</label>
+            <textarea class="form-control" rows="3" @bind="appearanceForm.WarningMessage"></textarea>
+            <div class="form-text">@L["MenuAppearance_HtmlHint"]</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">@L["MenuAppearance_Header"]</label>
+            <textarea class="form-control" rows="3" @bind="appearanceForm.Header"></textarea>
+            <div class="form-text">@L["MenuAppearance_HtmlHint"]</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">@L["MenuAppearance_Footer"]</label>
+            <textarea class="form-control" rows="3" @bind="appearanceForm.Footer"></textarea>
+            <div class="form-text">@L["MenuAppearance_HtmlHint"]</div>
+        </div>
+        <button class="btn btn-primary" @onclick="SaveAppearanceAsync" disabled="@isSavingAppearance">
+            @if (isSavingAppearance) { <span class="spinner-border spinner-border-sm me-1"></span> }
+            @L["MenuMgmt_SaveChanges"]
+        </button>
+    </div>
+</div>
+
 @code {
     [Parameter] public int EventId { get; set; }
 
@@ -236,6 +264,10 @@
     private int? deletingCatId;
     private CatForm catForm = new();
 
+    // Appearance form state
+    private AppearanceForm appearanceForm = new();
+    private bool isSavingAppearance;
+
     private ItemForm form = new();
 
     protected override async Task OnInitializedAsync()
@@ -245,7 +277,7 @@
         eventName = ev?.Name ?? $"Event {EventId}";
         eventCurrencySymbol = ev?.CurrencySymbol ?? "€";
 
-        await Task.WhenAll(LoadCategoriesAsync(), LoadAllergensAsync(), LoadItemsAsync());
+        await Task.WhenAll(LoadCategoriesAsync(), LoadAllergensAsync(), LoadItemsAsync(), LoadAppearanceAsync());
     }
 
     private async Task LoadCategoriesAsync()
@@ -266,6 +298,32 @@
         var r = await Mediator.QueryAsync(new GetEventMenu.Query(EventId, IncludeUnavailable: true));
         items = r.Items;
         isLoading = false;
+    }
+
+    private async Task LoadAppearanceAsync()
+    {
+        var r = await Mediator.QueryAsync(new GetMenuDetails.Query(EventId));
+        if (r.Details is not null)
+        {
+            appearanceForm.WarningMessage = r.Details.WarningMessage;
+            appearanceForm.Header = r.Details.Header;
+            appearanceForm.Footer = r.Details.Footer;
+        }
+    }
+
+    private async Task SaveAppearanceAsync()
+    {
+        isSavingAppearance = true;
+        message = string.Empty;
+        try
+        {
+            await Mediator.SendAsync(new UpdateMenuDetails.Command(
+                EventId, appearanceForm.WarningMessage, appearanceForm.Header, appearanceForm.Footer));
+            message = L["MenuAppearance_Saved"];
+            messageSuccess = true;
+        }
+        catch (Exception ex) { ShowError(string.Format(L["MenuMgmt_Error"], ex.Message)); }
+        isSavingAppearance = false;
     }
 
     // ─── Item CRUD ───
@@ -425,5 +483,12 @@
     {
         public string Name { get; set; } = string.Empty;
         public int DisplayOrder { get; set; } = 0;
+    }
+
+    private class AppearanceForm
+    {
+        public string? WarningMessage { get; set; }
+        public string? Header { get; set; }
+        public string? Footer { get; set; }
     }
 }

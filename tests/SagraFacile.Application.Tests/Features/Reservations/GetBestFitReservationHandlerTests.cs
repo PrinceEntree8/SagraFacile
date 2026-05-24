@@ -19,14 +19,14 @@ public class GetBestFitReservationHandlerTests
     public async Task Handle_ExactMatch_ReturnsAsPerfect()
     {
         // Arrange
-        var reservations = new List<TableReservation>
+        var reservations = new List<Reservation>
         {
-            new() { Id = 1, QueueNumber = "001", CustomerName = "Mario", PartySize = 4, Status = "Called", CreatedAt = DateTime.UtcNow.AddMinutes(-10) }
+            new() { Id = 1, EventId = 1, SequenceNumber = 1, CustomerName = "Mario", PartySize = 4, Status = ReservationStatus.Called, CreatedAt = DateTime.UtcNow.AddMinutes(-10) }
         };
-        _repository.GetCalledReservationsOrderedByCreatedAtAsync(Arg.Any<CancellationToken>()).Returns(reservations);
+        _repository.GetCalledReservationsOrderedByCreatedAtAsync(1, Arg.Any<CancellationToken>()).Returns(reservations);
 
         // Act
-        var result = await _handler.Handle(new GetBestFitReservation.Query(4), CancellationToken.None);
+        var result = await _handler.Handle(new GetBestFitReservation.Query(1, 4), CancellationToken.None);
 
         // Assert
         Assert.Single(result.Matches);
@@ -37,14 +37,14 @@ public class GetBestFitReservationHandlerTests
     public async Task Handle_OneUnderCoverCount_ReturnsAsGood()
     {
         // Arrange
-        var reservations = new List<TableReservation>
+        var reservations = new List<Reservation>
         {
-            new() { Id = 1, QueueNumber = "001", CustomerName = "Mario", PartySize = 3, Status = "Called", CreatedAt = DateTime.UtcNow }
+            new() { Id = 1, EventId = 1, SequenceNumber = 1, CustomerName = "Mario", PartySize = 3, Status = ReservationStatus.Called, CreatedAt = DateTime.UtcNow }
         };
-        _repository.GetCalledReservationsOrderedByCreatedAtAsync(Arg.Any<CancellationToken>()).Returns(reservations);
+        _repository.GetCalledReservationsOrderedByCreatedAtAsync(1, Arg.Any<CancellationToken>()).Returns(reservations);
 
         // Act
-        var result = await _handler.Handle(new GetBestFitReservation.Query(4), CancellationToken.None);
+        var result = await _handler.Handle(new GetBestFitReservation.Query(1, 4), CancellationToken.None);
 
         // Assert
         Assert.Single(result.Matches);
@@ -55,15 +55,15 @@ public class GetBestFitReservationHandlerTests
     public async Task Handle_ZeroCoverCount_ReturnsAllCalledWithMatchQualityAll()
     {
         // Arrange
-        var reservations = new List<TableReservation>
+        var reservations = new List<Reservation>
         {
-            new() { Id = 1, PartySize = 2, Status = "Called", QueueNumber = "001", CreatedAt = DateTime.UtcNow },
-            new() { Id = 2, PartySize = 6, Status = "Called", QueueNumber = "002", CreatedAt = DateTime.UtcNow }
+            new() { Id = 1, EventId = 1, SequenceNumber = 1, PartySize = 2, Status = ReservationStatus.Called, CreatedAt = DateTime.UtcNow },
+            new() { Id = 2, EventId = 1, SequenceNumber = 2, PartySize = 6, Status = ReservationStatus.Called, CreatedAt = DateTime.UtcNow }
         };
-        _repository.GetCalledReservationsOrderedByCreatedAtAsync(Arg.Any<CancellationToken>()).Returns(reservations);
+        _repository.GetCalledReservationsOrderedByCreatedAtAsync(1, Arg.Any<CancellationToken>()).Returns(reservations);
 
         // Act
-        var result = await _handler.Handle(new GetBestFitReservation.Query(0), CancellationToken.None);
+        var result = await _handler.Handle(new GetBestFitReservation.Query(1, 0), CancellationToken.None);
 
         // Assert
         Assert.Equal(2, result.Matches.Count);
@@ -74,14 +74,14 @@ public class GetBestFitReservationHandlerTests
     public async Task Handle_PartyLargerThanTable_NotIncluded()
     {
         // Arrange
-        var reservations = new List<TableReservation>
+        var reservations = new List<Reservation>
         {
-            new() { Id = 1, PartySize = 6, Status = "Called", QueueNumber = "001", CreatedAt = DateTime.UtcNow }
+            new() { Id = 1, EventId = 1, SequenceNumber = 1, PartySize = 6, Status = ReservationStatus.Called, CreatedAt = DateTime.UtcNow }
         };
-        _repository.GetCalledReservationsOrderedByCreatedAtAsync(Arg.Any<CancellationToken>()).Returns(reservations);
+        _repository.GetCalledReservationsOrderedByCreatedAtAsync(1, Arg.Any<CancellationToken>()).Returns(reservations);
 
         // Act
-        var result = await _handler.Handle(new GetBestFitReservation.Query(4), CancellationToken.None);
+        var result = await _handler.Handle(new GetBestFitReservation.Query(1, 4), CancellationToken.None);
 
         // Assert
         Assert.Empty(result.Matches);

@@ -8,11 +8,12 @@ namespace SagraFacile.Application.Tests.Features.Menu;
 public class GetEventMenuHandlerTests
 {
     private readonly IMenuRepository _repo = Substitute.For<IMenuRepository>();
+    private readonly IMenuCacheService _cache = Substitute.For<IMenuCacheService>();
     private readonly GetEventMenu.Handler _handler;
 
     public GetEventMenuHandlerTests()
     {
-        _handler = new GetEventMenu.Handler(_repo);
+        _handler = new GetEventMenu.Handler(_repo, _cache);
     }
 
     [Fact]

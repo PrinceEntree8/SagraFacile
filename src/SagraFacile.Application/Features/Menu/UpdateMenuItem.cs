@@ -22,15 +22,11 @@ public static class UpdateMenuItem
         }
     }
 
-    public class Handler : ICommandHandler<Command, Result>
+    public class Handler(IMenuRepository repo, IMenuCacheService cache) : ICommandHandler<Command, Result>
     {
-        private readonly IMenuRepository _repo;
-
-        public Handler(IMenuRepository repo) => _repo = repo;
-
         public async Task<Result> Handle(Command command, CancellationToken ct)
         {
-            var item = await _repo.GetByIdAsync(command.Id, ct);
+            var item = await repo.GetByIdAsync(command.Id, ct);
             if (item is null) return new Result(false, "Item not found");
 
             item.Name = command.Name;
@@ -43,7 +39,8 @@ public static class UpdateMenuItem
             foreach (var aid in command.AllergenIds)
                 item.MenuItemAllergens.Add(new MenuItemAllergen { MenuItemId = item.Id, AllergenId = aid });
 
-            await _repo.SaveChangesAsync(ct);
+            await repo.SaveChangesAsync(ct);
+            cache.InvalidateMenu(item.EventId);
             return new Result(true, $"'{item.Name}' updated");
         }
     }

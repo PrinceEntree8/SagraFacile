@@ -57,3 +57,8 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+[Bb]in*/
+.junie/
+
+.DS_Store

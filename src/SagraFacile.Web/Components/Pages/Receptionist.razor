@@ -98,18 +98,20 @@
                         @foreach (var reservation in reservations)
                         {
                             <div class="reservation-chip @GetRowClass(reservation)">
-                                <span class="chip-queue" title="@L["Receptionist_ColQueue"]">@reservation.QueueNumber</span>
+                                <span class="chip-queue" title="@L["Receptionist_ColQueue"]">@reservation.SequenceNumber</span>
                                 <span class="chip-name">@reservation.CustomerName</span>
-                                <span class="badge bg-info chip-party" title="@L["Receptionist_ColParty"]">@reservation.PartySize</span>
+                                <span class="badge bg-info chip-party" title="@L["Receptionist_ColParty"]"><i class="bi bi-people"></i> @reservation.PartySize</span>
                                 <span class="badge @GetStatusBadge(reservation.Status) chip-status">@L["Reservation_Status_" + reservation.Status]</span>
-                                <span class="chip-wait" title="@L["Receptionist_ColWaiting"]">
-                                    @FormatTimeSpan(reservation.WaitingTime)
+                                <span class="chip-wait text-muted ms-1" title="@L["Receptionist_ColWaiting"]">
                                     @if (reservation.TimeSinceLastCall.HasValue)
                                     {
-                                        <small class="text-muted ms-1">(@FormatTimeSpan(reservation.TimeSinceLastCall.Value))</small>
+                                        @FormatTimeSpan(reservation.TimeSinceLastCall.Value)
+                                    }
+                                    else
+                                    {
+                                        @FormatTimeSpan(reservation.WaitingTime)
                                     }
                                 </span>
-                                <span class="chip-calls text-muted" title="@L["Receptionist_ColCalls"]">×@reservation.CallCount</span>
                                 @if (reservation.Status == "Waiting" || reservation.Status == "Called")
                                 {
                                     <span class="chip-actions">
@@ -166,6 +168,7 @@
 </div>
 
 @code {
+    private int activeEventId = 1; // TODO: replace with session-backed active event store
     private HubConnection? hubConnection;
     private NewReservationModel newReservation = new();
     private List<GetReservations.ReservationDto> reservations = new();
@@ -193,7 +196,7 @@
 
     private async Task LoadCounters()
     {
-        var result = await Mediator.QueryAsync(new GetCounters.Query());
+        var result = await Mediator.QueryAsync(new GetCounters.Query(activeEventId));
         UpdateCounters(result.Counters);
     }
 
@@ -202,7 +205,7 @@
         totalCount = counters.Sum(c => c.Count);
         totalPeople = counters.Sum(c => c.TotalPeople);
 
-        var toBeSeated = counters.Where(c => c.Status == "Waiting" || c.Status == "Called").ToList();
+        var toBeSeated = counters.Where(c => c.Status is "Waiting" or "Called").ToList();
         toBeSeatedCount = toBeSeated.Sum(c => c.Count);
         toBeSeatedPeople = toBeSeated.Sum(c => c.TotalPeople);
 
@@ -218,25 +221,25 @@
             .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.On<int, string, string, int>("ReservationCreated", async (id, queueNumber, name, size) =>
+        hubConnection.On<int, int, string, int>("ReservationCreated", async (id, sequenceNumber, name, size) =>
         {
             await LoadReservations(currentFilter);
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<int, string, string, int, int>("ReservationCalled", async (id, queueNumber, customerName, partySize, callCount) =>
+        hubConnection.On<int, int, string, int, int>("ReservationCalled", async (id, sequenceNumber, customerName, partySize, callCount) =>
         {
             await LoadReservations(currentFilter);
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<int, string>("ReservationVoided", async (id, queueNumber) =>
+        hubConnection.On<int, int>("ReservationVoided", async (id, sequenceNumber) =>
         {
             await LoadReservations(currentFilter);
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<int, string>("ReservationSeated", async (id, queueNumber) =>
+        hubConnection.On<int, int>("ReservationSeated", async (id, sequenceNumber) =>
         {
             await LoadReservations(currentFilter);
             await InvokeAsync(StateHasChanged);
@@ -270,7 +273,7 @@
         currentFilter = status;
         try
         {
-            var query = new GetReservations.Query(Status: status, Page: 1, PageSize: 100);
+            var query = new GetReservations.Query(EventId: activeEventId, Status: status, Page: 1, PageSize: 100);
             var result = await Mediator.QueryAsync(query);
             reservations = result.Reservations;
         }
@@ -302,6 +305,7 @@
         try
         {
             var command = new CreateReservation.Command(
+                activeEventId,
                 newReservation.CustomerName,
                 newReservation.PartySize,
                 newReservation.Notes
@@ -309,7 +313,7 @@
 
             var result = await Mediator.SendAsync(command);
             
-            creationMessage = string.Format(L["Receptionist_ReservationCreated"], result.QueueNumber);
+            creationMessage = string.Format(L["Receptionist_ReservationCreated"], result.SequenceNumber);
             newReservation = new();
             
             await LoadReservations(currentFilter);

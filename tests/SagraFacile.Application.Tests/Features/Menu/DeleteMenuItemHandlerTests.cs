@@ -8,11 +8,12 @@ namespace SagraFacile.Application.Tests.Features.Menu;
 public class DeleteMenuItemHandlerTests
 {
     private readonly IMenuRepository _repo = Substitute.For<IMenuRepository>();
+    private readonly IMenuCacheService _cache = Substitute.For<IMenuCacheService>();
     private readonly DeleteMenuItem.Handler _handler;
 
     public DeleteMenuItemHandlerTests()
     {
-        _handler = new DeleteMenuItem.Handler(_repo);
+        _handler = new DeleteMenuItem.Handler(_repo, _cache);
     }
 
     [Fact]

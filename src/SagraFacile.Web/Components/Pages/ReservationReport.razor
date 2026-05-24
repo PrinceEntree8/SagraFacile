@@ -1,8 +1,11 @@
 @page "/reservation-report"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.SignalR.Client
 @inject IMediator Mediator
+@inject NavigationManager Navigation
 @inject IStringLocalizer<SharedResource> L
+@implements IAsyncDisposable
 
 <PageTitle>@L["Report_PageTitle"]</PageTitle>
 
@@ -16,16 +19,24 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-4">
-                        <label class="form-label">@L["Report_StartDate"]</label>
-                        <InputDate @bind-Value="startDate" class="form-control" />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">@L["Report_EndDate"]</label>
-                        <InputDate @bind-Value="endDate" class="form-control" />
+                    <div class="col-md-8">
+                        <label class="form-label">@L["Report_Event"]</label>
+                        <InputSelect @bind-Value="selectedEventId" class="form-select" disabled="@(!events.Any())">
+                            @if (!events.Any())
+                            {
+                                <option value="">@L["Report_NoEventsAvailable"]</option>
+                            }
+                            else
+                            {
+                                @foreach (var ev in events)
+                                {
+                                    <option value="@ev.Id">@ev.Date.ToString("d") - @ev.Name</option>
+                                }
+                            }
+                        </InputSelect>
                     </div>
                     <div class="col-md-4 d-flex align-items-end">
-                        <button class="btn btn-primary" @onclick="@LoadReport" disabled="@isLoading">
+                        <button class="btn btn-primary" @onclick="@LoadReport">
                             @if (isLoading)
                             {
                                 <span class="spinner-border spinner-border-sm me-2"></span>
@@ -45,7 +56,7 @@
 @if (statistics != null)
 {
     <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-md">
             <div class="card text-center">
                 <div class="card-body">
                     <h5 class="card-title">@L["Report_TotalReservations"]</h5>
@@ -53,7 +64,15 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md">
+            <div class="card text-center bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">@L["Report_TotalPeople"]</h5>
+                    <h2 class="display-4">@statistics.TotalPeople</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md">
             <div class="card text-center bg-success text-white">
                 <div class="card-body">
                     <h5 class="card-title">@L["Report_Seated"]</h5>
@@ -61,7 +80,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md">
             <div class="card text-center bg-warning">
                 <div class="card-body">
                     <h5 class="card-title">@L["Report_Waiting"]</h5>
@@ -69,7 +88,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md">
             <div class="card text-center bg-secondary text-white">
                 <div class="card-body">
                     <h5 class="card-title">@L["Report_Voided"]</h5>
@@ -148,7 +167,7 @@ else if (reports != null && reports.Any())
                         @foreach (var report in reports)
                         {
                             <tr>
-                                <td><strong>@report.QueueNumber</strong></td>
+                                <td><strong>@report.SequenceNumber</strong></td>
                                 <td>@report.CustomerName</td>
                                 <td><span class="badge bg-info">@report.PartySize</span></td>
                                 <td><span class="badge @GetStatusBadge(report.Status)">@report.Status</span></td>
@@ -195,7 +214,7 @@ else if (reports != null && reports.Any())
 else if (statistics == null)
 {
     <div class="alert alert-info">
-        <p>@L["Report_SelectDateRange"]</p>
+        <p>@L["Report_SelectEvent"]</p>
     </div>
 }
 else
@@ -206,23 +225,46 @@ else
 }
 
 @code {
-    private DateTime? startDate = null;
-    private DateTime? endDate = null;
+    private List<GetEvents.EventDto> events = new();
+    private int? selectedEventId;
+    private int? defaultEventId;
     private List<GetReservationReport.ReportDto> reports = new();
     private GetReservationReport.StatisticsDto? statistics = null;
     private bool isLoading = false;
+    private HubConnection? hubConnection;
 
     protected override async Task OnInitializedAsync()
     {
-        // Don't load report automatically
+        var activeEventTask = Mediator.QueryAsync(new GetActiveEvent.Query());
+        var eventsTask = Mediator.QueryAsync(new GetEvents.Query());
+        await Task.WhenAll(activeEventTask, eventsTask);
+
+        var activeEvent = (await activeEventTask).ActiveEvent;
+        events = (await eventsTask).Events;
+        defaultEventId = activeEvent?.Id ?? events.FirstOrDefault()?.Id;
+        selectedEventId = defaultEventId;
+
+        if (selectedEventId.HasValue)
+        {
+            await LoadReport();
+        }
+
+        await InitializeSignalR();
     }
 
     private async Task LoadReport()
     {
+        if (!selectedEventId.HasValue)
+        {
+            reports = new();
+            statistics = null;
+            return;
+        }
+
         isLoading = true;
         try
         {
-            var query = new GetReservationReport.Query(startDate, endDate);
+            var query = new GetReservationReport.Query(selectedEventId);
             var result = await Mediator.Send(query, CancellationToken.None);
             reports = result.Reports;
             statistics = result.Statistics;
@@ -235,9 +277,57 @@ else
 
     private async Task ClearFilters()
     {
-        startDate = null;
-        endDate = null;
+        selectedEventId = defaultEventId;
         await LoadReport();
+    }
+
+    private async Task InitializeSignalR()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/hubs/reservations"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On<int, string, string, int>("ReservationCreated", async (_, _, _, _) =>
+        {
+            await LoadReport();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        hubConnection.On<int, string, string, int, int>("ReservationCalled", async (_, _, _, _, _) =>
+        {
+            await LoadReport();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        hubConnection.On<int, string>("ReservationVoided", async (_, _) =>
+        {
+            await LoadReport();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        hubConnection.On<int, string>("ReservationSeated", async (_, _) =>
+        {
+            await LoadReport();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        try
+        {
+            await hubConnection.StartAsync();
+        }
+        catch
+        {
+            // Keep report page functional even if realtime connection is unavailable.
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
     }
 
     private string GetStatusBadge(string status) => status switch

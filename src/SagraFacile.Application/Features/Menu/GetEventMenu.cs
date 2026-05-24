@@ -20,15 +20,12 @@ public static class GetEventMenu
         List<AllergenDto> Allergens);
     public record AllergenDto(int Id, string Code, string Icon);
 
-    public class Handler : IQueryHandler<Query, Result>
+    public class Handler(IMenuRepository repo, IMenuCacheService cache) : IQueryHandler<Query, Result>
     {
-        private readonly IMenuRepository _repo;
-
-        public Handler(IMenuRepository repo) => _repo = repo;
-
         public async Task<Result> Handle(Query query, CancellationToken ct)
         {
-            var items = await _repo.GetByEventIdAsync(query.EventId, query.IncludeUnavailable, ct);
+            if (!query.IncludeUnavailable && cache.TryGetMenuItems(query.EventId, out var cached)) return cached!;
+            var items = await repo.GetByEventIdAsync(query.EventId, query.IncludeUnavailable, ct);
             var dtos = items.Select(i => new MenuItemDto(
                 i.Id, i.EventId, i.Name, i.Description, i.PriceInCents,
                 i.CategoryId,
@@ -37,7 +34,9 @@ public static class GetEventMenu
                 i.MenuItemAllergens.Select(mia => new AllergenDto(
                     mia.Allergen.Id, mia.Allergen.Code, mia.Allergen.Icon)).ToList()
             )).ToList();
-            return new Result(dtos);
+            var result = new Result(dtos);
+            if (!query.IncludeUnavailable) cache.SetMenuItems(query.EventId, result);
+            return result;
         }
     }
 }

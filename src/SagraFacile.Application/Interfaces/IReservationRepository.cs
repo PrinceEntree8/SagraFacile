@@ -5,15 +5,16 @@ namespace SagraFacile.Application.Interfaces;
 
 public interface IReservationRepository
 {
-    Task<TableReservation?> GetByIdAsync(int id, CancellationToken cancellationToken);
-    Task<TableReservation?> GetLastByDatePrefixAsync(DateTime datePrefix, CancellationToken cancellationToken);
-    Task<(List<TableReservation> Items, int TotalCount)> GetPagedAsync(
-        string? status, int page, int pageSize, CancellationToken cancellationToken);
-    Task<List<TableReservation>> GetCalledReservationsOrderedByCreatedAtAsync(CancellationToken cancellationToken);
-    Task<List<TableReservation>> GetByDateRangeAsync(
-        DateTime? startDateUtc, DateTime? endDateUtc, CancellationToken cancellationToken);
-    Task<List<GetCounters.ReservationCounter>> GetCountersAsync(CancellationToken cancellationToken);
-    Task AddAsync(TableReservation reservation, CancellationToken cancellationToken);
+    Task<Reservation?> GetByIdAsync(int id, CancellationToken cancellationToken);
+    Task<Reservation?> GetByEventAndSequenceAsync(int eventId, int sequenceNumber, CancellationToken cancellationToken);
+    Task<int> GetNextSequenceNumberAsync(int eventId, CancellationToken cancellationToken);
+    Task<(List<Reservation> Items, int TotalCount)> GetPagedAsync(
+        int eventId, string? status, int page, int pageSize, CancellationToken cancellationToken);
+    Task<List<Reservation>> GetCalledReservationsOrderedByCreatedAtAsync(int eventId, CancellationToken cancellationToken);
+    Task<List<Reservation>> GetByDateRangeAsync(
+        int? eventId, DateTime? startDateUtc, DateTime? endDateUtc, CancellationToken cancellationToken);
+    Task<List<GetCounters.ReservationCounter>> GetCountersAsync(int eventId, CancellationToken cancellationToken);
+    Task AddAsync(Reservation reservation, CancellationToken cancellationToken);
     Task AddCallAsync(ReservationCall call, CancellationToken cancellationToken);
     Task SaveChangesAsync(CancellationToken cancellationToken);
 }

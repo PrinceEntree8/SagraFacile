@@ -4,25 +4,25 @@ namespace SagraFacile.Web.Hubs;
 
 public class ReservationHub : Hub<IReservationHubClient>
 {
-    public async Task NotifyReservationCreated(int reservationId, string queueNumber, string customerName, int partySize)
+    public async Task NotifyReservationCreated(int reservationId, int sequenceNumber, string customerName, int partySize)
     {
-        await Clients.All.ReservationCreated(reservationId, queueNumber, customerName, partySize);
+        await Clients.All.ReservationCreated(reservationId, sequenceNumber, customerName, partySize);
     }
 
-    public async Task NotifyReservationCalled(int reservationId, string queueNumber, string customerName, int partySize, int callCount)
+    public async Task NotifyReservationCalled(int reservationId, int sequenceNumber, string customerName, int partySize, int callCount)
     {
         // Broadcast to all connected clients (includes those in the NOW_CALLING group).
-        await Clients.All.ReservationCalled(reservationId, queueNumber, customerName, partySize, callCount);
+        await Clients.All.ReservationCalled(reservationId, sequenceNumber, customerName, partySize, callCount);
     }
 
-    public async Task NotifyReservationVoided(int reservationId, string queueNumber)
+    public async Task NotifyReservationVoided(int reservationId, int sequenceNumber)
     {
-        await Clients.All.ReservationVoided(reservationId, queueNumber);
+        await Clients.All.ReservationVoided(reservationId, sequenceNumber);
     }
 
-    public async Task NotifyReservationSeated(int reservationId, string queueNumber)
+    public async Task NotifyReservationSeated(int reservationId, int sequenceNumber)
     {
-        await Clients.All.ReservationSeated(reservationId, queueNumber);
+        await Clients.All.ReservationSeated(reservationId, sequenceNumber);
     }
 
     public async Task NotifyAvailableSeatsUpdated(int availableSeats)

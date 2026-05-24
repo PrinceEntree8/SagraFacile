@@ -5,14 +5,14 @@ namespace SagraFacile.Application.Features.Reservations;
 
 public static class GetBestFitReservation
 {
-    public record Query(int TableCoverCount) : IQuery<Result>;
+    public record Query(int EventId, int TableCoverCount) : IQuery<Result>;
     public record Result(List<ReservationMatchDto> Matches);
     public record ReservationMatchDto(
         int Id,
-        string QueueNumber,
+        int SequenceNumber,
         string CustomerName,
         int PartySize,
-        string Notes,
+        string? Notes,
         DateTime CreatedAt,
         TimeSpan WaitingTime,
         int CallCount,
@@ -28,7 +28,7 @@ public static class GetBestFitReservation
         public async Task<Result> Handle(Query query, CancellationToken cancellationToken)
         {
             var now = DateTime.UtcNow;
-            var reservations = await _repository.GetCalledReservationsOrderedByCreatedAtAsync(cancellationToken);
+            var reservations = await _repository.GetCalledReservationsOrderedByCreatedAtAsync(query.EventId, cancellationToken);
             var matches = new List<ReservationMatchDto>();
 
             // If coverCount is 0, return ALL Called reservations without filtering
@@ -37,7 +37,7 @@ public static class GetBestFitReservation
                 foreach (var r in reservations)
                 {
                     matches.Add(new ReservationMatchDto(
-                        r.Id, r.QueueNumber, r.CustomerName, r.PartySize, r.Notes,
+                        r.Id, r.SequenceNumber, r.CustomerName, r.PartySize, r.Notes,
                         r.CreatedAt, now - r.CreatedAt, r.CallCount, r.LastCalledAt, "All"));
                 }
                 return new Result(matches);
@@ -63,7 +63,7 @@ public static class GetBestFitReservation
                 if (matchQuality != null)
                 {
                     matches.Add(new ReservationMatchDto(
-                        r.Id, r.QueueNumber, r.CustomerName, r.PartySize, r.Notes,
+                        r.Id, r.SequenceNumber, r.CustomerName, r.PartySize, r.Notes,
                         r.CreatedAt, now - r.CreatedAt, r.CallCount, r.LastCalledAt, matchQuality));
                 }
             }

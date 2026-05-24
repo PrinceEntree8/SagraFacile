@@ -13,31 +13,31 @@ public class SignalRReservationNotifier : IReservationNotifier
         _hubContext = hubContext;
     }
 
-    public Task NotifyReservationCreatedAsync(int reservationId, string queueNumber, string customerName, int partySize, CancellationToken cancellationToken)
+    public Task NotifyReservationCreatedAsync(int reservationId, int sequenceNumber, string customerName, int partySize, CancellationToken cancellationToken)
     {
         return _hubContext.Clients.All
-            .ReservationCreated(reservationId, queueNumber, customerName, partySize)
+            .ReservationCreated(reservationId, sequenceNumber, customerName, partySize)
             .WaitAsync(cancellationToken);
     }
 
-    public Task NotifyReservationCalledAsync(int reservationId, string queueNumber, string customerName, int partySize, int callCount, CancellationToken cancellationToken)
+    public Task NotifyReservationCalledAsync(int reservationId, int sequenceNumber, string customerName, int partySize, int callCount, CancellationToken cancellationToken)
     {
         return _hubContext.Clients.All
-            .ReservationCalled(reservationId, queueNumber, customerName, partySize, callCount)
+            .ReservationCalled(reservationId, sequenceNumber, customerName, partySize, callCount)
             .WaitAsync(cancellationToken);
     }
 
-    public Task NotifyReservationVoidedAsync(int reservationId, string queueNumber, CancellationToken cancellationToken)
+    public Task NotifyReservationVoidedAsync(int reservationId, int sequenceNumber, CancellationToken cancellationToken)
     {
         return _hubContext.Clients.All
-            .ReservationVoided(reservationId, queueNumber)
+            .ReservationVoided(reservationId, sequenceNumber)
             .WaitAsync(cancellationToken);
     }
 
-    public Task NotifyReservationSeatedAsync(int reservationId, string queueNumber, CancellationToken cancellationToken)
+    public Task NotifyReservationSeatedAsync(int reservationId, int sequenceNumber, CancellationToken cancellationToken)
     {
         return _hubContext.Clients.All
-            .ReservationSeated(reservationId, queueNumber)
+            .ReservationSeated(reservationId, sequenceNumber)
             .WaitAsync(cancellationToken);
     }
 

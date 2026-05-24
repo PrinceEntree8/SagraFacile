@@ -59,6 +59,9 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
 
+  <!-- Common -->
+  <data name="Common_Close" xml:space="preserve"><value>Chiudi</value></data>
+
   <!-- Navigation -->
   <data name="Nav_Home" xml:space="preserve"><value>Home</value></data>
   <data name="Nav_NowCalling" xml:space="preserve"><value>In Chiamata</value></data>
@@ -202,6 +205,17 @@
   <data name="HeadWaiter_Announced" xml:space="preserve"><value>Annunciati {0} posti disponibili alla Reception.</value></data>
   <data name="HeadWaiter_Error" xml:space="preserve"><value>Errore: {0}</value></data>
   <data name="HeadWaiter_ErrorSeating" xml:space="preserve"><value>Errore nell'accomodare la prenotazione: {0}</value></data>
+  <data name="HeadWaiter_SignalRError" xml:space="preserve"><value>Gli aggiornamenti in tempo reale non sono disponibili. La pagina non rifletterà le modifiche in diretta.</value></data>
+  <data name="HeadWaiter_ManualSeat" xml:space="preserve"><value>Accomodamento Manuale</value></data>
+  <data name="HeadWaiter_ManualSeatTitle" xml:space="preserve"><value>Accomodamento Manuale per Numero di Coda</value></data>
+  <data name="HeadWaiter_ManualSeatHint" xml:space="preserve"><value>Inserisci il numero di coda dell'ospite arrivato al tavolo. Verrà chiamato (se necessario) e accomodato in modo atomico.</value></data>
+  <data name="HeadWaiter_QueueNumber" xml:space="preserve"><value>Numero di Coda</value></data>
+  <data name="HeadWaiter_QueueNumberPlaceholder" xml:space="preserve"><value>es. 20260523-001</value></data>
+  <data name="HeadWaiter_CallAndSeat" xml:space="preserve"><value>Chiama &amp; Accomoda</value></data>
+  <data name="HeadWaiter_ManualSeatQueueRequired" xml:space="preserve"><value>Il numero di coda è obbligatorio.</value></data>
+  <data name="HeadWaiter_AnnounceSeatsTitle" xml:space="preserve"><value>Annuncia Posti Disponibili</value></data>
+  <data name="HeadWaiter_ColWaitTime" xml:space="preserve"><value>Attesa</value></data>
+  <data name="HeadWaiter_Actions" xml:space="preserve"><value>Azioni</value></data>
 
   <!-- Now Calling -->
   <data name="NowCalling_PageTitle" xml:space="preserve"><value>In Chiamata – SagraFacile</value></data>
@@ -217,11 +231,11 @@
   <data name="Report_PageTitle" xml:space="preserve"><value>Report Prenotazioni</value></data>
   <data name="Report_Heading" xml:space="preserve"><value>Report Prenotazioni</value></data>
   <data name="Report_FilterOptions" xml:space="preserve"><value>Opzioni Filtro</value></data>
-  <data name="Report_StartDate" xml:space="preserve"><value>Data Inizio</value></data>
-  <data name="Report_EndDate" xml:space="preserve"><value>Data Fine</value></data>
+  <data name="Report_Event" xml:space="preserve"><value>Evento</value></data>
   <data name="Report_Generate" xml:space="preserve"><value>Genera Report</value></data>
   <data name="Report_Clear" xml:space="preserve"><value>Cancella</value></data>
   <data name="Report_TotalReservations" xml:space="preserve"><value>Prenotazioni Totali</value></data>
+  <data name="Report_TotalPeople" xml:space="preserve"><value>Persone Totali</value></data>
   <data name="Report_Seated" xml:space="preserve"><value>Seduti</value></data>
   <data name="Report_Waiting" xml:space="preserve"><value>In Attesa</value></data>
   <data name="Report_Voided" xml:space="preserve"><value>Annullati</value></data>
@@ -243,8 +257,9 @@
   <data name="Report_NotCalled" xml:space="preserve"><value>Non chiamato</value></data>
   <data name="Report_InProgress" xml:space="preserve"><value>In corso</value></data>
   <data name="Report_Loading" xml:space="preserve"><value>Caricamento report...</value></data>
-  <data name="Report_SelectDateRange" xml:space="preserve"><value>Seleziona l'intervallo di date e clicca "Genera Report" per visualizzare le statistiche.</value></data>
-  <data name="Report_NoReservations" xml:space="preserve"><value>Nessuna prenotazione trovata per l'intervallo di date selezionato.</value></data>
+  <data name="Report_SelectEvent" xml:space="preserve"><value>Seleziona un evento e clicca "Genera Report" per visualizzare le statistiche.</value></data>
+  <data name="Report_NoEventsAvailable" xml:space="preserve"><value>Nessun evento disponibile</value></data>
+  <data name="Report_NoReservations" xml:space="preserve"><value>Nessuna prenotazione trovata per l'evento selezionato.</value></data>
 
   <!-- Menu Categories -->
   <data name="MenuCategory_Starters" xml:space="preserve"><value>Antipasti</value></data>
@@ -330,5 +345,23 @@
   </data>
   <data name="Reservation_Status_Waiting" xml:space="preserve">
     <value>In Attesa</value>
+  </data>
+  <data name="MenuAppearance_Section" xml:space="preserve">
+    <value>Aspetto del Menu</value>
+  </data>
+  <data name="MenuAppearance_WarningMessage" xml:space="preserve">
+    <value>Messaggio di avviso</value>
+  </data>
+  <data name="MenuAppearance_Header" xml:space="preserve">
+    <value>Intestazione</value>
+  </data>
+  <data name="MenuAppearance_Footer" xml:space="preserve">
+    <value>Piè di pagina</value>
+  </data>
+  <data name="MenuAppearance_Saved" xml:space="preserve">
+    <value>Aspetto salvato.</value>
+  </data>
+  <data name="MenuAppearance_HtmlHint" xml:space="preserve">
+    <value>Supporta HTML.</value>
   </data>
 </root>

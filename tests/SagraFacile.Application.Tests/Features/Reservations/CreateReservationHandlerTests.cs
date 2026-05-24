@@ -1,4 +1,6 @@
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
+using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Features.Reservations;
 using SagraFacile.Application.Interfaces;
 using SagraFacile.Domain.Features.Reservations;
@@ -17,70 +19,114 @@ public class CreateReservationHandlerTests
     }
 
     [Fact]
-    public async Task Handle_FirstReservationOfDay_GeneratesQueueNumberWithSequence0001()
+    public async Task Handle_ValidCommand_SetsEventIdAndSequenceNumber()
     {
         // Arrange
-        var today = DateTime.UtcNow.ToString("yyyyMMdd");
-        _repository.GetLastByDatePrefixAsync(today, Arg.Any<CancellationToken>()).Returns((TableReservation?)null);
+        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
 
-        TableReservation? saved = null;
-        _repository.When(r => r.AddAsync(Arg.Any<TableReservation>(), Arg.Any<CancellationToken>()))
-            .Do(ci => { saved = ci.Arg<TableReservation>(); saved.Id = 1; });
+        Reservation? saved = null;
+        _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
+            .Do(ci => { saved = ci.Arg<Reservation>(); saved.Id = 1; });
 
-        var command = new CreateReservation.Command("Mario Rossi", 4);
+        var command = new CreateReservation.Command(1, "Mario Rossi", 4);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal("0001", result.QueueNumber);
-        Assert.Equal(today, saved!.Date);
+        Assert.Equal(1, result.SequenceNumber);
         Assert.Equal(1, result.Id);
+        Assert.Equal(1, saved!.EventId);
+        Assert.Equal(1, saved.SequenceNumber);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
         await _notifier.Received(1).NotifyReservationCreatedAsync(
             result.Id,
-            result.QueueNumber,
+            result.SequenceNumber,
             command.CustomerName,
             command.PartySize,
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_SubsequentReservation_IncrementsSequenceNumber()
+    public async Task Handle_ValidCommand_SetsStatusWaiting()
     {
         // Arrange
-        var today = DateTime.UtcNow.ToString("yyyyMMdd");
-        var last = new TableReservation { Date = today, QueueNumber = "0005" };
-        _repository.GetLastByDatePrefixAsync(today, Arg.Any<CancellationToken>()).Returns(last);
+        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
 
-        _repository.When(r => r.AddAsync(Arg.Any<TableReservation>(), Arg.Any<CancellationToken>()))
-            .Do(ci => ci.Arg<TableReservation>().Id = 2);
+        Reservation? saved = null;
+        _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
+            .Do(ci => saved = ci.Arg<Reservation>());
 
-        var command = new CreateReservation.Command("Luigi Verdi", 2);
+        // Act
+        await _handler.Handle(new CreateReservation.Command(1, "Test", 3), CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(saved);
+        Assert.Equal(ReservationStatus.Waiting, saved!.Status);
+    }
+
+    [Fact]
+    public async Task Handle_ValidCommand_NullNotes_IsAccepted()
+    {
+        // Arrange
+        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
+
+        Reservation? saved = null;
+        _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
+            .Do(ci => saved = ci.Arg<Reservation>());
+
+        // Act
+        await _handler.Handle(new CreateReservation.Command(1, "Test", 3, null), CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(saved);
+        Assert.Null(saved!.Notes);
+    }
+
+    [Fact]
+    public async Task Handle_UniqueViolationOnFirstAttempt_Retries()
+    {
+        // Arrange
+        var callCount = 0;
+        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
+
+        _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
+            .Do(ci => ci.Arg<Reservation>().Id = 1);
+
+        // First call throws unique violation, second succeeds
+        _repository.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(ci =>
+            {
+                callCount++;
+                if (callCount == 1)
+                    throw new RepositoryUniqueConstraintException();
+                return Task.CompletedTask;
+            });
+
+        var command = new CreateReservation.Command(1, "Mario", 4);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
-        Assert.Equal("0006", result.QueueNumber);
+        // Assert — SaveChanges was called twice (one failure + one success)
+        Assert.Equal(2, callCount);
     }
 
     [Fact]
-    public async Task Handle_SetsStatusToWaiting()
+    public async Task Handle_UniqueViolationExceedsMaxRetries_Throws()
     {
         // Arrange
-        var today = DateTime.UtcNow.ToString("yyyyMMdd");
-        _repository.GetLastByDatePrefixAsync(today, Arg.Any<CancellationToken>()).Returns((TableReservation?)null);
+        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
 
-        TableReservation? saved = null;
-        _repository.When(r => r.AddAsync(Arg.Any<TableReservation>(), Arg.Any<CancellationToken>()))
-            .Do(ci => saved = ci.Arg<TableReservation>());
+        _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
+            .Do(ci => ci.Arg<Reservation>().Id = 1);
 
-        // Act
-        await _handler.Handle(new CreateReservation.Command("Test", 3), CancellationToken.None);
+        _repository.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .ThrowsAsync(new RepositoryUniqueConstraintException());
 
-        // Assert
-        Assert.NotNull(saved);
-        Assert.Equal("Waiting", saved!.Status);
+        var command = new CreateReservation.Command(1, "Mario", 4);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<RepositoryUniqueConstraintException>(() => _handler.Handle(command, CancellationToken.None));
     }
 }

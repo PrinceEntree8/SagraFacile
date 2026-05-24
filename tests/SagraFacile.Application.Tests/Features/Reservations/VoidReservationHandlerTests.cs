@@ -22,7 +22,7 @@ public class VoidReservationHandlerTests
     public async Task Handle_WaitingReservation_SetsStatusToVoided()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 1, QueueNumber = "202601010001", Status = "Waiting" };
+        var reservation = new Reservation { Id = 1, EventId = 1, SequenceNumber = 1, Status = ReservationStatus.Waiting };
         _repository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(reservation);
 
         // Act
@@ -30,12 +30,12 @@ public class VoidReservationHandlerTests
 
         // Assert
         Assert.True(result.Success);
-        Assert.Equal("Voided", reservation.Status);
+        Assert.Equal(ReservationStatus.Voided, reservation.Status);
         Assert.NotNull(reservation.VoidedAt);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
         await _notifier.Received(1).NotifyReservationVoidedAsync(
             reservation.Id,
-            reservation.QueueNumber,
+            reservation.SequenceNumber,
             Arg.Any<CancellationToken>());
     }
 
@@ -43,7 +43,7 @@ public class VoidReservationHandlerTests
     public async Task Handle_SeatedReservation_ReturnsFailure()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 2, Status = "Seated" };
+        var reservation = new Reservation { Id = 2, EventId = 1, SequenceNumber = 2, Status = ReservationStatus.Seated };
         _repository.GetByIdAsync(2, Arg.Any<CancellationToken>()).Returns(reservation);
 
         // Act
@@ -58,7 +58,7 @@ public class VoidReservationHandlerTests
     public async Task Handle_AlreadyVoidedReservation_ReturnsFailure()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 3, Status = "Voided" };
+        var reservation = new Reservation { Id = 3, EventId = 1, SequenceNumber = 3, Status = ReservationStatus.Voided };
         _repository.GetByIdAsync(3, Arg.Any<CancellationToken>()).Returns(reservation);
 
         // Act
@@ -73,7 +73,7 @@ public class VoidReservationHandlerTests
     public async Task Handle_ConcurrentModification_ReturnsFailure()
     {
         // Arrange
-        var reservation = new TableReservation { Id = 1, QueueNumber = "202601010001", Status = "Waiting" };
+        var reservation = new Reservation { Id = 1, EventId = 1, SequenceNumber = 1, Status = ReservationStatus.Waiting };
         _repository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(reservation);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>())
             .ThrowsAsync(new RepositoryConcurrencyException());
@@ -86,7 +86,7 @@ public class VoidReservationHandlerTests
         Assert.Contains("modified by another user", result.Message);
         await _notifier.DidNotReceive().NotifyReservationVoidedAsync(
             Arg.Any<int>(),
-            Arg.Any<string>(),
+            Arg.Any<int>(),
             Arg.Any<CancellationToken>());
     }
 }

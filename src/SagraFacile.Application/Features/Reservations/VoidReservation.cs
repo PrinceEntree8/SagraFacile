@@ -2,6 +2,7 @@ using FluentValidation;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Domain.Features.Reservations;
 
 namespace SagraFacile.Application.Features.Reservations;
 
@@ -36,13 +37,13 @@ public static class VoidReservation
             if (reservation == null)
                 return new Result(false, "Reservation not found");
 
-            if (reservation.Status == "Voided")
+            if (reservation.Status == ReservationStatus.Voided)
                 return new Result(false, "Reservation is already voided");
 
-            if (reservation.Status == "Seated")
+            if (reservation.Status == ReservationStatus.Seated)
                 return new Result(false, "Cannot void a seated reservation");
 
-            reservation.Status = "Voided";
+            reservation.Status = ReservationStatus.Voided;
             reservation.VoidedAt = DateTime.UtcNow;
 
             try
@@ -56,13 +57,13 @@ public static class VoidReservation
 
             await _notifier.NotifyReservationVoidedAsync(
                 reservation.Id,
-                reservation.QueueNumber,
+                reservation.SequenceNumber,
                 cancellationToken);
 
-            var counters = await _repository.GetCountersAsync(cancellationToken);
+            var counters = await _repository.GetCountersAsync(reservation.EventId, cancellationToken);
             await _notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
 
-            return new Result(true, $"Reservation {reservation.QueueNumber} voided successfully");
+            return new Result(true, $"Reservation {reservation.SequenceNumber} voided successfully");
         }
     }
 }
