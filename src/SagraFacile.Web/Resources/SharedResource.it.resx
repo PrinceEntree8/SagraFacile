@@ -231,8 +231,7 @@
   <data name="Report_PageTitle" xml:space="preserve"><value>Report Prenotazioni</value></data>
   <data name="Report_Heading" xml:space="preserve"><value>Report Prenotazioni</value></data>
   <data name="Report_FilterOptions" xml:space="preserve"><value>Opzioni Filtro</value></data>
-  <data name="Report_StartDate" xml:space="preserve"><value>Data Inizio</value></data>
-  <data name="Report_EndDate" xml:space="preserve"><value>Data Fine</value></data>
+  <data name="Report_Event" xml:space="preserve"><value>Evento</value></data>
   <data name="Report_Generate" xml:space="preserve"><value>Genera Report</value></data>
   <data name="Report_Clear" xml:space="preserve"><value>Cancella</value></data>
   <data name="Report_TotalReservations" xml:space="preserve"><value>Prenotazioni Totali</value></data>
@@ -258,8 +257,9 @@
   <data name="Report_NotCalled" xml:space="preserve"><value>Non chiamato</value></data>
   <data name="Report_InProgress" xml:space="preserve"><value>In corso</value></data>
   <data name="Report_Loading" xml:space="preserve"><value>Caricamento report...</value></data>
-  <data name="Report_SelectDateRange" xml:space="preserve"><value>Seleziona l'intervallo di date e clicca "Genera Report" per visualizzare le statistiche.</value></data>
-  <data name="Report_NoReservations" xml:space="preserve"><value>Nessuna prenotazione trovata per l'intervallo di date selezionato.</value></data>
+  <data name="Report_SelectEvent" xml:space="preserve"><value>Seleziona un evento e clicca "Genera Report" per visualizzare le statistiche.</value></data>
+  <data name="Report_NoEventsAvailable" xml:space="preserve"><value>Nessun evento disponibile</value></data>
+  <data name="Report_NoReservations" xml:space="preserve"><value>Nessuna prenotazione trovata per l'evento selezionato.</value></data>
 
   <!-- Menu Categories -->
   <data name="MenuCategory_Starters" xml:space="preserve"><value>Antipasti</value></data>

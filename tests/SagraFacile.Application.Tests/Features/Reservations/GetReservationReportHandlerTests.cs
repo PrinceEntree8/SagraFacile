@@ -1,6 +1,7 @@
 using NSubstitute;
 using SagraFacile.Application.Features.Reservations;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Domain.Features.Events;
 using SagraFacile.Domain.Features.Reservations;
 
 namespace SagraFacile.Application.Tests.Features.Reservations;
@@ -8,41 +9,43 @@ namespace SagraFacile.Application.Tests.Features.Reservations;
 public class GetReservationReportHandlerTests
 {
     private readonly IReservationRepository _repository = Substitute.For<IReservationRepository>();
+    private readonly IEventRepository _eventRepository = Substitute.For<IEventRepository>();
     private readonly GetReservationReport.Handler _handler;
 
     public GetReservationReportHandlerTests()
     {
-        _handler = new GetReservationReport.Handler(_repository);
+        _handler = new GetReservationReport.Handler(_repository, _eventRepository);
     }
 
     [Fact]
-    public async Task Handle_NoDateFilter_CallsRepositoryWithNulls()
+    public async Task Handle_NoEventFilter_CallsRepositoryWithNulls()
     {
-        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<CancellationToken>())
+        _repository.GetByDateRangeAsync(null, null, null, Arg.Any<CancellationToken>())
             .Returns(new List<Reservation>());
 
-        var result = await _handler.Handle(new GetReservationReport.Query(1), CancellationToken.None);
+        var result = await _handler.Handle(new GetReservationReport.Query(), CancellationToken.None);
 
-        await _repository.Received(1).GetByDateRangeAsync(1, null, null, Arg.Any<CancellationToken>());
+        await _repository.Received(1).GetByDateRangeAsync(null, null, null, Arg.Any<CancellationToken>());
         Assert.Empty(result.Reports);
         Assert.Equal(0, result.Statistics.TotalPeople);
     }
 
     [Fact]
-    public async Task Handle_WithDateFilter_NormalisesToUtc()
+    public async Task Handle_WithEventFilter_UsesSelectedEventDayRange()
     {
-        var start = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Unspecified);
-        var end = new DateTime(2026, 8, 31, 23, 59, 59, DateTimeKind.Unspecified);
+        var eventDate = new DateTime(2026, 8, 20, 13, 30, 0, DateTimeKind.Unspecified);
+        _eventRepository.GetByIdAsync(7, Arg.Any<CancellationToken>())
+            .Returns(new Event { Id = 7, Date = eventDate, Name = "Sagra test" });
 
-        _repository.GetByDateRangeAsync(Arg.Any<int>(), Arg.Any<DateTime?>(), Arg.Any<DateTime?>(), Arg.Any<CancellationToken>())
+        _repository.GetByDateRangeAsync(Arg.Any<int?>(), Arg.Any<DateTime?>(), Arg.Any<DateTime?>(), Arg.Any<CancellationToken>())
             .Returns(new List<Reservation>());
 
-        await _handler.Handle(new GetReservationReport.Query(1, start, end), CancellationToken.None);
+        await _handler.Handle(new GetReservationReport.Query(7), CancellationToken.None);
 
         await _repository.Received(1).GetByDateRangeAsync(
-            1,
-            Arg.Is<DateTime?>(d => d.HasValue && d.Value.Kind == DateTimeKind.Utc),
-            Arg.Is<DateTime?>(d => d.HasValue && d.Value.Kind == DateTimeKind.Utc),
+            7,
+            Arg.Is<DateTime?>(d => d == new DateTime(2026, 8, 20, 0, 0, 0, DateTimeKind.Utc)),
+            Arg.Is<DateTime?>(d => d == new DateTime(2026, 8, 20, 23, 59, 59, 999, DateTimeKind.Utc).AddTicks(9999)),
             Arg.Any<CancellationToken>());
     }
 
