@@ -14,10 +14,12 @@
     <h1 class="mb-0">@L["HeadWaiter_Heading"]</h1>
     <div class="d-flex gap-2">
         <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#announceModal">
-            @L["HeadWaiter_AnnounceSeats"]
+            <i class="bi bi-megaphone-fill"></i>
+            <span class="d-none d-md-inline">@L["HeadWaiter_AnnounceSeats"]</span>
         </button>
         <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#manualSeatModal">
-            @L["HeadWaiter_ManualSeat"]
+            <i class="bi bi-person-plus-fill"></i>
+            <span class="d-none d-md-inline">@L["HeadWaiter_ManualSeat"]</span>
         </button>
     </div>
 </div>
@@ -111,7 +113,7 @@
                                 @* Mobile summary row (accordion trigger) *@
                                 <div class="d-flex d-md-none align-items-center justify-content-between px-2 py-2" style="cursor:pointer" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false">
                                     <div class="d-flex align-items-center gap-2">
-                                        <strong>@match.SequenceNumber - @match.CustomerName</strong>
+                                        <strong>@match.SequenceNumber</strong> - @match.CustomerName
                                     </div>
                                     <span class="badge bg-info float-end">@match.PartySize <i class="bi bi-people"></i></span>
                                 </div>

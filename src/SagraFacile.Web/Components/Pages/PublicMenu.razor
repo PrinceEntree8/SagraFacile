@@ -14,11 +14,15 @@
     else if (activeEvent is null)
     {
         <div class="text-center text-muted mt-5">
-            <h2>🍽️ @L["PublicMenu_NoActiveEvent"]</h2>
+            <h2>@L["PublicMenu_NoActiveEvent"]</h2>
         </div>
     }
     else
     {
+        <div class="text-center mb-4">
+            <h1>🍽️ @activeEvent.Name</h1>
+        </div>
+        
         @if (!string.IsNullOrWhiteSpace(menuDetails?.WarningMessage))
         {
             <div class="alert alert-warning">@((MarkupString)menuDetails.WarningMessage)</div>
@@ -27,9 +31,6 @@
         {
             <div class="menu-header mb-4">@((MarkupString)menuDetails.Header)</div>
         }
-        <div class="text-center mb-4">
-            <h1>🍽️ @activeEvent.Name</h1>
-        </div>
 
         @if (!items.Any())
         {

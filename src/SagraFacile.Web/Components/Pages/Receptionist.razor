@@ -100,7 +100,7 @@
                             <div class="reservation-chip @GetRowClass(reservation)">
                                 <span class="chip-queue" title="@L["Receptionist_ColQueue"]">@reservation.SequenceNumber</span>
                                 <span class="chip-name">@reservation.CustomerName</span>
-                                <span class="badge bg-info chip-party" title="@L["Receptionist_ColParty"]">@reservation.PartySize</span>
+                                <span class="badge bg-info chip-party" title="@L["Receptionist_ColParty"]"><i class="bi bi-people"></i> @reservation.PartySize</span>
                                 <span class="badge @GetStatusBadge(reservation.Status) chip-status">@L["Reservation_Status_" + reservation.Status]</span>
                                 <span class="chip-wait text-muted ms-1" title="@L["Receptionist_ColWaiting"]">
                                     @if (reservation.TimeSinceLastCall.HasValue)
