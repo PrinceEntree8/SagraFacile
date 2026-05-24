@@ -217,8 +217,7 @@
   <data name="Report_PageTitle" xml:space="preserve"><value>Reservation Report</value></data>
   <data name="Report_Heading" xml:space="preserve"><value>Reservation Report</value></data>
   <data name="Report_FilterOptions" xml:space="preserve"><value>Filter Options</value></data>
-  <data name="Report_StartDate" xml:space="preserve"><value>Start Date</value></data>
-  <data name="Report_EndDate" xml:space="preserve"><value>End Date</value></data>
+  <data name="Report_Event" xml:space="preserve"><value>Event</value></data>
   <data name="Report_Generate" xml:space="preserve"><value>Generate Report</value></data>
   <data name="Report_Clear" xml:space="preserve"><value>Clear</value></data>
   <data name="Report_TotalReservations" xml:space="preserve"><value>Total Reservations</value></data>
@@ -244,8 +243,9 @@
   <data name="Report_NotCalled" xml:space="preserve"><value>Not called</value></data>
   <data name="Report_InProgress" xml:space="preserve"><value>In progress</value></data>
   <data name="Report_Loading" xml:space="preserve"><value>Loading report...</value></data>
-  <data name="Report_SelectDateRange" xml:space="preserve"><value>Select date range and click "Generate Report" to view statistics.</value></data>
-  <data name="Report_NoReservations" xml:space="preserve"><value>No reservations found for the selected date range.</value></data>
+  <data name="Report_SelectEvent" xml:space="preserve"><value>Select an event and click "Generate Report" to view statistics.</value></data>
+  <data name="Report_NoEventsAvailable" xml:space="preserve"><value>No events available</value></data>
+  <data name="Report_NoReservations" xml:space="preserve"><value>No reservations found for the selected event.</value></data>
 
   <!-- Menu Categories -->
   <data name="MenuCategory_Starters" xml:space="preserve"><value>Starters</value></data>

@@ -1,6 +1,7 @@
 using NSubstitute;
 using SagraFacile.Application.Features.Reservations;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Domain.Features.Events;
 using SagraFacile.Domain.Features.Reservations;
 
 namespace SagraFacile.Application.Tests.Features.Reservations;
@@ -8,15 +9,16 @@ namespace SagraFacile.Application.Tests.Features.Reservations;
 public class GetReservationReportHandlerTests
 {
     private readonly IReservationRepository _repository = Substitute.For<IReservationRepository>();
+    private readonly IEventRepository _eventRepository = Substitute.For<IEventRepository>();
     private readonly GetReservationReport.Handler _handler;
 
     public GetReservationReportHandlerTests()
     {
-        _handler = new GetReservationReport.Handler(_repository);
+        _handler = new GetReservationReport.Handler(_repository, _eventRepository);
     }
 
     [Fact]
-    public async Task Handle_NoDateFilter_CallsRepositoryWithNulls()
+    public async Task Handle_NoEventFilter_CallsRepositoryWithNulls()
     {
         _repository.GetByDateRangeAsync(null, null, Arg.Any<CancellationToken>())
             .Returns(new List<TableReservation>());
@@ -29,19 +31,20 @@ public class GetReservationReportHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithDateFilter_NormalisesToUtc()
+    public async Task Handle_WithEventFilter_UsesSelectedEventDayRange()
     {
-        var start = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Unspecified);
-        var end = new DateTime(2026, 8, 31, 23, 59, 59, DateTimeKind.Unspecified);
+        var eventDate = new DateTime(2026, 8, 20, 13, 30, 0, DateTimeKind.Unspecified);
+        _eventRepository.GetByIdAsync(7, Arg.Any<CancellationToken>())
+            .Returns(new Event { Id = 7, Date = eventDate, Name = "Sagra test" });
 
         _repository.GetByDateRangeAsync(Arg.Any<DateTime?>(), Arg.Any<DateTime?>(), Arg.Any<CancellationToken>())
             .Returns(new List<TableReservation>());
 
-        await _handler.Handle(new GetReservationReport.Query(start, end), CancellationToken.None);
+        await _handler.Handle(new GetReservationReport.Query(7), CancellationToken.None);
 
         await _repository.Received(1).GetByDateRangeAsync(
-            Arg.Is<DateTime?>(d => d.HasValue && d.Value.Kind == DateTimeKind.Utc),
-            Arg.Is<DateTime?>(d => d.HasValue && d.Value.Kind == DateTimeKind.Utc),
+            Arg.Is<DateTime?>(d => d == new DateTime(2026, 8, 20, 0, 0, 0, DateTimeKind.Utc)),
+            Arg.Is<DateTime?>(d => d == new DateTime(2026, 8, 20, 23, 59, 59, 999, DateTimeKind.Utc).AddTicks(9999)),
             Arg.Any<CancellationToken>());
     }
 
@@ -53,7 +56,7 @@ public class GetReservationReportHandlerTests
         {
             new()
             {
-                Id = 1, QueueNumber = "0001", CustomerName = "Mario", PartySize = 4,
+                Id = 1, ReservationId = "0001", CustomerName = "Mario", PartySize = 4,
                 Status = "Seated", CreatedAt = now.AddMinutes(-30),
                 FirstCalledAt = now.AddMinutes(-20),
                 SeatedAt = now.AddMinutes(-10),
@@ -61,7 +64,7 @@ public class GetReservationReportHandlerTests
             },
             new()
             {
-                Id = 2, QueueNumber = "0002", CustomerName = "Luigi", PartySize = 2,
+                Id = 2, ReservationId = "0002", CustomerName = "Luigi", PartySize = 2,
                 Status = "Seated", CreatedAt = now.AddMinutes(-60),
                 FirstCalledAt = now.AddMinutes(-50),
                 SeatedAt = now.AddMinutes(-40),
@@ -92,7 +95,7 @@ public class GetReservationReportHandlerTests
         {
             new()
             {
-                Id = 1, QueueNumber = "0001", CustomerName = "Anna", PartySize = 2,
+                Id = 1, ReservationId = "0001", CustomerName = "Anna", PartySize = 2,
                 Status = "Voided", CreatedAt = now.AddMinutes(-10),
                 VoidedAt = now.AddMinutes(-5), CallCount = 0
             },
@@ -113,7 +116,7 @@ public class GetReservationReportHandlerTests
         {
             new()
             {
-                Id = 1, QueueNumber = "0001", CustomerName = "Carlo", PartySize = 3,
+                Id = 1, ReservationId = "0001", CustomerName = "Carlo", PartySize = 3,
                 Status = "Waiting", CreatedAt = now.AddMinutes(-5), CallCount = 0
             },
         };
@@ -133,7 +136,7 @@ public class GetReservationReportHandlerTests
         {
             new()
             {
-                Id = 1, QueueNumber = "0001", CustomerName = "Giulia", PartySize = 2,
+                Id = 1, ReservationId = "0001", CustomerName = "Giulia", PartySize = 2,
                 Status = "Called", CreatedAt = now.AddMinutes(-15),
                 FirstCalledAt = now.AddMinutes(-5), CallCount = 1
             },
@@ -152,7 +155,7 @@ public class GetReservationReportHandlerTests
         {
             new()
             {
-                Id = 1, QueueNumber = "0001", CustomerName = "A", PartySize = 1,
+                Id = 1, ReservationId = "0001", CustomerName = "A", PartySize = 1,
                 Status = "Waiting", CreatedAt = DateTime.UtcNow, CallCount = 0
             },
         };
@@ -176,7 +179,7 @@ public class GetReservationReportHandlerTests
         {
             new()
             {
-                Id = 1, QueueNumber = "0001", CustomerName = "Test", PartySize = 2,
+                Id = 1, ReservationId = "0001", CustomerName = "Test", PartySize = 2,
                 Status = "Called", CreatedAt = created, FirstCalledAt = firstCalled, CallCount = 1
             },
         };
@@ -197,9 +200,9 @@ public class GetReservationReportHandlerTests
         var now = DateTime.UtcNow;
         var reservations = new List<TableReservation>
         {
-            new() { Id = 1, QueueNumber = "0001", CustomerName = "A", PartySize = 1, Status = "Seated", CreatedAt = now.AddMinutes(-10), SeatedAt = now.AddMinutes(-8), CallCount = 0 },
-            new() { Id = 2, QueueNumber = "0002", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = now.AddMinutes(-20), SeatedAt = now.AddMinutes(-10), CallCount = 0 },
-            new() { Id = 3, QueueNumber = "0003", CustomerName = "C", PartySize = 3, Status = "Seated", CreatedAt = now.AddMinutes(-30), SeatedAt = now.AddMinutes(-15), CallCount = 0 },
+            new() { Id = 1, ReservationId = "0001", CustomerName = "A", PartySize = 1, Status = "Seated", CreatedAt = now.AddMinutes(-10), SeatedAt = now.AddMinutes(-8), CallCount = 0 },
+            new() { Id = 2, ReservationId = "0002", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = now.AddMinutes(-20), SeatedAt = now.AddMinutes(-10), CallCount = 0 },
+            new() { Id = 3, ReservationId = "0003", CustomerName = "C", PartySize = 3, Status = "Seated", CreatedAt = now.AddMinutes(-30), SeatedAt = now.AddMinutes(-15), CallCount = 0 },
         };
         _repository.GetByDateRangeAsync(null, null, Arg.Any<CancellationToken>()).Returns(reservations);
 
@@ -216,8 +219,8 @@ public class GetReservationReportHandlerTests
         var now = DateTime.UtcNow;
         var reservations = new List<TableReservation>
         {
-            new() { Id = 1, QueueNumber = "0001", CustomerName = "A", PartySize = 1, Status = "Seated", CreatedAt = now.AddMinutes(-10), SeatedAt = now.AddMinutes(-6), CallCount = 0 },
-            new() { Id = 2, QueueNumber = "0002", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = now.AddMinutes(-20), SeatedAt = now, CallCount = 0 },
+            new() { Id = 1, ReservationId = "0001", CustomerName = "A", PartySize = 1, Status = "Seated", CreatedAt = now.AddMinutes(-10), SeatedAt = now.AddMinutes(-6), CallCount = 0 },
+            new() { Id = 2, ReservationId = "0002", CustomerName = "B", PartySize = 2, Status = "Seated", CreatedAt = now.AddMinutes(-20), SeatedAt = now, CallCount = 0 },
         };
         _repository.GetByDateRangeAsync(null, null, Arg.Any<CancellationToken>()).Returns(reservations);
 

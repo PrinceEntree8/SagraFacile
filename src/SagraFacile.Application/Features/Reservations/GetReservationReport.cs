@@ -5,7 +5,7 @@ namespace SagraFacile.Application.Features.Reservations;
 
 public static class GetReservationReport
 {
-    public record Query(DateTime? StartDate = null, DateTime? EndDate = null) : IQuery<Result>;
+    public record Query(int? EventId = null) : IQuery<Result>;
     public record Result(List<ReportDto> Reports, StatisticsDto Statistics);
 
     public record ReportDto(
@@ -36,14 +36,27 @@ public static class GetReservationReport
     public class Handler : IQueryHandler<Query, Result>
     {
         private readonly IReservationRepository _repository;
+        private readonly IEventRepository _eventRepository;
 
-        public Handler(IReservationRepository repository) => _repository = repository;
+        public Handler(IReservationRepository repository, IEventRepository eventRepository)
+        {
+            _repository = repository;
+            _eventRepository = eventRepository;
+        }
 
         public async Task<Result> Handle(Query query, CancellationToken cancellationToken)
         {
-            // Normalise dates to UTC before delegating to the repository
-            DateTime? startUtc = NormaliseToUtc(query.StartDate);
-            DateTime? endUtc = NormaliseToUtc(query.EndDate);
+            DateTime? startUtc = null;
+            DateTime? endUtc = null;
+
+            if (query.EventId.HasValue)
+            {
+                var selectedEvent = await _eventRepository.GetByIdAsync(query.EventId.Value, cancellationToken);
+                if (selectedEvent is not null)
+                {
+                    (startUtc, endUtc) = GetUtcDayRange(selectedEvent.Date);
+                }
+            }
 
             var reservations = await _repository.GetByDateRangeAsync(startUtc, endUtc, cancellationToken);
 
@@ -119,12 +132,14 @@ public static class GetReservationReport
             return sorted[count / 2];
         }
 
-        private static DateTime? NormaliseToUtc(DateTime? dt)
+        private static (DateTime StartUtc, DateTime EndUtc) GetUtcDayRange(DateTime day)
         {
-            if (!dt.HasValue) return null;
-            return dt.Value.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(dt.Value, DateTimeKind.Utc)
-                : dt.Value.ToUniversalTime();
+            var dateOnly = day.Date;
+            var startUtc = day.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(dateOnly, DateTimeKind.Utc)
+                : dateOnly.ToUniversalTime();
+            var endUtc = startUtc.AddDays(1).AddTicks(-1);
+            return (startUtc, endUtc);
         }
     }
 }
