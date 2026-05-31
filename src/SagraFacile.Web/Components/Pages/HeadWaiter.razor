@@ -270,7 +270,7 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<int, int, string, int, int>("ReservationCalled", async (id, sequenceNumber, customerName, partySize, callCount) =>
+        hubConnection.On<int, int, string, int, int>(nameof(IReservationHubClient.ReservationCalled), async (id, sequenceNumber, customerName, partySize, callCount) =>
         {
             if (coverCountForSearch > 0)
                 await SearchBestFit();

@@ -135,6 +135,24 @@
   <data name="Events_NoEvents" xml:space="preserve"><value>No events found. Create the first event.</value></data>
   <data name="Events_EventCreated" xml:space="preserve"><value>Event '{0}' created successfully!</value></data>
   <data name="Events_Error" xml:space="preserve"><value>Error: {0}</value></data>
+  <data name="Events_AdditionalOptions" xml:space="preserve"><value>Additional Options</value></data>
+
+  <!-- Event Additional Options -->
+  <data name="EventOptions_PageTitle" xml:space="preserve"><value>Additional Options – {0}</value></data>
+  <data name="EventOptions_Heading" xml:space="preserve"><value>⚙️ Additional Options</value></data>
+  <data name="EventOptions_EventNotFound" xml:space="preserve"><value>Event not found.</value></data>
+  <data name="EventOptions_Loading" xml:space="preserve"><value>Loading options...</value></data>
+  <data name="EventOptions_ReservationOptions" xml:space="preserve"><value>Reservation Options</value></data>
+  <data name="EventOptions_PartyCompletion" xml:space="preserve"><value>Party Completion</value></data>
+  <data name="EventOptions_PartyCompletionDesc" xml:space="preserve"><value>When enabled, reservations are held until the full party has arrived before being called.</value></data>
+  <data name="EventOptions_EnablePartyCompletion" xml:space="preserve"><value>Enable Party Completion</value></data>
+  <data name="EventOptions_MinPartySize" xml:space="preserve"><value>Minimum Party Size</value></data>
+  <data name="EventOptions_MinPartySizeDesc" xml:space="preserve"><value>Minimum number of guests required before the reservation can be called.</value></data>
+  <data name="EventOptions_Save" xml:space="preserve"><value>Save Options</value></data>
+  <data name="EventOptions_Saved" xml:space="preserve"><value>Options saved successfully!</value></data>
+  <data name="EventOptions_Error" xml:space="preserve"><value>Error: {0}</value></data>
+  <data name="EventOptions_MinPartySizeInvalid" xml:space="preserve"><value>Minimum party size must be at least 1.</value></data>
+  <data name="EventOptions_BackToEvents" xml:space="preserve"><value>← Back to Events</value></data>
 
   <!-- Receptionist -->
   <data name="Receptionist_PageTitle" xml:space="preserve"><value>Receptionist - Table Reservations</value></data>
