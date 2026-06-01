@@ -244,6 +244,8 @@
   <data name="NowCalling_WaitingForCall" xml:space="preserve"><value>Waiting for the first call…</value></data>
   <data name="NowCalling_CurrentCall" xml:space="preserve"><value>CURRENT CALL</value></data>
   <data name="NowCalling_PreviousCalls" xml:space="preserve"><value>Previous Calls</value></data>
+  <data name="NowCalling_BackToMenu" xml:space="preserve"><value>Back to menu</value></data>
+  <data name="NowCalling_NoActiveEvent" xml:space="preserve"><value>No active event at the moment.</value></data>
 
   <!-- Reservation Report -->
   <data name="Report_PageTitle" xml:space="preserve"><value>Reservation Report</value></data>
@@ -344,6 +346,9 @@
   <data name="PublicMenu_NoActiveEvent" xml:space="preserve"><value>No active event at the moment.</value></data>
   <data name="PublicMenu_NoItems" xml:space="preserve"><value>Menu not yet available.</value></data>
   <data name="PublicMenu_Allergens" xml:space="preserve"><value>Allergens</value></data>
+  <data name="PublicMenu_GoToNowCalling" xml:space="preserve"><value>Go to now calling</value></data>
+  <data name="PublicMenu_LatestCalled" xml:space="preserve"><value>Latest Called</value></data>
+  <data name="PublicMenu_NoCalledYet" xml:space="preserve"><value>No reservations called yet.</value></data>
   <data name="MenuMgmt_ManageCategories" xml:space="preserve"><value>Manage Categories</value></data>
   <data name="MenuMgmt_CatNameEn" xml:space="preserve"><value>Name</value></data>
   <data name="MenuMgmt_CatNameIt" xml:space="preserve"><value>Name</value></data>
