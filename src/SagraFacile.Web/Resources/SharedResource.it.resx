@@ -317,6 +317,10 @@
   <data name="MenuMgmt_ManageMenu" xml:space="preserve"><value>Gestisci Menù</value></data>
 
   <!-- Public Menu -->
+  <data name="Home_PageTitle" xml:space="preserve"><value>Home - SagraFacile</value></data>
+  <data name="Home_GoToMenu" xml:space="preserve"><value>Vai al menù</value></data>
+  <data name="Home_LastCalled" xml:space="preserve"><value>Ultima Chiamata</value></data>
+  <data name="Home_LatestNineCalled" xml:space="preserve"><value>Ultime 9 Chiamate</value></data>
   <data name="PublicMenu_PageTitle" xml:space="preserve"><value>Menù - SagraFacile</value></data>
   <data name="PublicMenu_Loading" xml:space="preserve"><value>Caricamento menù...</value></data>
   <data name="PublicMenu_NoActiveEvent" xml:space="preserve"><value>Nessun evento attivo al momento.</value></data>
