@@ -135,7 +135,25 @@
   <data name="Events_NoEvents" xml:space="preserve"><value>Nessun evento trovato. Crea il primo evento.</value></data>
   <data name="Events_EventCreated" xml:space="preserve"><value>Evento '{0}' creato con successo!</value></data>
   <data name="Events_Error" xml:space="preserve"><value>Errore: {0}</value></data>
-
+  <data name="Events_AdditionalOptions" xml:space="preserve"><value>Opzioni Aggiuntive</value></data>
+ 
+  <!-- Event Additional Options -->
+  <data name="EventOptions_PageTitle" xml:space="preserve"><value>Opzioni Aggiuntive – {0}</value></data>
+  <data name="EventOptions_Heading" xml:space="preserve"><value>⚙️ Opzioni Aggiuntive</value></data>
+  <data name="EventOptions_EventNotFound" xml:space="preserve"><value>Evento non trovato.</value></data>
+  <data name="EventOptions_Loading" xml:space="preserve"><value>Caricamento opzioni...</value></data>
+  <data name="EventOptions_ReservationOptions" xml:space="preserve"><value>Opzioni Prenotazioni</value></data>
+  <data name="EventOptions_PartyCompletion" xml:space="preserve"><value>Completamento Gruppo</value></data>
+  <data name="EventOptions_PartyCompletionDesc" xml:space="preserve"><value>Se abilitato, le prenotazioni vengono trattenute finché non è arrivato l'intero gruppo prima di essere chiamate.</value></data>
+  <data name="EventOptions_EnablePartyCompletion" xml:space="preserve"><value>Abilita Completamento Gruppo</value></data>
+  <data name="EventOptions_MinPartySize" xml:space="preserve"><value>Dimensione Minima del Gruppo</value></data>
+  <data name="EventOptions_MinPartySizeDesc" xml:space="preserve"><value>Numero minimo di ospiti richiesti prima che la prenotazione possa essere chiamata.</value></data>
+  <data name="EventOptions_Save" xml:space="preserve"><value>Salva Opzioni</value></data>
+  <data name="EventOptions_Saved" xml:space="preserve"><value>Opzioni salvate con successo!</value></data>
+  <data name="EventOptions_Error" xml:space="preserve"><value>Errore: {0}</value></data>
+  <data name="EventOptions_MinPartySizeInvalid" xml:space="preserve"><value>La dimensione minima del gruppo deve essere almeno 1.</value></data>
+  <data name="EventOptions_BackToEvents" xml:space="preserve"><value>← Torna agli Eventi</value></data>
+ 
   <!-- Receptionist -->
   <data name="Receptionist_PageTitle" xml:space="preserve"><value>Receptionist - Prenotazioni Tavoli</value></data>
   <data name="Receptionist_Heading" xml:space="preserve"><value>Receptionist - Prenotazioni Tavoli</value></data>
@@ -349,6 +367,18 @@
   </data>
   <data name="Reservation_Status_Waiting" xml:space="preserve">
     <value>In Attesa</value>
+  </data>
+  <data name="Reservation_Status_PartyCompleted" xml:space="preserve">
+    <value>Gruppo al completo</value>
+  </data>
+  <data name="Receptionist_Button_PartyComplete" xml:space="preserve">
+    <value>Gruppo al completo</value>
+  </data>
+  <data name="Receptionist_Filter_IncompleteParties" xml:space="preserve">
+    <value>Gruppi incompleti</value>
+  </data>
+  <data name="Receptionist_Label_PartyComplete" xml:space="preserve">
+    <value>Gruppo al completo?</value>
   </data>
   <data name="MenuAppearance_Section" xml:space="preserve">
     <value>Aspetto del Menu</value>

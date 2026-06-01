@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SagraFacile.Domain.Features.Events;
@@ -6,6 +7,8 @@ namespace SagraFacile.Infrastructure.Data.Configurations.Events;
 
 public class EventConfiguration : IEntityTypeConfiguration<Event>
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     public void Configure(EntityTypeBuilder<Event> entity)
     {
         entity.HasKey(e => e.Id);
@@ -13,5 +16,13 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
         entity.Property(e => e.Description).HasMaxLength(1000);
         entity.Property(e => e.Currency).IsRequired().HasMaxLength(10);
         entity.Property(e => e.CurrencySymbol).IsRequired().HasMaxLength(5);
+        entity.Property(e => e.AdditionalOptions)
+            .HasColumnType("jsonb")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                v => string.IsNullOrEmpty(v)
+                    ? new EventAdditionalOptions()
+                    : JsonSerializer.Deserialize<EventAdditionalOptions>(v, JsonOptions) ?? new EventAdditionalOptions())
+            .HasDefaultValue(new EventAdditionalOptions());
     }
 }

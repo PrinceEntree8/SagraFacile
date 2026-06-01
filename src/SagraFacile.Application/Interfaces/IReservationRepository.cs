@@ -6,6 +6,7 @@ namespace SagraFacile.Application.Interfaces;
 public interface IReservationRepository
 {
     Task<Reservation?> GetByIdAsync(int id, CancellationToken cancellationToken);
+    Task<Reservation?> GetByIdWithEventAsync(int id, CancellationToken cancellationToken);
     Task<Reservation?> GetByEventAndSequenceAsync(int eventId, int sequenceNumber, CancellationToken cancellationToken);
     Task<int> GetNextSequenceNumberAsync(int eventId, CancellationToken cancellationToken);
     Task<(List<Reservation> Items, int TotalCount)> GetPagedAsync(

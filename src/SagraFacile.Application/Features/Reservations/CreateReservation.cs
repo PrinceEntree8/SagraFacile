@@ -8,7 +8,7 @@ namespace SagraFacile.Application.Features.Reservations;
 
 public static class CreateReservation
 {
-    public record Command(int EventId, string CustomerName, int PartySize, string? Notes = null) : ICommand<Result>;
+    public record Command(int EventId, string CustomerName, int PartySize, string? Notes = null, bool PartyComplete = false) : ICommand<Result>;
     public record Result(int Id, int SequenceNumber);
 
     public class Validator : AbstractValidator<Command>
@@ -29,23 +29,24 @@ public static class CreateReservation
         }
     }
 
-    public class Handler : ICommandHandler<Command, Result>
+    public class Handler(IReservationRepository repository, IReservationNotifier notifier, IEventRepository eventRepository)
+        : ICommandHandler<Command, Result>
     {
-        private readonly IReservationRepository _repository;
-        private readonly IReservationNotifier _notifier;
-
-        public Handler(IReservationRepository repository, IReservationNotifier notifier)
-        {
-            _repository = repository;
-            _notifier = notifier;
-        }
 
         public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
         {
+            var reservationEvent = await eventRepository.GetByIdAsync(command.EventId, cancellationToken);
+            var partyCompletionEnabled = reservationEvent?.AdditionalOptions.Reservations.PartyCompletion.Enabled ?? false;
+            var minPartySize = reservationEvent?.AdditionalOptions.Reservations.PartyCompletion.MinPartySize ?? 1;
+
+            var partyComplete = command.PartyComplete;
+            if (partyCompletionEnabled && !command.PartyComplete)
+                partyComplete = command.PartySize < minPartySize;
+
             const int maxRetries = 5;
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
-                var sequenceNumber = await _repository.GetNextSequenceNumberAsync(command.EventId, cancellationToken);
+                var sequenceNumber = await repository.GetNextSequenceNumberAsync(command.EventId, cancellationToken);
                 var reservation = new Reservation
                 {
                     EventId        = command.EventId,
@@ -53,24 +54,24 @@ public static class CreateReservation
                     CustomerName   = command.CustomerName,
                     PartySize      = command.PartySize,
                     Notes          = command.Notes,
-                    Status         = ReservationStatus.Waiting,
+                    Status         = partyComplete && partyCompletionEnabled ? ReservationStatus.PartyCompleted : ReservationStatus.Waiting,
                     CreatedAt      = DateTime.UtcNow
                 };
 
                 try
                 {
-                    await _repository.AddAsync(reservation, cancellationToken);
-                    await _repository.SaveChangesAsync(cancellationToken);
+                    await repository.AddAsync(reservation, cancellationToken);
+                    await repository.SaveChangesAsync(cancellationToken);
 
-                    await _notifier.NotifyReservationCreatedAsync(
+                    await notifier.NotifyReservationCreatedAsync(
                         reservation.Id,
                         reservation.SequenceNumber,
                         reservation.CustomerName,
                         reservation.PartySize,
                         cancellationToken);
 
-                    var counters = await _repository.GetCountersAsync(command.EventId, cancellationToken);
-                    await _notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
+                    var counters = await repository.GetCountersAsync(command.EventId, cancellationToken);
+                    await notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
 
                     return new Result(reservation.Id, reservation.SequenceNumber);
                 }

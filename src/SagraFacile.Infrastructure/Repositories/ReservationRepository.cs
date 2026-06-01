@@ -18,8 +18,15 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
     public Task<Reservation?> GetByIdAsync(int id, CancellationToken cancellationToken)
         => _db.Reservations.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
+    public Task<Reservation?> GetByIdWithEventAsync(int id, CancellationToken cancellationToken)
+        => _db.Reservations
+            .Include(r => r.Event)
+            .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+
     public Task<Reservation?> GetByEventAndSequenceAsync(int eventId, int sequenceNumber, CancellationToken cancellationToken)
-        => _db.Reservations.FirstOrDefaultAsync(r => r.EventId == eventId && r.SequenceNumber == sequenceNumber, cancellationToken);
+        => _db.Reservations
+            .Include(r => r.Event)
+            .FirstOrDefaultAsync(r => r.EventId == eventId && r.SequenceNumber == sequenceNumber, cancellationToken);
 
     public async Task<int> GetNextSequenceNumberAsync(int eventId, CancellationToken cancellationToken)
     {
@@ -43,6 +50,7 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
         {
             query = query.Where(r => r.Status == parsedStatus);
         }
+
 
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query

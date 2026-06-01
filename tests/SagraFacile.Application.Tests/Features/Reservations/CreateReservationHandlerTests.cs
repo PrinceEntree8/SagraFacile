@@ -3,6 +3,7 @@ using NSubstitute.ExceptionExtensions;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Features.Reservations;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Domain.Features.Events;
 using SagraFacile.Domain.Features.Reservations;
 
 namespace SagraFacile.Application.Tests.Features.Reservations;
@@ -11,11 +12,14 @@ public class CreateReservationHandlerTests
 {
     private readonly IReservationRepository _repository = Substitute.For<IReservationRepository>();
     private readonly IReservationNotifier _notifier = Substitute.For<IReservationNotifier>();
+    private readonly IEventRepository _eventRepository = Substitute.For<IEventRepository>();
     private readonly CreateReservation.Handler _handler;
 
     public CreateReservationHandlerTests()
     {
-        _handler = new CreateReservation.Handler(_repository, _notifier);
+        _eventRepository.GetByIdAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(ci => new Event { Id = ci.Arg<int>() });
+        _handler = new CreateReservation.Handler(_repository, _notifier, _eventRepository);
     }
 
     [Fact]
@@ -128,5 +132,77 @@ public class CreateReservationHandlerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<RepositoryUniqueConstraintException>(() => _handler.Handle(command, CancellationToken.None));
+    }
+    private static Event CreateEventWithOptions(int id, bool enabled, int minPartySize)
+    {
+        return new Event
+        {
+            Id = id,
+            AdditionalOptions = new EventAdditionalOptions
+            {
+                Reservations = new ReservationOptions
+                {
+                    PartyCompletion = new PartyCompletionOptions
+                    {
+                        Enabled = enabled,
+                        MinPartySize = minPartySize
+                    }
+                }
+            }
+        };
+    }
+
+    [Fact]
+    public async Task Handle_PartyCompletionEnabled_PartyCompleteTrue_SetsStatusPartyCompleted()
+    {
+        // Arrange
+        _eventRepository.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(CreateEventWithOptions(1, true, 4));
+        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
+        Reservation? saved = null;
+        _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
+            .Do(ci => saved = ci.Arg<Reservation>());
+
+        // Act
+        await _handler.Handle(new CreateReservation.Command(1, "Test", 4, PartyComplete: true), CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ReservationStatus.PartyCompleted, saved!.Status);
+    }
+
+    [Fact]
+    public async Task Handle_PartyCompletionEnabled_PartyCompleteFalseButSmallParty_SetsStatusPartyCompleted()
+    {
+        // Arrange
+        _eventRepository.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(CreateEventWithOptions(1, true, 4));
+        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
+        Reservation? saved = null;
+        _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
+            .Do(ci => saved = ci.Arg<Reservation>());
+
+        // Act
+        await _handler.Handle(new CreateReservation.Command(1, "Test", 2, PartyComplete: false), CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ReservationStatus.PartyCompleted, saved!.Status);
+    }
+
+    [Fact]
+    public async Task Handle_PartyCompletionEnabled_PartyCompleteFalseLargeParty_SetsStatusWaiting()
+    {
+        // Arrange
+        _eventRepository.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(CreateEventWithOptions(1, true, 4));
+        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
+        Reservation? saved = null;
+        _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
+            .Do(ci => saved = ci.Arg<Reservation>());
+
+        // Act
+        await _handler.Handle(new CreateReservation.Command(1, "Test", 5, PartyComplete: false), CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ReservationStatus.Waiting, saved!.Status);
     }
 }

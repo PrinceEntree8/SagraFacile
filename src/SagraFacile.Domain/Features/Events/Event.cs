@@ -10,4 +10,5 @@ public class Event
     public string CurrencySymbol { get; set; } = "€";
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public EventAdditionalOptions AdditionalOptions { get; set; } = new();
 }
