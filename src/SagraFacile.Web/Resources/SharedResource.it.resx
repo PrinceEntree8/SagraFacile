@@ -364,6 +364,18 @@
   <data name="Reservation_Status_Waiting" xml:space="preserve">
     <value>In Attesa</value>
   </data>
+  <data name="Reservation_Status_PartyCompleted" xml:space="preserve">
+    <value>Gruppo al completo</value>
+  </data>
+  <data name="Receptionist_Button_PartyComplete" xml:space="preserve">
+    <value>Gruppo al completo</value>
+  </data>
+  <data name="Receptionist_Filter_IncompleteParties" xml:space="preserve">
+    <value>Gruppi incompleti</value>
+  </data>
+  <data name="Receptionist_Label_PartyComplete" xml:space="preserve">
+    <value>Gruppo al completo?</value>
+  </data>
   <data name="MenuAppearance_Section" xml:space="preserve">
     <value>Aspetto del Menu</value>
   </data>

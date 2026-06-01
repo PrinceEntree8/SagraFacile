@@ -14,6 +14,13 @@ public class SignalRReservationNotifier(IHubContext<ReservationHub, IReservation
             .WaitAsync(cancellationToken);
     }
 
+    public Task NotifyReservationPartyCompleteAsync(int reservationId, int sequenceNumber, string customerName, int partySize, CancellationToken cancellationToken)
+    {
+        return hubContext.Clients.All
+            .ReservationPartyComplete(reservationId, sequenceNumber, customerName, partySize)
+            .WaitAsync(cancellationToken);
+    }
+
     public Task NotifyReservationCalledAsync(int reservationId, int sequenceNumber, string customerName, int partySize, int callCount, CancellationToken cancellationToken)
     {
         return hubContext.Clients.All

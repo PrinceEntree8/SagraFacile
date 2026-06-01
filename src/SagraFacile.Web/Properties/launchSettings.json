@@ -12,14 +12,21 @@
           "ASPNETCORE_ENVIRONMENT": "Development"
         }
       },
-      "https": {
+      "Production": {
         "commandName": "Project",
         "dotnetRunMessages": true,
         "launchBrowser": true,
         "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
-        "applicationUrl": "https://localhost:7132;http://localhost:5254",
+        "applicationUrl": "http://localhost:5254",
         "environmentVariables": {
-          "ASPNETCORE_ENVIRONMENT": "Development"
+          "ASPNETCORE_ENVIRONMENT": "Production",
+          "AllowHttp": "false",
+          "Jwt__Key": "Dev-SagraFacile-Secret-Key-For-Local-Development-Only!",
+          "Jwt__Issuer": "SagraFacile",
+          "Jwt__Audience": "SagraFacile",
+          "Seed__AdminUsername": "admin",
+          "Seed__AdminPassword": "Admin@123!",
+          "Seed__AdminEmail": "admin@sagrafacile.local"
         }
       }
     }

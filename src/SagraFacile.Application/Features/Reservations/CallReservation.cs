@@ -39,7 +39,7 @@ public static class CallReservation
 
         public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
         {
-            var reservation = await _repository.GetByIdAsync(command.ReservationId, cancellationToken);
+            var reservation = await _repository.GetByIdWithEventAsync(command.ReservationId, cancellationToken);
 
             if (reservation == null)
                 return new Result(false, "Reservation not found");
@@ -49,6 +49,17 @@ public static class CallReservation
 
             if (reservation.Status == ReservationStatus.Seated)
                 return new Result(false, "Reservation is already seated");
+
+            var partyCompletionEnabled = reservation.Event.AdditionalOptions.Reservations.PartyCompletion.Enabled;
+
+            if (partyCompletionEnabled)
+            {
+                if (reservation.Status == ReservationStatus.Waiting)
+                    return new Result(false, "Mark party complete first");
+
+                if (reservation.Status != ReservationStatus.PartyCompleted && reservation.Status != ReservationStatus.Called)
+                    return new Result(false, "Reservation cannot be called from its current status");
+            }
 
             var now = DateTime.UtcNow;
 

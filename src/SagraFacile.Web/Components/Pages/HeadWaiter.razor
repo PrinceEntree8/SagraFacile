@@ -2,6 +2,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
+@using SagraFacile.Web.Hubs
 @inject IMediator Mediator
 @inject NavigationManager Navigation
 @inject IStringLocalizer<SharedResource> L
@@ -261,7 +262,7 @@
             .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.On<int, int, string, int>("ReservationCreated", async (id, sequenceNumber, name, size) =>
+        hubConnection.On<int, int, string, int>(nameof(IReservationHubClient.ReservationCreated), async (id, sequenceNumber, name, size) =>
         {
             if (coverCountForSearch > 0)
                 await SearchBestFit();
