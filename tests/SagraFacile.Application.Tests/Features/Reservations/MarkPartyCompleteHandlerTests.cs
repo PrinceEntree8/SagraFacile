@@ -61,11 +61,15 @@ public class MarkPartyCompleteHandlerTests
         Assert.True(result.Success);
         Assert.Equal(ReservationStatus.PartyCompleted, reservation.Status);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
-        await _notifier.Received(1).NotifyReservationPartyCompleteAsync(
-            reservation.Id,
-            reservation.SequenceNumber,
-            reservation.CustomerName,
-            reservation.PartySize,
+        await _notifier.Received(1).EnqueueStatusChangedAsync(
+            Arg.Is<ReservationStatusChangedNotification>(x =>
+                x.ReservationId == reservation.Id &&
+                x.SequenceNumber == reservation.SequenceNumber &&
+                x.CustomerName == reservation.CustomerName &&
+                x.PartySize == reservation.PartySize &&
+                x.NewStatus == ReservationStatus.PartyCompleted &&
+                x.OldStatus == ReservationStatus.Waiting &&
+                x.CallCount == null),
             Arg.Any<CancellationToken>());
     }
 

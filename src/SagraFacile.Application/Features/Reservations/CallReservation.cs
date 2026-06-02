@@ -62,6 +62,7 @@ public static class CallReservation
             }
 
             var now = DateTime.UtcNow;
+            var oldStatus = reservation.Status;
 
             if (reservation.FirstCalledAt == null)
                 reservation.FirstCalledAt = now;
@@ -88,16 +89,20 @@ public static class CallReservation
                 return new Result(false, "This reservation was modified by another user. Please refresh and try again.");
             }
 
-            await _notifier.NotifyReservationCalledAsync(
+            await _notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
                 reservation.Id,
                 reservation.SequenceNumber,
                 reservation.CustomerName,
                 reservation.PartySize,
-                reservation.CallCount,
-                cancellationToken);
+                NewStatus: ReservationStatus.Called,
+                OldStatus: oldStatus,
+                CallCount: reservation.CallCount
+            ), cancellationToken);
 
             var counters = await _repository.GetCountersAsync(reservation.EventId, cancellationToken);
-            await _notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
+            await _notifier.EnqueueCountersUpdatedAsync(
+                new CountersUpdatedNotification(counters),
+                cancellationToken).ConfigureAwait(false);
 
             return new Result(true, $"Reservation {reservation.SequenceNumber} called successfully (call #{reservation.CallCount})");
         }

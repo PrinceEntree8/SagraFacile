@@ -57,12 +57,15 @@ public class CallReservationHandlerTests
         Assert.NotNull(reservation.LastCalledAt);
         await _repository.Received(1).AddCallAsync(Arg.Any<ReservationCall>(), Arg.Any<CancellationToken>());
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
-        await _notifier.Received(1).NotifyReservationCalledAsync(
-            reservation.Id,
-            reservation.SequenceNumber,
-            reservation.CustomerName,
-            reservation.PartySize,
-            reservation.CallCount,
+        await _notifier.Received(1).EnqueueStatusChangedAsync(
+            Arg.Is<ReservationStatusChangedNotification>(x =>
+                x.ReservationId == reservation.Id &&
+                x.SequenceNumber == reservation.SequenceNumber &&
+                x.CustomerName == reservation.CustomerName &&
+                x.PartySize == reservation.PartySize &&
+                x.NewStatus == ReservationStatus.Called &&
+                x.OldStatus == ReservationStatus.Waiting &&
+                x.CallCount == reservation.CallCount),
             Arg.Any<CancellationToken>());
     }
 
@@ -145,12 +148,8 @@ public class CallReservationHandlerTests
         // Assert
         Assert.False(result.Success);
         Assert.Contains("modified by another user", result.Message);
-        await _notifier.DidNotReceive().NotifyReservationCalledAsync(
-            Arg.Any<int>(),
-            Arg.Any<int>(),
-            Arg.Any<string>(),
-            Arg.Any<int>(),
-            Arg.Any<int>(),
+        await _notifier.DidNotReceive().EnqueueStatusChangedAsync(
+            Arg.Any<ReservationStatusChangedNotification>(),
             Arg.Any<CancellationToken>());
     }
     [Fact]

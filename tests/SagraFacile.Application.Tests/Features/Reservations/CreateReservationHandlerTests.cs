@@ -43,11 +43,15 @@ public class CreateReservationHandlerTests
         Assert.Equal(1, saved!.EventId);
         Assert.Equal(1, saved.SequenceNumber);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
-        await _notifier.Received(1).NotifyReservationCreatedAsync(
-            result.Id,
-            result.SequenceNumber,
-            command.CustomerName,
-            command.PartySize,
+        await _notifier.Received(1).EnqueueStatusChangedAsync(
+            Arg.Is<ReservationStatusChangedNotification>(x =>
+                x.ReservationId == result.Id &&
+                x.SequenceNumber == result.SequenceNumber &&
+                x.CustomerName == command.CustomerName &&
+                x.PartySize == command.PartySize &&
+                x.NewStatus == ReservationStatus.Waiting &&
+                x.OldStatus == null &&
+                x.CallCount == null),
             Arg.Any<CancellationToken>());
     }
 

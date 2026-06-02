@@ -1,51 +1,23 @@
 using SagraFacile.Application.Features.Reservations;
-using Microsoft.AspNetCore.SignalR;
 using SagraFacile.Application.Interfaces;
 
 namespace SagraFacile.Web.Hubs;
 
-public class SignalRReservationNotifier(IHubContext<ReservationHub, IReservationHubClient> hubContext)
+/// <summary>
+/// Scoped implementation of <see cref="IReservationNotifier"/>.
+/// Writes messages to the singleton <see cref="ReservationNotificationChannel"/>;
+/// never calls SignalR directly.
+/// </summary>
+public sealed class SignalRReservationNotifier(ReservationNotificationChannel channel)
     : IReservationNotifier
 {
-    public Task NotifyReservationCreatedAsync(int reservationId, int sequenceNumber, string customerName, int partySize, CancellationToken cancellationToken)
-    {
-        return hubContext.Clients.All
-            .ReservationCreated(reservationId, sequenceNumber, customerName, partySize)
-            .WaitAsync(cancellationToken);
-    }
+    public ValueTask EnqueueStatusChangedAsync(
+        ReservationStatusChangedNotification notification,
+        CancellationToken cancellationToken)
+        => channel.Writer.WriteAsync(new StatusChangedMessage(notification), cancellationToken);
 
-    public Task NotifyReservationPartyCompleteAsync(int reservationId, int sequenceNumber, string customerName, int partySize, CancellationToken cancellationToken)
-    {
-        return hubContext.Clients.All
-            .ReservationPartyComplete(reservationId, sequenceNumber, customerName, partySize)
-            .WaitAsync(cancellationToken);
-    }
-
-    public Task NotifyReservationCalledAsync(int reservationId, int sequenceNumber, string customerName, int partySize, int callCount, CancellationToken cancellationToken)
-    {
-        return hubContext.Clients.All
-            .ReservationCalled(reservationId, sequenceNumber, customerName, partySize, callCount)
-            .WaitAsync(cancellationToken);
-    }
-
-    public Task NotifyReservationVoidedAsync(int reservationId, int sequenceNumber, CancellationToken cancellationToken)
-    {
-        return hubContext.Clients.All
-            .ReservationVoided(reservationId, sequenceNumber)
-            .WaitAsync(cancellationToken);
-    }
-
-    public Task NotifyReservationSeatedAsync(int reservationId, int sequenceNumber, CancellationToken cancellationToken)
-    {
-        return hubContext.Clients.All
-            .ReservationSeated(reservationId, sequenceNumber)
-            .WaitAsync(cancellationToken);
-    }
-
-    public Task NotifyCountersUpdatedAsync(List<GetCounters.ReservationCounter> counters, CancellationToken cancellationToken)
-    {
-        return hubContext.Clients.All
-            .CountersUpdated(counters)
-            .WaitAsync(cancellationToken);
-    }
+    public ValueTask EnqueueCountersUpdatedAsync(
+        CountersUpdatedNotification notification,
+        CancellationToken cancellationToken)
+        => channel.Writer.WriteAsync(new CountersUpdatedMessage(notification), cancellationToken);
 }

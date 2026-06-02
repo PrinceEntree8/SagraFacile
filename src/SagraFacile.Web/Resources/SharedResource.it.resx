@@ -79,6 +79,11 @@
   <data name="Nav_ToggleSidebar" xml:space="preserve"><value>Mostra/nascondi barra laterale</value></data>
   <data name="Nav_SectionService" xml:space="preserve"><value>Servizio</value></data>
   <data name="Nav_SectionManagement" xml:space="preserve"><value>Gestione</value></data>
+  <data name="ReservationOverview_PageTitle" xml:space="preserve"><value>Panoramica Prenotazioni</value></data>
+  <data name="ReservationOverview_Title" xml:space="preserve"><value>Panoramica</value></data>
+  <data name="ReservationOverview_NoActiveEvent" xml:space="preserve"><value>Nessun evento attivo</value></data>
+  <data name="ReservationOverview_Loading" xml:space="preserve"><value>Caricamento...</value></data>
+  <data name="ReservationOverview_ModalTitle" xml:space="preserve"><value>Dettagli Prenotazione</value></data>
 
   <!-- Login -->
   <data name="Login_PageTitle" xml:space="preserve"><value>Accesso - SagraFacile</value></data>
@@ -374,10 +379,10 @@
     <value>In Attesa</value>
   </data>
   <data name="Reservation_Status_PartyCompleted" xml:space="preserve">
-    <value>Gruppo al completo</value>
+    <value>Presenti</value>
   </data>
   <data name="Receptionist_Button_PartyComplete" xml:space="preserve">
-    <value>Gruppo al completo</value>
+    <value>Completo</value>
   </data>
   <data name="Receptionist_Filter_IncompleteParties" xml:space="preserve">
     <value>Gruppi incompleti</value>
@@ -402,5 +407,16 @@
   </data>
   <data name="MenuAppearance_HtmlHint" xml:space="preserve">
     <value>Supporta HTML.</value>
+  </data>
+  <data name="ReservationEdit_ModalTitle" xml:space="preserve">
+    <value>Modifica prenotazione</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Save</value>
+    <comment>Common_Save</comment>
+  </data>
+  <data name="Receptionist_ActionEdit" xml:space="preserve">
+    <value>Modifica</value>
+    <comment>Receptionist_ActionEdit</comment>
   </data>
 </root>

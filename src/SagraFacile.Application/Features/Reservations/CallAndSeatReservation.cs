@@ -38,8 +38,9 @@ public static class CallAndSeatReservation
             if (reservation.Status == ReservationStatus.Seated)
                 return new Result(false, "Reservation is already seated");
 
+            var oldStatus = reservation.Status;
             var now = DateTime.UtcNow;
-            bool didCall = reservation.Status != ReservationStatus.Called;
+            var didCall = reservation.Status != ReservationStatus.Called;
 
             // Add Call event if not yet called
             if (didCall)
@@ -74,19 +75,20 @@ public static class CallAndSeatReservation
                 return new Result(false, "This reservation was modified by another user. Please refresh and try again.");
             }
 
-            if (didCall)
-                await notifier.NotifyReservationCalledAsync(
-                    reservation.Id,
-                    reservation.SequenceNumber,
-                    reservation.CustomerName,
-                    reservation.PartySize,
-                    reservation.CallCount,
-                    cancellationToken);
-
-            await notifier.NotifyReservationSeatedAsync(reservation.Id, reservation.SequenceNumber, cancellationToken);
+            await notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
+                reservation.Id,
+                reservation.SequenceNumber,
+                reservation.CustomerName,
+                reservation.PartySize,
+                NewStatus: ReservationStatus.Seated,
+                OldStatus: oldStatus,
+                CallCount: null
+            ), cancellationToken);
 
             var counters = await repository.GetCountersAsync(reservation.EventId, cancellationToken);
-            await notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
+            await notifier.EnqueueCountersUpdatedAsync(
+                new CountersUpdatedNotification(counters),
+                cancellationToken).ConfigureAwait(false);
 
             return new Result(true, $"Reservation {reservation.SequenceNumber} ({reservation.CustomerName}, party of {reservation.PartySize}) seated successfully");
         }

@@ -58,3 +58,33 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.reservation-status-waiting {
+    --status-color: 255, 193, 7;
+    --background-color: rgba(var(--status-color) / 0.2);
+}
+
+.reservation-status-partycomplete {
+    --status-color: 253, 126, 20;
+    --background-color: rgba(var(--status-color) / 0.2);
+}
+
+.reservation-status-called {
+    --status-color: 13, 110, 253;
+    --background-color: rgba(var(--status-color) / 0.2);
+}
+
+.reservation-status-seated {
+    --status-color: 25, 135, 84;
+    --background-color: rgba(var(--status-color) / 0.2);
+}
+
+.reservation-status-voided {
+    --status-color: 33, 37, 41;
+    --background-color: rgba(var(--status-color) / 0.2);
+}
+
+.reservation-status-left {
+    --status-color: 108, 117, 125;
+    --background-color: rgba(var(--status-color) / 0.2);
+}

@@ -33,9 +33,13 @@ public class VoidReservationHandlerTests
         Assert.Equal(ReservationStatus.Voided, reservation.Status);
         Assert.NotNull(reservation.VoidedAt);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
-        await _notifier.Received(1).NotifyReservationVoidedAsync(
-            reservation.Id,
-            reservation.SequenceNumber,
+        await _notifier.Received(1).EnqueueStatusChangedAsync(
+            Arg.Is<ReservationStatusChangedNotification>(x =>
+                x.ReservationId == reservation.Id &&
+                x.SequenceNumber == reservation.SequenceNumber &&
+                x.NewStatus == ReservationStatus.Voided &&
+                x.OldStatus == ReservationStatus.Waiting &&
+                x.CallCount == null),
             Arg.Any<CancellationToken>());
     }
 
@@ -84,9 +88,8 @@ public class VoidReservationHandlerTests
         // Assert
         Assert.False(result.Success);
         Assert.Contains("modified by another user", result.Message);
-        await _notifier.DidNotReceive().NotifyReservationVoidedAsync(
-            Arg.Any<int>(),
-            Arg.Any<int>(),
+        await _notifier.DidNotReceive().EnqueueStatusChangedAsync(
+            Arg.Any<ReservationStatusChangedNotification>(),
             Arg.Any<CancellationToken>());
     }
 }

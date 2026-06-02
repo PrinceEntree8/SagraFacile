@@ -2,12 +2,17 @@ using SagraFacile.Application.Features.Reservations;
 
 namespace SagraFacile.Application.Interfaces;
 
+/// <summary>
+/// Enqueues reservation notifications into an internal channel.
+/// Implementations must not block the caller beyond the channel write.
+/// </summary>
 public interface IReservationNotifier
 {
-    Task NotifyReservationCreatedAsync(int reservationId, int sequenceNumber, string customerName, int partySize, CancellationToken cancellationToken);
-    Task NotifyReservationPartyCompleteAsync(int reservationId, int sequenceNumber, string customerName, int partySize, CancellationToken cancellationToken);
-    Task NotifyReservationCalledAsync(int reservationId, int sequenceNumber, string customerName, int partySize, int callCount, CancellationToken cancellationToken);
-    Task NotifyReservationVoidedAsync(int reservationId, int sequenceNumber, CancellationToken cancellationToken);
-    Task NotifyReservationSeatedAsync(int reservationId, int sequenceNumber, CancellationToken cancellationToken);
-    Task NotifyCountersUpdatedAsync(List<GetCounters.ReservationCounter> counters, CancellationToken cancellationToken);
+    ValueTask EnqueueStatusChangedAsync(
+        ReservationStatusChangedNotification notification,
+        CancellationToken cancellationToken);
+
+    ValueTask EnqueueCountersUpdatedAsync(
+        CountersUpdatedNotification notification,
+        CancellationToken cancellationToken);
 }

@@ -79,6 +79,11 @@
   <data name="Nav_ToggleSidebar" xml:space="preserve"><value>Toggle sidebar</value></data>
   <data name="Nav_SectionService" xml:space="preserve"><value>Service</value></data>
   <data name="Nav_SectionManagement" xml:space="preserve"><value>Management</value></data>
+  <data name="ReservationOverview_PageTitle" xml:space="preserve"><value>Reservation Overview</value></data>
+  <data name="ReservationOverview_Title" xml:space="preserve"><value>Reservation Overview</value></data>
+  <data name="ReservationOverview_NoActiveEvent" xml:space="preserve"><value>No active event</value></data>
+  <data name="ReservationOverview_Loading" xml:space="preserve"><value>Loading...</value></data>
+  <data name="ReservationOverview_ModalTitle" xml:space="preserve"><value>Reservation Details</value></data>
 
   <!-- Login -->
   <data name="Login_PageTitle" xml:space="preserve"><value>Login - SagraFacile</value></data>
@@ -402,5 +407,16 @@
   </data>
   <data name="MenuAppearance_HtmlHint" xml:space="preserve">
     <value>Supports HTML.</value>
+  </data>
+  <data name="ReservationEdit_ModalTitle" xml:space="preserve">
+    <value>Edit Reservation</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Save</value>
+    <comment>Common_Save</comment>
+  </data>
+  <data name="Receptionist_ActionEdit" xml:space="preserve">
+    <value>Edit</value>
+    <comment>Receptionist_ActionEdit</comment>
   </data>
 </root>

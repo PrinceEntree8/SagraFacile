@@ -63,15 +63,20 @@ public static class CreateReservation
                     await repository.AddAsync(reservation, cancellationToken);
                     await repository.SaveChangesAsync(cancellationToken);
 
-                    await notifier.NotifyReservationCreatedAsync(
+                    await notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
                         reservation.Id,
                         reservation.SequenceNumber,
                         reservation.CustomerName,
                         reservation.PartySize,
-                        cancellationToken);
+                        NewStatus: ReservationStatus.Waiting,
+                        OldStatus: null,
+                        CallCount: null
+                    ), cancellationToken);
 
                     var counters = await repository.GetCountersAsync(command.EventId, cancellationToken);
-                    await notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
+                    await notifier.EnqueueCountersUpdatedAsync(
+                        new CountersUpdatedNotification(counters),
+                        cancellationToken).ConfigureAwait(false);
 
                     return new Result(reservation.Id, reservation.SequenceNumber);
                 }

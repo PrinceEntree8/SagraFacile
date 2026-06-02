@@ -43,6 +43,7 @@ public static class VoidReservation
             if (reservation.Status == ReservationStatus.Seated)
                 return new Result(false, "Cannot void a seated reservation");
 
+            var oldStatus = reservation.Status;
             reservation.Status = ReservationStatus.Voided;
             reservation.VoidedAt = DateTime.UtcNow;
 
@@ -55,13 +56,20 @@ public static class VoidReservation
                 return new Result(false, "This reservation was modified by another user. Please refresh and try again.");
             }
 
-            await _notifier.NotifyReservationVoidedAsync(
+            await _notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
                 reservation.Id,
                 reservation.SequenceNumber,
-                cancellationToken);
+                reservation.CustomerName,
+                reservation.PartySize,
+                NewStatus: ReservationStatus.Voided,
+                OldStatus: oldStatus,
+                CallCount: null
+            ), cancellationToken);
 
             var counters = await _repository.GetCountersAsync(reservation.EventId, cancellationToken);
-            await _notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
+            await _notifier.EnqueueCountersUpdatedAsync(
+                new CountersUpdatedNotification(counters),
+                cancellationToken).ConfigureAwait(false);
 
             return new Result(true, $"Reservation {reservation.SequenceNumber} voided successfully");
         }

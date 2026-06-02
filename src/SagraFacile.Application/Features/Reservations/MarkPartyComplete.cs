@@ -38,6 +38,7 @@ public static class MarkPartyComplete
             if (reservation.Status != ReservationStatus.Waiting)
                 return new Result(false, "Reservation is not in waiting status");
 
+            var oldStatus = reservation.Status;
             reservation.Status = ReservationStatus.PartyCompleted;
 
             try
@@ -49,15 +50,20 @@ public static class MarkPartyComplete
                 return new Result(false, "This reservation was modified by another user. Please refresh and try again.");
             }
 
-            await notifier.NotifyReservationPartyCompleteAsync(
+            await notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
                 reservation.Id,
                 reservation.SequenceNumber,
                 reservation.CustomerName,
                 reservation.PartySize,
-                cancellationToken);
+                NewStatus: ReservationStatus.PartyCompleted,
+                OldStatus: oldStatus,
+                CallCount: null
+            ), cancellationToken);
 
             var counters = await repository.GetCountersAsync(reservation.EventId, cancellationToken);
-            await notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
+            await notifier.EnqueueCountersUpdatedAsync(
+                new CountersUpdatedNotification(counters),
+                cancellationToken).ConfigureAwait(false);
 
             return new Result(true, $"Reservation {reservation.SequenceNumber} marked as party complete");
         }
