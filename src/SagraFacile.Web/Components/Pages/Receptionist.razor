@@ -40,6 +40,7 @@
                         <label class="form-label">@L["Receptionist_PartySize"]</label>
                         <div class="input-group">
                             <InputNumber @bind-Value="newReservation.PartySize"
+                                         @ValueChanged="OnPartySizeChanged"
                                          class="@GetInputClass(partySizeError)"/>
                             @if (partyCompletionEnabled) {
                                 <span class="input-group-text">@L["Receptionist_Label_PartyComplete"]</span>
@@ -470,7 +471,7 @@
 
     private string GetRowClass(GetReservations.ReservationDto reservation)
     {
-        if (reservation.WaitingTime.TotalMinutes > 30)
+        if (reservation.WaitingTime.TotalMinutes > 45)
             return "bg-danger bg-opacity-10";
         return "";
     }
@@ -493,26 +494,20 @@
     private class NewReservationModel
     {
         public string CustomerName { get; set; } = string.Empty;
-        private int _partySize = 2;
-        public int PartySize 
-        { 
-            get => _partySize; 
-            set 
-            {
-                _partySize = value;
-                // We'll update PartyComplete in the component's change handler if possible, 
-                // but since it's a simple model we'll leave it to the UI or setter if we had access to minPartySize.
-                // For now, handled in the component.
-            }
-        }
+        public int PartySize { get; set; } = 2;
         public string Notes { get; set; } = string.Empty;
-        public bool PartyComplete { get; set; }
+        public bool PartyComplete { get; set; } = true;
     }
 
     private Task OpenReservationEditModal(GetReservations.ReservationDto reservation)
     {
         selectedReservation = reservation;
         return Task.CompletedTask;
+    }
+
+    private void OnPartySizeChanged(int value)
+    {
+        newReservation.PartyComplete = value < minPartySize;
     }
 
 }

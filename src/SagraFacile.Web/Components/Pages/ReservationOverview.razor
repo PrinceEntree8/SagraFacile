@@ -65,7 +65,7 @@ else
 
         if (activeEvent is not null)
         {
-            var result = await Mediator.QueryAsync(new GetReservations.Query(activeEvent.Id, null, 1, 1000));
+            var result = await Mediator.QueryAsync(new GetReservations.Query(activeEvent.Id, null, 1, 1000, ReservationStatusFilter.Active));
             reservations.Clear();
             reservations.AddRange(result.Reservations.OrderBy(r => r.SequenceNumber));
             await InitializeSignalRAsync();
@@ -88,7 +88,7 @@ else
             {
                 case ReservationStatus.Waiting:
                     reservations.RemoveAll(a => a.Id == r.ReservationId);
-                    reservations.Insert(0, CreateReservationDto(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString()));
+                    reservations.Insert(reservations.Count, CreateReservationDto(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString()));
                     break;
                 case ReservationStatus.Called:
                 case ReservationStatus.Seated:
@@ -99,6 +99,10 @@ else
                     reservations.RemoveAll(a => a.Id == r.ReservationId);
                     break;
 
+                case ReservationStatus.None:
+                    break;
+                case ReservationStatus.Left:
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }

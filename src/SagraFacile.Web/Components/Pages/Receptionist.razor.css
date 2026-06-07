@@ -57,7 +57,7 @@
 }
 
 .chip-status {
-    background-color: color(var(--status-color) / 0.2);
+    background-color: var(--background-color);
     border-color: var(--status-color);
 }
 

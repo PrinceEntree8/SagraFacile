@@ -38,7 +38,7 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
     }
 
     public async Task<(List<Reservation> Items, int TotalCount)> GetPagedAsync(
-        int eventId, string? status, int page, int pageSize, CancellationToken cancellationToken)
+        int eventId, string? status, int page, int pageSize, ReservationStatusFilter filter, CancellationToken cancellationToken)
     {
         var query = _db.Reservations.Where(r => r.EventId == eventId);
 
@@ -69,7 +69,7 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
             .ToListAsync(cancellationToken);
 
     public async Task<List<Reservation>> GetByDateRangeAsync(
-        int? eventId, DateTime? startDateUtc, DateTime? endDateUtc, CancellationToken cancellationToken)
+        int? eventId, DateTime? startDateUtc, DateTime? endDateUtc, ReservationStatusFilter filter, CancellationToken cancellationToken)
     {
         var query = _db.Reservations.AsQueryable();
 
