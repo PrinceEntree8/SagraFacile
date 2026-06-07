@@ -419,4 +419,8 @@
     <value>Modifica</value>
     <comment>Receptionist_ActionEdit</comment>
   </data>
+  <data name="PublicMenu_GoToHome" xml:space="preserve">
+    <value>Vai alla prima pagina</value>
+    <comment>PublicMenu_GoToHome</comment>
+  </data>
 </root>

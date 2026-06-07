@@ -60,14 +60,6 @@
                         <small class="form-text text-muted">@L["Receptionist_NotesHint"]</small>
                     </div>
 
-                    @if (partyCompletionEnabled)
-                    {
-                        <div class="mb-3 form-check">
-                            <InputCheckbox @bind-Value="newReservation.PartyComplete" class="form-check-input" id="partyCompleteCheck" />
-                            <label class="form-check-label" for="partyCompleteCheck">@L["Receptionist_Label_PartyComplete"]</label>
-                        </div>
-                    }
-
                     <button type="submit" class="btn btn-primary" disabled="@(isCreating || actionInProgress != null)">
                         @if (isCreating)
                         {

@@ -1,10 +1,7 @@
 @page "/reservation-overview"
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Admin,Supervisore")]
-@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.SignalR.Client
-@using SagraFacile.Application.Features.Events
-@using SagraFacile.Application.Features.Reservations
 @using SagraFacile.Domain.Features.Reservations
 @using SagraFacile.Web.Components.Modals
 @using SagraFacile.Web.Hubs
@@ -53,6 +50,8 @@ else
 <ViewReservationModal Reservation="selectedReservation"/>
 
 @code {
+    // TODO: raise some exception in the backend
+
     private HubConnection? hubConnection;
     private GetActiveEvent.EventDto? activeEvent;
     private readonly List<GetReservations.ReservationDto> reservations = [];
@@ -104,38 +103,6 @@ else
                     throw new ArgumentOutOfRangeException();
             }
 
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int, int, string, int>("ReservationCreated", async (id, sequenceNumber, customerName, partySize) =>
-        {
-            reservations.RemoveAll(r => r.Id == id);
-            reservations.Insert(0, CreateReservationDto(id, sequenceNumber, customerName, partySize, "Waiting"));
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int, int, string, int>("ReservationPartyComplete", async (id, sequenceNumber, customerName, partySize) =>
-        {
-            PatchReservationStatus(id, sequenceNumber, customerName, partySize, "PartyCompleted");
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int, int, string, int, int>("ReservationCalled", async (id, sequenceNumber, customerName, partySize, _) =>
-        {
-            PatchReservationStatus(id, sequenceNumber, customerName, partySize, "Called");
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int, int>("ReservationVoided", async (id, sequenceNumber) =>
-        {
-            reservations.RemoveAll(r => r.Id == id);
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int, int>("ReservationSeated", async (id, sequenceNumber) =>
-        {
-            _ = sequenceNumber;
-            PatchReservationStatus(id, null, null, null, "Seated");
             await InvokeAsync(StateHasChanged);
         });
 
