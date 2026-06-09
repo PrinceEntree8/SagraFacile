@@ -2,6 +2,8 @@
 @*@layout DisplayLayout*@
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
+@using SagraFacile.Domain.Features.Reservations
+@using SagraFacile.Web.Hubs
 @inject NavigationManager Navigation
 @inject IMediator Mediator
 @inject IStringLocalizer<SharedResource> L
@@ -191,14 +193,21 @@
         };
 
         // Listen for new reservation calls (LIFO prepend).
-        hubConnection.On<int, int, string, int, int>(
-            "ReservationCalled",
-            async (id, sequenceNumber, customerName, partySize, callCount) =>
+        hubConnection.On<ReservationStatusChangedNotification>(
+            nameof(IReservationHubClient.ReservationStatusChanged),
+            async notification =>
             {
-                var entry = new CalledEntry(id, sequenceNumber, customerName, partySize, DateTime.UtcNow);
+                if (notification.NewStatus != ReservationStatus.Called) return;
+                
+                var entry = new CalledEntry(
+                    notification.ReservationId, 
+                    notification.SequenceNumber, 
+                    notification.CustomerName, 
+                    notification.PartySize, 
+                    DateTime.UtcNow);
 
                 // Remove any existing entry for the same reservation (re-call scenario).
-                calledEntries.RemoveAll(e => e.Id == id);
+                calledEntries.RemoveAll(e => e.Id == notification.ReservationId);
 
                 // Prepend the new call at the front (LIFO).
                 calledEntries.Insert(0, entry);

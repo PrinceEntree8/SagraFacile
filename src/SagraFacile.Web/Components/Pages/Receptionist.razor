@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
 @using SagraFacile.Web.Components.Modals
+@using SagraFacile.Web.Extensions
 @inject IMediator Mediator
 @inject NavigationManager Navigation
 @inject IStringLocalizer<SharedResource> L
@@ -55,11 +56,11 @@
                         }
                     </div>
 
-                    <div class="mb-3">
+                    @*<div class="mb-3">
                         <label class="form-label">@L["Receptionist_Notes"]</label>
                         <InputTextArea @bind-Value="newReservation.Notes" class="form-control" rows="3"/>
                         <small class="form-text text-muted">@L["Receptionist_NotesHint"]</small>
-                    </div>
+                    </div>*@
 
                     <button type="submit" class="btn btn-primary" disabled="@(isCreating || actionInProgress != null)">
                         @if (isCreating)
@@ -133,14 +134,14 @@
                                         {
                                             <button class="btn btn-sm btn-warning" @onclick="@(() => MarkPartyCompleteAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
                                                 <i class="bi bi-person-arms-up"></i>
-                                                <span class="d-none d-md-inline">@L["Receptionist_Button_PartyComplete"]</span>
+                                                <span class="d-none d-xl-inline">@L["Receptionist_Button_PartyComplete"]</span>
                                             </button>
                                         }
                                         else
                                         {
                                             <button class="btn btn-sm btn-success" @onclick="@(() => CallReservationAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
                                                 <i class="bi bi-megaphone"></i>
-                                                <span class="d-none d-md-inline">@L["Receptionist_ActionCall"]</span>
+                                                <span class="d-none d-xl-inline">@L["Receptionist_ActionCall"]</span>
                                             </button>
                                         }
                                         <button class="btn btn-sm btn-primary"
@@ -150,7 +151,7 @@
                                                 data-bs-target="#reservationEditModal"
                                                 role="button">
                                             <i class="bi bi-pencil-square"></i>
-                                            <span class="d-none d-md-inline">@L["Receptionist_ActionEdit"]</span>
+                                            <span class="d-none d-xl-inline">@L["Receptionist_ActionEdit"]</span>
                                         </button>
                                     </span>
                                 }
@@ -474,13 +475,6 @@
         if (reservation.WaitingTime.TotalMinutes > 45)
             return "bg-danger bg-opacity-10";
         return "";
-    }
-
-    private string FormatTimeSpan(TimeSpan timeSpan)
-    {
-        if (timeSpan.TotalHours >= 1)
-            return $"{(int)timeSpan.TotalHours}h {timeSpan.Minutes}m";
-        return $"{(int)timeSpan.TotalMinutes}m";
     }
 
     public async ValueTask DisposeAsync()

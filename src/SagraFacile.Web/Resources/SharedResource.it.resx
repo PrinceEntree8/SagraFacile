@@ -388,7 +388,7 @@
     <value>Gruppi incompleti</value>
   </data>
   <data name="Receptionist_Label_PartyComplete" xml:space="preserve">
-    <value>Gruppo al completo?</value>
+    <value>Presenti?</value>
   </data>
   <data name="MenuAppearance_Section" xml:space="preserve">
     <value>Aspetto del Menu</value>

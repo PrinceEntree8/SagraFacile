@@ -2,6 +2,8 @@
 @*@layout DisplayLayout*@
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
+@using SagraFacile.Domain.Features.Reservations
+@using SagraFacile.Web.Hubs
 @inject IMediator Mediator
 @inject NavigationManager Navigation
 @inject IStringLocalizer<SharedResource> L
@@ -176,7 +178,21 @@
             .WithUrl(Navigation.ToAbsoluteUri("/hubs/reservations"))
             .WithAutomaticReconnect()
             .Build();
+        
+        hubConnection.On<ReservationStatusChangedNotification>(
+            nameof(IReservationHubClient.ReservationStatusChanged),
+            async notification =>
+            {
+                if (notification.NewStatus != ReservationStatus.Called) return;
+                latestCalled = new CalledEntry(
+                    notification.ReservationId, 
+                    notification.SequenceNumber, 
+                    notification.CustomerName, 
+                    notification.PartySize);
 
+                await InvokeAsync(StateHasChanged);
+            });
+        
         hubConnection.On<int, int, string, int, int>(
             "ReservationCalled",
             async (id, sequenceNumber, customerName, partySize, _) =>

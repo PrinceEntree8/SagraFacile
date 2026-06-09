@@ -393,8 +393,8 @@
     <value>Incomplete Parties</value>
   </data>
     <data name="Receptionist_Label_PartyComplete" xml:space="preserve">
-    <value>Party complete?</value>
-  </data>
+        <value>Party complete?</value>
+    </data>
     <data name="MenuAppearance_Section" xml:space="preserve">
     <value>Menu Appearance</value>
   </data>
