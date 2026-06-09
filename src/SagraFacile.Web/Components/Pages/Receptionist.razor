@@ -278,7 +278,7 @@
             .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.On<ReservationNotificationMessage>(nameof(IReservationHubClient.ReservationStatusChanged), async _ =>
+        hubConnection.On<ReservationStatusChangedNotification>(nameof(IReservationHubClient.ReservationStatusChanged), async _ =>
         {
             await LoadReservations(currentFilter);
             await InvokeAsync(StateHasChanged);
