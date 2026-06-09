@@ -428,4 +428,8 @@
     <value>Go to homepage</value>
         <comment>PublicMenu_GoToHome</comment>
   </data>
+    <data name="ReservationView_ModalTitle" xml:space="preserve">
+        <value>Reservation</value>
+        <comment>ReservationView_ModalTitle</comment>
+    </data>
 </root>

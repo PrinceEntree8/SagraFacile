@@ -6,7 +6,7 @@ namespace SagraFacile.Application.Features.Reservations;
 
 public static class GetReservations
 {
-    public record Query(int EventId, string? Status = null, int Page = 1, int PageSize = 50, ReservationStatusFilter Filter = ReservationStatusFilter.AllWaiting) : IQuery<Result>;
+    public record Query(int EventId, int Page = 1, int PageSize = 50, ReservationStatusFilter Filter = ReservationStatusFilter.AllWaiting) : IQuery<Result>;
     public record Result(List<ReservationDto> Reservations, int TotalCount);
 
     public record ReservationDto(
@@ -32,7 +32,7 @@ public static class GetReservations
         public async Task<Result> Handle(Query query, CancellationToken cancellationToken)
         {
             var now = DateTime.UtcNow;
-            var (items, total) = await _repository.GetPagedAsync(query.EventId, query.Status, query.Page, query.PageSize, query.Filter, cancellationToken);
+            var (items, total) = await _repository.GetPagedAsync(query.EventId, query.Page, query.PageSize, query.Filter, cancellationToken);
 
             var dtos = items.Select(r => new ReservationDto(
                 r.Id,

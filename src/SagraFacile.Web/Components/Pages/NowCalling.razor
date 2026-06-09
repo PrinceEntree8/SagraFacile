@@ -139,7 +139,7 @@
     {
         try
         {
-            var query = new GetReservations.Query(EventId: eventId, Status: "Called", Page: 1, PageSize: MaxEntries);
+            var query = new GetReservations.Query(EventId: eventId, Page: 1, PageSize: MaxEntries, ReservationStatusFilter.Called);
             var result = await Mediator.Send(query, CancellationToken.None);
 
             // Sort descending by LastCalledAt so the most recently called is first.

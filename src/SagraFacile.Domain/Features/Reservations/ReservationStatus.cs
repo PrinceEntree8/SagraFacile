@@ -45,7 +45,7 @@ public static class ReservationFilterExtensions
     public static bool HasFlagFast(this ReservationStatusFilter value, ReservationStatusFilter flag)
         => (value & flag) != 0;
 
-    public static ReservationStatus[] ToStatusArray(this ReservationStatusFilter values)
+    public static IList<ReservationStatus> ToStatusArray(this ReservationStatusFilter values)
     {
         if (values == ReservationStatusFilter.None)
             return [];

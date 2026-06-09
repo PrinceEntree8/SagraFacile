@@ -38,19 +38,15 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
     }
 
     public async Task<(List<Reservation> Items, int TotalCount)> GetPagedAsync(
-        int eventId, string? status, int page, int pageSize, ReservationStatusFilter filter, CancellationToken cancellationToken)
+        int eventId, int page, int pageSize, ReservationStatusFilter filter, CancellationToken cancellationToken)
     {
         var query = _db.Reservations.Where(r => r.EventId == eventId);
 
-        if (string.IsNullOrEmpty(status))
+        if (filter != ReservationStatusFilter.None)
         {
-            query = query.Where(r => r.Status != ReservationStatus.Seated && r.Status != ReservationStatus.Voided);
+            var statusFilter = filter.ToStatusArray();
+            query = query.Where(r => statusFilter.Contains(r.Status));
         }
-        else if (Enum.TryParse<ReservationStatus>(status, ignoreCase: true, out var parsedStatus))
-        {
-            query = query.Where(r => r.Status == parsedStatus);
-        }
-
 
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query

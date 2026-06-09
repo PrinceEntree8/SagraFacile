@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @using SagraFacile.Domain.Features.Reservations
 @using SagraFacile.Web.Components.Modals
+@using SagraFacile.Web.Extensions
 @using SagraFacile.Web.Hubs
 @inject IMediator Mediator
 @inject NavigationManager Navigation
@@ -32,13 +33,13 @@ else
         @foreach (var reservation in reservations)
         {
             <div class="col">
-                <div class="overview-cell @StatusClass(reservation.Status)"
+                <div class="overview-cell @reservation.Status.GetStatusClass()"
                      @onclick="() => SelectReservation(reservation)"
                      data-bs-toggle="modal"
                      data-bs-target="#reservationDetailModal"
                      role="button">
                     <span class="seq">@reservation.SequenceNumber</span>
-                    <span class="d-none d-md-inline name">@reservation.CustomerName</span>
+                    <span class="d-none d-xl-inline name">@reservation.CustomerName</span>
                     <span class="party badge bg-light text-dark">
                         <i class="bi bi-people"></i> @reservation.PartySize
                     </span>
@@ -66,7 +67,7 @@ else
 
         if (activeEvent is not null)
         {
-            var result = await Mediator.QueryAsync(new GetReservations.Query(activeEvent.Id, null, 1, 1000, ReservationStatusFilter.Active));
+            var result = await Mediator.QueryAsync(new GetReservations.Query(activeEvent.Id, 1, 1000, ReservationStatusFilter.Active));
             reservations.Clear();
             reservations.AddRange(result.Reservations.OrderBy(r => r.SequenceNumber));
             await InitializeSignalRAsync();
@@ -124,18 +125,8 @@ else
     private void SelectReservation(GetReservations.ReservationDto reservation)
     {
         selectedReservation = reservation;
+        StateHasChanged();
     }
-
-    private static string StatusClass(string status) => status switch
-    {
-        "Waiting" => "status-waiting",
-        "PartyCompleted" => "status-partycompleted",
-        "Called" => "status-called",
-        "Seated" => "status-seated",
-        "Voided" => "status-voided",
-        "Left" => "status-left",
-        _ => string.Empty
-    };
 
     private static GetReservations.ReservationDto CreateReservationDto(int id, int sequenceNumber, string customerName, int partySize, string status)
     {

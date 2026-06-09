@@ -10,7 +10,7 @@ public interface IReservationRepository
     Task<Reservation?> GetByEventAndSequenceAsync(int eventId, int sequenceNumber, CancellationToken cancellationToken = default);
     Task<int> GetNextSequenceNumberAsync(int eventId, CancellationToken cancellationToken = default);
     Task<(List<Reservation> Items, int TotalCount)> GetPagedAsync(
-        int eventId, string? status, int page, int pageSize, ReservationStatusFilter filter, CancellationToken cancellationToken = default);
+        int eventId, int page, int pageSize, ReservationStatusFilter filter, CancellationToken cancellationToken = default);
     Task<List<Reservation>> GetCalledReservationsOrderedByCreatedAtAsync(int eventId, CancellationToken cancellationToken = default);
     Task<List<Reservation>> GetByDateRangeAsync(
         int? eventId, DateTime? startDateUtc, DateTime? endDateUtc, ReservationStatusFilter filter, CancellationToken cancellationToken = default);

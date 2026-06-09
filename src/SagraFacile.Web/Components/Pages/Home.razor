@@ -105,7 +105,7 @@
     {
         try
         {
-            var result = await Mediator.QueryAsync(new GetReservations.Query(EventId: eventId, Status: CalledStatus, Page: 1, PageSize: MaxEntries));
+            var result = await Mediator.QueryAsync(new GetReservations.Query(eventId, 1, MaxEntries, ReservationStatusFilter.Called));
             var sorted = result.Reservations
                 .Where(r => r.LastCalledAt.HasValue)
                 .OrderByDescending(r => r.LastCalledAt!.Value)

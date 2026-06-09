@@ -1,5 +1,8 @@
 @using SagraFacile.Domain.Features.Reservations
 @inject IStringLocalizer<SharedResource> L
+@inject IMediator Mediator
+@inject IJSRuntime JS
+
 <div class="modal fade" id="reservationEditModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -57,19 +60,20 @@
                                                rows="3"
                                                @bind-Value="_editReservation.Notes"/>
                             </div>
+                            
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">
+                                    @L["Common_Save"]
+                                </button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    @L["Common_Close"]
+                                </button>
+                            </div>
                         </EditForm>
                     </div>
                 }
             </div>
 
-            <div class="modal-footer">
-                <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">
-                    @L["Common_Save"]
-                </button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    @L["Common_Close"]
-                </button>
-            </div>
         </div>
     </div>
 </div>
@@ -99,14 +103,25 @@
 
     private EditReservationModel? _editReservation;
 
-    private Task SaveReservationAsync(EditContext arg)
+    private async Task SaveReservationAsync(EditContext arg)
     {
-        throw new NotImplementedException();
+        if (arg.Model is not EditReservationModel reservation)
+        {
+            return;
+        }
+
+        var result = await Mediator.SendAsync(new EditReservation.Command(
+            reservation.Id,
+            reservation.CustomerName,
+            reservation.PartySize,
+            reservation.Notes,
+            Enum.Parse<ReservationStatus>(reservation.Status)
+        ), CancellationToken.None);
     }
 
     private sealed record EditReservationModel
     {
-        public int Id { get; set; }
+        public int Id { get; init; }
         public string CustomerName { get; set; } = string.Empty;
         public int PartySize { get; set; }
         public string Notes { get; set; } = string.Empty;

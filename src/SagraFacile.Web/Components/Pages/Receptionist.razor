@@ -2,8 +2,10 @@
 @attribute [Authorize]
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
+@using SagraFacile.Domain.Features.Reservations
 @using SagraFacile.Web.Components.Modals
 @using SagraFacile.Web.Extensions
+@using SagraFacile.Web.Hubs
 @inject IMediator Mediator
 @inject NavigationManager Navigation
 @inject IStringLocalizer<SharedResource> L
@@ -120,11 +122,11 @@
                                 <span class="chip-wait text-muted ms-1" title="@L["Receptionist_ColWaiting"]">
                                     @if (reservation.TimeSinceLastCall.HasValue)
                                     {
-                                        @FormatTimeSpan(reservation.TimeSinceLastCall.Value)
+                                        @reservation.TimeSinceLastCall.Value.FormatTimeSpan()
                                     }
                                     else
                                     {
-                                        @FormatTimeSpan(reservation.WaitingTime)
+                                        @reservation.WaitingTime.FormatTimeSpan()
                                     }
                                 </span>
                                 @if (reservation.Status is "Waiting" or "Called" or "PartyCompleted")
@@ -276,43 +278,19 @@
             .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.On<int, int, string, int>("ReservationCreated", async (id, sequenceNumber, name, size) =>
+        hubConnection.On<ReservationNotificationMessage>(nameof(IReservationHubClient.ReservationStatusChanged), async _ =>
         {
             await LoadReservations(currentFilter);
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<int, int, string, int>("ReservationPartyComplete", async (id, sequenceNumber, name, size) =>
-        {
-            await LoadReservations(currentFilter);
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int, int, string, int, int>("ReservationCalled", async (id, sequenceNumber, customerName, partySize, callCount) =>
-        {
-            await LoadReservations(currentFilter);
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int, int>("ReservationVoided", async (id, sequenceNumber) =>
-        {
-            await LoadReservations(currentFilter);
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int, int>("ReservationSeated", async (id, sequenceNumber) =>
-        {
-            await LoadReservations(currentFilter);
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int>("AvailableSeatsUpdated", async (seats) =>
+        hubConnection.On<int>(nameof(IReservationHubClient.AvailableSeatsUpdated), async (seats) =>
         {
             availableSeats = seats;
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<List<GetCounters.ReservationCounter>>("CountersUpdated", async (counters) =>
+        hubConnection.On<List<GetCounters.ReservationCounter>>(nameof(IReservationHubClient.CountersUpdated), async (counters) =>
         {
             UpdateCounters(counters);
             await InvokeAsync(StateHasChanged);
@@ -332,9 +310,12 @@
     {
         isLoading = true;
         currentFilter = status;
+        
+        var filter = Enum.Parse<ReservationStatusFilter>(status ?? "AllWaiting");
+        
         try
         {
-            var query = new GetReservations.Query(EventId: activeEventId, Status: status, Page: 1, PageSize: 100);
+            var query = new GetReservations.Query(EventId: activeEventId, Page: 1, PageSize: 100, Filter: filter);
             var result = await Mediator.QueryAsync(query);
             reservations = result.Reservations;
         }

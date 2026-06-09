@@ -9,8 +9,8 @@ public record ReservationStatusChangedNotification(
     string CustomerName,
     int PartySize,
     ReservationStatus NewStatus,
-    ReservationStatus? OldStatus,
-    int? CallCount
+    ReservationStatus? OldStatus = null,
+    int? CallCount = null
 );
 
 /// <summary>Aggregated seat/queue counters for the event.</summary>
