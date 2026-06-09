@@ -4,121 +4,115 @@
 @inject IMediator Mediator
 @inject IStringLocalizer<SharedResource> L
 
-<div class="top-row ps-3 navbar navbar-dark">
+<nav class="navbar navbar-expand-md navbar-dark bg-nav">
     <div class="container-fluid">
         <a class="navbar-brand" href="">SagraFacile</a>
-    </div>
-</div>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <div class="navbar-nav me-auto">
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> @L["Nav_Home"]
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="menu">
-                <span class="bi bi-menu-button-wide-nav-menu" aria-hidden="true"></span> @L["Nav_PublicMenu"]
-            </NavLink>
-        </div>
-
-        <AuthorizeView>
-            <Authorized>
-                <div class="nav-section-header px-3">@L["Nav_SectionService"]</div>
-
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="now-calling">
-                        <span class="bi bi-megaphone-fill-nav-menu" aria-hidden="true"></span> @L["Nav_NowCalling"]
-                    </NavLink>
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        @L["Nav_DropdownPublic"]
+                    </a>
+                    <div class="dropdown-menu">
+                        <NavLink class="dropdown-item d-flex align-items-center" href="" Match="NavLinkMatch.All">
+                            <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> @L["Nav_Home"]
+                        </NavLink>
+                        <NavLink class="dropdown-item d-flex align-items-center" href="menu">
+                            <span class="bi bi-menu-button-wide-nav-menu" aria-hidden="true"></span> @L["Nav_PublicMenu"]
+                        </NavLink>
+                    </div>
                 </div>
 
-                <AuthorizeView Roles="Admin,Supervisore,Cassiere">
-                    <Authorized Context="receptionistCtx">
-                        <div class="nav-item px-3">
-                            <NavLink class="nav-link" href="receptionist">
-                                <span class="bi bi-person-check-nav-menu" aria-hidden="true"></span> @L["Nav_Receptionist"]
-                            </NavLink>
-                        </div>
-                    </Authorized>
-                </AuthorizeView>
-
-                <AuthorizeView Roles="Admin,Supervisore,Cassiere">
-                    <Authorized Context="headwaiterCtx">
-                        <div class="nav-item px-3">
-                            <NavLink class="nav-link" href="headwaiter">
-                                <span class="bi bi-table-nav-menu" aria-hidden="true"></span> @L["Nav_HeadWaiter"]
-                            </NavLink>
-                        </div>
-                    </Authorized>
-                </AuthorizeView>
-
-                <AuthorizeView Roles="Admin,Supervisore">
-                    <Authorized Context="reportsCtx">
-                        <div class="nav-section-header px-3">@L["Nav_SectionManagement"]</div>
-                        <div class="nav-item px-3">
-                            <NavLink class="nav-link" href="reservation-overview">
-                                <span class="bi bi-grid-3x3-gap-nav-menu" aria-hidden="true"></span> @L["ReservationOverview_Title"]
-                            </NavLink>
-                        </div>
-                        <div class="nav-item px-3">
-                            <NavLink class="nav-link" href="reservation-report">
-                                <span class="bi bi-bar-chart-nav-menu" aria-hidden="true"></span> @L["Nav_Reports"]
-                            </NavLink>
+                <AuthorizeView>
+                    <Authorized>
+                        <div class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                @L["Nav_SectionService"]
+                            </a>
+                            <div class="dropdown-menu">
+                                <NavLink class="dropdown-item d-flex align-items-center" href="now-calling">
+                                    <span class="bi bi-megaphone-fill-nav-menu" aria-hidden="true"></span> @L["Nav_NowCalling"]
+                                </NavLink>
+                                <AuthorizeView Roles="Admin,Supervisore,Cassiere">
+                                    <Authorized Context="receptionistCtx">
+                                        <NavLink class="dropdown-item d-flex align-items-center" href="receptionist">
+                                            <span class="bi bi-person-check-nav-menu" aria-hidden="true"></span> @L["Nav_Receptionist"]
+                                        </NavLink>
+                                    </Authorized>
+                                </AuthorizeView>
+                                <AuthorizeView Roles="Admin,Supervisore,Cassiere">
+                                    <Authorized Context="headwaiterCtx">
+                                        <NavLink class="dropdown-item d-flex align-items-center" href="headwaiter">
+                                            <span class="bi bi-table-nav-menu" aria-hidden="true"></span> @L["Nav_HeadWaiter"]
+                                        </NavLink>
+                                    </Authorized>
+                                </AuthorizeView>
+                                <AuthorizeView Roles="Admin,Supervisore">
+                                    <Authorized Context="reportsCtx">
+                                        <div class="dropdown-divider"></div>
+                                        <NavLink class="dropdown-item d-flex align-items-center" href="reservation-overview">
+                                            <span class="bi bi-grid-3x3-gap-nav-menu" aria-hidden="true"></span> @L["ReservationOverview_Title"]
+                                        </NavLink>
+                                        <NavLink class="dropdown-item d-flex align-items-center" href="reservation-report">
+                                            <span class="bi bi-bar-chart-nav-menu" aria-hidden="true"></span> @L["Nav_Reports"]
+                                        </NavLink>
+                                    </Authorized>
+                                </AuthorizeView>
+                            </div>
                         </div>
                     </Authorized>
                 </AuthorizeView>
 
                 <AuthorizeView Roles="Admin">
                     <Authorized Context="adminCtx">
-                        <div class="nav-item px-3">
-                            <NavLink class="nav-link" href="events">
-                                <span class="bi bi-calendar-event-nav-menu" aria-hidden="true"></span> @L["Nav_Events"]
-                            </NavLink>
-                        </div>
-
-                        <div class="nav-item px-3">
-                            <NavLink class="nav-link" href="admin">
-                                <span class="bi bi-gear-fill-nav-menu" aria-hidden="true"></span> @L["Nav_Admin"]
-                            </NavLink>
+                        <div class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                @L["Nav_DropdownAdmin"]
+                            </a>
+                            <div class="dropdown-menu">
+                                <NavLink class="dropdown-item d-flex align-items-center" href="events">
+                                    <span class="bi bi-calendar-event-nav-menu" aria-hidden="true"></span> @L["Nav_Events"]
+                                </NavLink>
+                                <NavLink class="dropdown-item d-flex align-items-center" href="admin">
+                                    <span class="bi bi-gear-fill-nav-menu" aria-hidden="true"></span> @L["Nav_Admin"]
+                                </NavLink>
+                            </div>
                         </div>
                     </Authorized>
                 </AuthorizeView>
 
-                <div class="nav-item px-3 mt-2">
-                    <form method="post" action="/logout">
-                        <AntiforgeryToken />
-                        <button type="submit" class="nav-link btn btn-link text-danger p-0">
-                            <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> @L["Nav_Logout"] (@context.User.Identity?.Name)
-                        </button>
-                    </form>
-                </div>
-            </Authorized>
-            <NotAuthorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="login">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @L["Nav_Login"]
-                    </NavLink>
-                </div>
-            </NotAuthorized>
-        </AuthorizeView>
-
-        @if (activeEvent is not null)
-        {
-            <div class="nav-item px-3 mt-3">
-                <div class="small text-light opacity-75">
-                    <span class="bi bi-calendar-check-nav-menu" aria-hidden="true"></span>
-                    <strong>@L["Nav_ActiveEvent"]:</strong><br />
-                    <span>@activeEvent.Name</span>
-                    <span class="badge bg-light text-dark ms-1">@activeEvent.CurrencySymbol @activeEvent.Currency</span>
-                </div>
             </div>
-        }
-    </nav>
-</div>
+            
+            @if (activeEvent is not null)
+            {
+                <span class="badge bg-light text-dark">@activeEvent.Name</span>
+            }
+
+            <div class="navbar-nav ms-auto align-items-center gap-2">
+                <AuthorizeView>
+                    <Authorized>
+                        <form method="post" action="/logout">
+                            <AntiforgeryToken />
+                            <button type="submit" class="btn btn-outline-light btn-sm">
+                                @L["Nav_Logout"]
+                            </button>
+                        </form>
+                    </Authorized>
+                    <NotAuthorized>
+                        <NavLink class="nav-link" href="login">
+                            <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @L["Nav_Login"]
+                        </NavLink>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    </div>
+</nav>
 
 @code {
     private GetActiveEvent.EventDto? activeEvent;

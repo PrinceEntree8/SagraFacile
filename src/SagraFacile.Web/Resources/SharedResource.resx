@@ -84,6 +84,8 @@
     <data name="Nav_ToggleSidebar" xml:space="preserve"><value>Toggle sidebar</value></data>
     <data name="Nav_SectionService" xml:space="preserve"><value>Service</value></data>
     <data name="Nav_SectionManagement" xml:space="preserve"><value>Management</value></data>
+    <data name="Nav_DropdownPublic" xml:space="preserve"><value>Public</value></data>
+    <data name="Nav_DropdownAdmin" xml:space="preserve"><value>Admin</value></data>
     <data name="ReservationOverview_PageTitle" xml:space="preserve"><value>Reservation Overview</value></data>
     <data name="ReservationOverview_Title" xml:space="preserve"><value>Reservation Overview</value></data>
     <data name="ReservationOverview_NoActiveEvent" xml:space="preserve"><value>No active event</value></data>

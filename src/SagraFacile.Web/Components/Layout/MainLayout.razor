@@ -1,35 +1,19 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @inherits LayoutComponentBase
-@inject IStringLocalizer<SharedResource> L
 
-
-<AuthorizeView>
-    <Authorized>
-        <div class="page">
-            <input type="checkbox" id="sidebar-toggle" class="sidebar-toggle-input" title="@L["Nav_ToggleSidebar"]"/>
-            <div class="sidebar">
-                <NavMenu/>
-            </div>
-
+<div class="page">
+    <AuthorizeView>
+        <Authorized>
+            <NavMenu />
             <main>
-                <div class="top-row px-4 d-none d-md-flex">
-                    <label for="sidebar-toggle" class="sidebar-toggle-label" aria-label="@L["Nav_ToggleSidebar"]"
-                           title="@L["Nav_ToggleSidebar"]">
-                        <span class="sidebar-toggle-icon" aria-hidden="true"></span>
-                    </label>
-                    <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-                </div>
-
-                <article class="content px-4">
-                    @Body
-                </article>
+                <article class="content px-4 py-3">@Body</article>
             </main>
-        </div>
-    </Authorized>
-    <NotAuthorized>
-        @Body
-    </NotAuthorized>
-</AuthorizeView>
+        </Authorized>
+        <NotAuthorized>
+            @Body
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.

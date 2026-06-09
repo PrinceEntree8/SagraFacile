@@ -79,6 +79,8 @@
   <data name="Nav_ToggleSidebar" xml:space="preserve"><value>Mostra/nascondi barra laterale</value></data>
   <data name="Nav_SectionService" xml:space="preserve"><value>Servizio</value></data>
   <data name="Nav_SectionManagement" xml:space="preserve"><value>Gestione</value></data>
+  <data name="Nav_DropdownPublic" xml:space="preserve"><value>Pubblico</value></data>
+  <data name="Nav_DropdownAdmin" xml:space="preserve"><value>Admin</value></data>
   <data name="ReservationOverview_PageTitle" xml:space="preserve"><value>Panoramica Prenotazioni</value></data>
   <data name="ReservationOverview_Title" xml:space="preserve"><value>Panoramica</value></data>
   <data name="ReservationOverview_NoActiveEvent" xml:space="preserve"><value>Nessun evento attivo</value></data>
