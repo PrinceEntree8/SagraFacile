@@ -24,7 +24,7 @@ public class GetReservationsHandlerTests
             new() { Id = 1, EventId = 1, SequenceNumber = 1, CustomerName = "Mario", PartySize = 4, Status = ReservationStatus.Waiting, CreatedAt = now.AddMinutes(-10) },
             new() { Id = 2, EventId = 1, SequenceNumber = 2, CustomerName = "Luigi", PartySize = 2, Status = ReservationStatus.Called, Notes = "Birthday", CreatedAt = now.AddMinutes(-5) },
         };
-        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<CancellationToken>())
+        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>())
             .Returns((reservations, 2));
 
         var result = await _handler.Handle(new GetReservations.Query(1), CancellationToken.None);
@@ -42,7 +42,7 @@ public class GetReservationsHandlerTests
         {
             new() { Id = 1, EventId = 1, SequenceNumber = 1, CustomerName = "Test", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = created },
         };
-        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<CancellationToken>())
+        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>())
             .Returns((reservations, 1));
 
         var result = await _handler.Handle(new GetReservations.Query(1), CancellationToken.None);
@@ -67,7 +67,7 @@ public class GetReservationsHandlerTests
                 LastCalledAt = lastCalled, CallCount = 1
             },
         };
-        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<CancellationToken>())
+        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>())
             .Returns((reservations, 1));
 
         var result = await _handler.Handle(new GetReservations.Query(1), CancellationToken.None);
@@ -86,7 +86,7 @@ public class GetReservationsHandlerTests
         {
             new() { Id = 1, EventId = 1, SequenceNumber = 1, CustomerName = "Test", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow },
         };
-        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<CancellationToken>())
+        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>())
             .Returns((reservations, 1));
 
         var result = await _handler.Handle(new GetReservations.Query(1), CancellationToken.None);
@@ -97,23 +97,23 @@ public class GetReservationsHandlerTests
     [Fact]
     public async Task Handle_PassesStatusFilterToRepository()
     {
-        _repository.GetPagedAsync(1, "Called", 1, 50, Arg.Any<CancellationToken>())
+        _repository.GetPagedAsync(1, "Called", 1, 50, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>())
             .Returns((new List<Reservation>(), 0));
 
         await _handler.Handle(new GetReservations.Query(1, Status: "Called"), CancellationToken.None);
 
-        await _repository.Received(1).GetPagedAsync(1, "Called", 1, 50, Arg.Any<CancellationToken>());
+        await _repository.Received(1).GetPagedAsync(1, "Called", 1, 50, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Handle_PassesPaginationToRepository()
     {
-        _repository.GetPagedAsync(1, null, 2, 10, Arg.Any<CancellationToken>())
+        _repository.GetPagedAsync(1, null, 2, 10, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>())
             .Returns((new List<Reservation>(), 0));
 
         await _handler.Handle(new GetReservations.Query(1, Page: 2, PageSize: 10), CancellationToken.None);
 
-        await _repository.Received(1).GetPagedAsync(1, null, 2, 10, Arg.Any<CancellationToken>());
+        await _repository.Received(1).GetPagedAsync(1, null, 2, 10, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -131,7 +131,7 @@ public class GetReservationsHandlerTests
                 FirstCalledAt = firstCalled, LastCalledAt = lastCalled, CallCount = 2
             },
         };
-        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<CancellationToken>())
+        _repository.GetPagedAsync(1, null, 1, 50, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>())
             .Returns((reservations, 1));
 
         var result = await _handler.Handle(new GetReservations.Query(1), CancellationToken.None);

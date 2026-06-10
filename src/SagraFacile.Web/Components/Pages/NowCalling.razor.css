@@ -47,6 +47,27 @@
     flex-shrink: 0;
 }
 
+.nc-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.nc-menu-link {
+    text-decoration: none;
+    border: 1px solid #58a6ff;
+    color: #58a6ff;
+    border-radius: 2em;
+    padding: 0.3em 0.9em;
+    font-size: clamp(0.75rem, 1.8vw, 1rem);
+    font-weight: 600;
+}
+
+.nc-menu-link:hover {
+    background: rgba(56, 139, 253, 0.2);
+    color: #79c0ff;
+}
+
 .nc-title {
     font-size: clamp(1.2rem, 3vw, 2rem);
     font-weight: 700;
@@ -270,6 +291,10 @@
 @media (max-width: 480px) {
     .nc-header {
         padding: 0.6rem 1rem;
+    }
+
+    .nc-header-actions {
+        gap: 0.45rem;
     }
 
     .nc-body {

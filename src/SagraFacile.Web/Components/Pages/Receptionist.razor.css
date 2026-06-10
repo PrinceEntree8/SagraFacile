@@ -56,6 +56,11 @@
     font-size: 0.8rem;
 }
 
+.chip-status {
+    background-color: var(--background-color);
+    border-color: var(--status-color);
+}
+
 .chip-wait {
     flex-shrink: 0;
     font-size: 0.875rem;

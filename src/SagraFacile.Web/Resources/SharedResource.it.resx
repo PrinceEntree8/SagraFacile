@@ -79,6 +79,13 @@
   <data name="Nav_ToggleSidebar" xml:space="preserve"><value>Mostra/nascondi barra laterale</value></data>
   <data name="Nav_SectionService" xml:space="preserve"><value>Servizio</value></data>
   <data name="Nav_SectionManagement" xml:space="preserve"><value>Gestione</value></data>
+  <data name="Nav_DropdownPublic" xml:space="preserve"><value>Pubblico</value></data>
+  <data name="Nav_DropdownAdmin" xml:space="preserve"><value>Admin</value></data>
+  <data name="ReservationOverview_PageTitle" xml:space="preserve"><value>Panoramica Prenotazioni</value></data>
+  <data name="ReservationOverview_Title" xml:space="preserve"><value>Panoramica</value></data>
+  <data name="ReservationOverview_NoActiveEvent" xml:space="preserve"><value>Nessun evento attivo</value></data>
+  <data name="ReservationOverview_Loading" xml:space="preserve"><value>Caricamento...</value></data>
+  <data name="ReservationOverview_ModalTitle" xml:space="preserve"><value>Dettagli Prenotazione</value></data>
 
   <!-- Login -->
   <data name="Login_PageTitle" xml:space="preserve"><value>Accesso - SagraFacile</value></data>
@@ -135,7 +142,25 @@
   <data name="Events_NoEvents" xml:space="preserve"><value>Nessun evento trovato. Crea il primo evento.</value></data>
   <data name="Events_EventCreated" xml:space="preserve"><value>Evento '{0}' creato con successo!</value></data>
   <data name="Events_Error" xml:space="preserve"><value>Errore: {0}</value></data>
-
+  <data name="Events_AdditionalOptions" xml:space="preserve"><value>Opzioni Aggiuntive</value></data>
+ 
+  <!-- Event Additional Options -->
+  <data name="EventOptions_PageTitle" xml:space="preserve"><value>Opzioni Aggiuntive – {0}</value></data>
+  <data name="EventOptions_Heading" xml:space="preserve"><value>⚙️ Opzioni Aggiuntive</value></data>
+  <data name="EventOptions_EventNotFound" xml:space="preserve"><value>Evento non trovato.</value></data>
+  <data name="EventOptions_Loading" xml:space="preserve"><value>Caricamento opzioni...</value></data>
+  <data name="EventOptions_ReservationOptions" xml:space="preserve"><value>Opzioni Prenotazioni</value></data>
+  <data name="EventOptions_PartyCompletion" xml:space="preserve"><value>Completamento Gruppo</value></data>
+  <data name="EventOptions_PartyCompletionDesc" xml:space="preserve"><value>Se abilitato, le prenotazioni vengono trattenute finché non è arrivato l'intero gruppo prima di essere chiamate.</value></data>
+  <data name="EventOptions_EnablePartyCompletion" xml:space="preserve"><value>Abilita Completamento Gruppo</value></data>
+  <data name="EventOptions_MinPartySize" xml:space="preserve"><value>Dimensione Minima del Gruppo</value></data>
+  <data name="EventOptions_MinPartySizeDesc" xml:space="preserve"><value>Numero minimo di ospiti richiesti prima che la prenotazione possa essere chiamata.</value></data>
+  <data name="EventOptions_Save" xml:space="preserve"><value>Salva Opzioni</value></data>
+  <data name="EventOptions_Saved" xml:space="preserve"><value>Opzioni salvate con successo!</value></data>
+  <data name="EventOptions_Error" xml:space="preserve"><value>Errore: {0}</value></data>
+  <data name="EventOptions_MinPartySizeInvalid" xml:space="preserve"><value>La dimensione minima del gruppo deve essere almeno 1.</value></data>
+  <data name="EventOptions_BackToEvents" xml:space="preserve"><value>← Torna agli Eventi</value></data>
+ 
   <!-- Receptionist -->
   <data name="Receptionist_PageTitle" xml:space="preserve"><value>Receptionist - Prenotazioni Tavoli</value></data>
   <data name="Receptionist_Heading" xml:space="preserve"><value>Receptionist - Prenotazioni Tavoli</value></data>
@@ -226,6 +251,8 @@
   <data name="NowCalling_WaitingForCall" xml:space="preserve"><value>In attesa della prima chiamata…</value></data>
   <data name="NowCalling_CurrentCall" xml:space="preserve"><value>CHIAMATA CORRENTE</value></data>
   <data name="NowCalling_PreviousCalls" xml:space="preserve"><value>Chiamate Precedenti</value></data>
+  <data name="NowCalling_BackToMenu" xml:space="preserve"><value>Torna al menù</value></data>
+  <data name="NowCalling_NoActiveEvent" xml:space="preserve"><value>Nessun evento attivo al momento.</value></data>
 
   <!-- Reservation Report -->
   <data name="Report_PageTitle" xml:space="preserve"><value>Report Prenotazioni</value></data>
@@ -317,11 +344,18 @@
   <data name="MenuMgmt_ManageMenu" xml:space="preserve"><value>Gestisci Menù</value></data>
 
   <!-- Public Menu -->
+  <data name="Home_PageTitle" xml:space="preserve"><value>Home - SagraFacile</value></data>
+  <data name="Home_GoToMenu" xml:space="preserve"><value>Vai al menù</value></data>
+  <data name="Home_LastCalled" xml:space="preserve"><value>Ultima Chiamata</value></data>
+  <data name="Home_LatestNineCalled" xml:space="preserve"><value>Ultime 9 Chiamate</value></data>
   <data name="PublicMenu_PageTitle" xml:space="preserve"><value>Menù - SagraFacile</value></data>
   <data name="PublicMenu_Loading" xml:space="preserve"><value>Caricamento menù...</value></data>
   <data name="PublicMenu_NoActiveEvent" xml:space="preserve"><value>Nessun evento attivo al momento.</value></data>
   <data name="PublicMenu_NoItems" xml:space="preserve"><value>Menù non ancora disponibile.</value></data>
   <data name="PublicMenu_Allergens" xml:space="preserve"><value>Allergeni</value></data>
+  <data name="PublicMenu_GoToNowCalling" xml:space="preserve"><value>Vai a in chiamata</value></data>
+  <data name="PublicMenu_LatestCalled" xml:space="preserve"><value>Ultima Chiamata</value></data>
+  <data name="PublicMenu_NoCalledYet" xml:space="preserve"><value>Nessuna prenotazione chiamata finora.</value></data>
   <data name="MenuMgmt_ManageCategories" xml:space="preserve"><value>Gestisci Categorie</value></data>
   <data name="MenuMgmt_CatNameEn" xml:space="preserve"><value>Nome</value></data>
   <data name="MenuMgmt_CatNameIt" xml:space="preserve"><value>Nome</value></data>
@@ -346,6 +380,18 @@
   <data name="Reservation_Status_Waiting" xml:space="preserve">
     <value>In Attesa</value>
   </data>
+  <data name="Reservation_Status_PartyCompleted" xml:space="preserve">
+    <value>Presenti</value>
+  </data>
+  <data name="Receptionist_Button_PartyComplete" xml:space="preserve">
+    <value>Completo</value>
+  </data>
+  <data name="Receptionist_Filter_IncompleteParties" xml:space="preserve">
+    <value>Gruppi incompleti</value>
+  </data>
+  <data name="Receptionist_Label_PartyComplete" xml:space="preserve">
+    <value>Presenti?</value>
+  </data>
   <data name="MenuAppearance_Section" xml:space="preserve">
     <value>Aspetto del Menu</value>
   </data>
@@ -363,5 +409,24 @@
   </data>
   <data name="MenuAppearance_HtmlHint" xml:space="preserve">
     <value>Supporta HTML.</value>
+  </data>
+  <data name="ReservationEdit_ModalTitle" xml:space="preserve">
+    <value>Modifica prenotazione</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Save</value>
+    <comment>Common_Save</comment>
+  </data>
+  <data name="Receptionist_ActionEdit" xml:space="preserve">
+    <value>Modifica</value>
+    <comment>Receptionist_ActionEdit</comment>
+  </data>
+  <data name="PublicMenu_GoToHome" xml:space="preserve">
+    <value>Vai alla prima pagina</value>
+    <comment>PublicMenu_GoToHome</comment>
+  </data>
+  <data name="ReservationView_ModalTitle" xml:space="preserve">
+    <value>Prenotazione</value>
+    <comment>ReservationView_ModalTitle</comment>
   </data>
 </root>

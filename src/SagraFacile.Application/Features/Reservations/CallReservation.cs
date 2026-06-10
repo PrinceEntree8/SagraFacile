@@ -39,7 +39,7 @@ public static class CallReservation
 
         public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
         {
-            var reservation = await _repository.GetByIdAsync(command.ReservationId, cancellationToken);
+            var reservation = await _repository.GetByIdWithEventAsync(command.ReservationId, cancellationToken);
 
             if (reservation == null)
                 return new Result(false, "Reservation not found");
@@ -50,7 +50,19 @@ public static class CallReservation
             if (reservation.Status == ReservationStatus.Seated)
                 return new Result(false, "Reservation is already seated");
 
+            var partyCompletionEnabled = reservation.Event.AdditionalOptions.Reservations.PartyCompletion.Enabled;
+
+            if (partyCompletionEnabled)
+            {
+                if (reservation.Status == ReservationStatus.Waiting)
+                    return new Result(false, "Mark party complete first");
+
+                if (reservation.Status != ReservationStatus.PartyCompleted && reservation.Status != ReservationStatus.Called)
+                    return new Result(false, "Reservation cannot be called from its current status");
+            }
+
             var now = DateTime.UtcNow;
+            var oldStatus = reservation.Status;
 
             if (reservation.FirstCalledAt == null)
                 reservation.FirstCalledAt = now;
@@ -77,16 +89,20 @@ public static class CallReservation
                 return new Result(false, "This reservation was modified by another user. Please refresh and try again.");
             }
 
-            await _notifier.NotifyReservationCalledAsync(
+            await _notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
                 reservation.Id,
                 reservation.SequenceNumber,
                 reservation.CustomerName,
                 reservation.PartySize,
-                reservation.CallCount,
-                cancellationToken);
+                NewStatus: ReservationStatus.Called,
+                OldStatus: oldStatus,
+                CallCount: reservation.CallCount
+            ), cancellationToken);
 
             var counters = await _repository.GetCountersAsync(reservation.EventId, cancellationToken);
-            await _notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
+            await _notifier.EnqueueCountersUpdatedAsync(
+                new CountersUpdatedNotification(counters),
+                cancellationToken).ConfigureAwait(false);
 
             return new Result(true, $"Reservation {reservation.SequenceNumber} called successfully (call #{reservation.CallCount})");
         }

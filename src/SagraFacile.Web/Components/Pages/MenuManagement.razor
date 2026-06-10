@@ -30,40 +30,62 @@
             <div class="accordion-body">
                 <div class="row g-2 mb-3">
                     <div class="col-sm-6">
-                        <input class="form-control" placeholder="@L["MenuMgmt_CatNameEn"]" @bind="catForm.Name" />
+                        <input class="form-control" placeholder="@L["MenuMgmt_CatNameEn"]" @bind="catForm.Name"/>
                     </div>
                     <div class="col-sm-2">
-                        <input type="number" class="form-control" placeholder="@L["MenuMgmt_CatOrder"]" @bind="catForm.DisplayOrder" />
+                        <input type="number" class="form-control" placeholder="@L["MenuMgmt_CatOrder"]"
+                               @bind="catForm.DisplayOrder"/>
                     </div>
                     <div class="col-sm-2">
                         <button class="btn @(editingCatId.HasValue ? "btn-warning" : "btn-primary") w-100"
                                 @onclick="SaveCategoryAsync" disabled="@isSavingCat">
-                            @if (isSavingCat) { <span class="spinner-border spinner-border-sm"></span> }
-                            else { @(editingCatId.HasValue ? L["MenuMgmt_SaveChanges"] : L["MenuMgmt_CatAdd"]) }
+                            @if (isSavingCat)
+                            {
+                                <span class="spinner-border spinner-border-sm"></span>
+                            }
+                            else
+                            {
+                                @(editingCatId.HasValue ? L["MenuMgmt_SaveChanges"] : L["MenuMgmt_CatAdd"])
+                            }
                         </button>
                     </div>
                 </div>
                 @if (editingCatId.HasValue)
                 {
-                    <button class="btn btn-outline-secondary btn-sm mb-2" @onclick="CancelCatEdit">@L["MenuMgmt_Cancel"]</button>
+                    <button class="btn btn-outline-secondary btn-sm mb-2"
+                            @onclick="CancelCatEdit">@L["MenuMgmt_Cancel"]</button>
                 }
                 <table class="table table-sm">
-                    <thead><tr><th>@L["MenuMgmt_CatNameEn"]</th><th>@L["MenuMgmt_CatOrder"]</th><th></th></tr></thead>
+                    <thead>
+                    <tr>
+                        <th>@L["MenuMgmt_CatNameEn"]</th>
+                        <th>@L["MenuMgmt_CatOrder"]</th>
+                        <th></th>
+                    </tr>
+                    </thead>
                     <tbody>
-                        @foreach (var c in categories)
-                        {
-                            <tr>
-                                <td>@c.Name</td>
-                                <td>@c.DisplayOrder</td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditCategory(c)">@L["MenuMgmt_Edit"]</button>
-                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteCategoryAsync(c.Id)" disabled="@(deletingCatId == c.Id)">
-                                        @if (deletingCatId == c.Id) { <span class="spinner-border spinner-border-sm"></span> }
-                                        else { @L["MenuMgmt_Delete"] }
-                                    </button>
-                                </td>
-                            </tr>
-                        }
+                    @foreach (var c in categories)
+                    {
+                        <tr>
+                            <td>@c.Name</td>
+                            <td>@c.DisplayOrder</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1"
+                                        @onclick="() => EditCategory(c)">@L["MenuMgmt_Edit"]</button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteCategoryAsync(c.Id)"
+                                        disabled="@(deletingCatId == c.Id)">
+                                    @if (deletingCatId == c.Id)
+                                    {
+                                        <span class="spinner-border spinner-border-sm"></span>
+                                    }
+                                    else
+                                    {
+                                        @L["MenuMgmt_Delete"]
+                                    }
+                                </button>
+                            </td>
+                        </tr>
+                    }
                     </tbody>
                 </table>
             </div>
@@ -81,7 +103,7 @@
             <div class="card-body">
                 <div class="mb-3">
                     <label class="form-label">@L["MenuMgmt_ItemName"] *</label>
-                    <input class="form-control" @bind="form.Name" />
+                    <input class="form-control" @bind="form.Name"/>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">@L["MenuMgmt_ItemDescription"]</label>
@@ -92,7 +114,7 @@
                         <label class="form-label">@L["MenuMgmt_ItemPrice"] * (@eventCurrencySymbol)</label>
                         <input type="number" min="0" step="0.01" class="form-control"
                                value="@(form.PriceInCents / 100.0)"
-                               @onchange="e => form.PriceInCents = ToCents(e.Value?.ToString())" />
+                               @onchange="e => form.PriceInCents = ToCents(e.Value?.ToString())"/>
                         <div class="form-text">@L["MenuMgmt_PriceHint"]</div>
                     </div>
                     <div class="col-md-6 mb-3">
@@ -114,7 +136,7 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="allergen_@a.Id"
                                        checked="@form.AllergenIds.Contains(a.Id)"
-                                       @onchange="e => ToggleAllergen(a.Id, (bool)e.Value!)" />
+                                       @onchange="e => ToggleAllergen(a.Id, (bool)e.Value!)"/>
                                 <label class="form-check-label" for="allergen_@a.Id">
                                     @a.Icon @L[$"Allergen_{a.Code}"]
                                 </label>
@@ -123,13 +145,16 @@
                     </div>
                 </div>
                 <div class="mb-3 form-check">
-                    <input class="form-check-input" type="checkbox" id="chkAvailable" @bind="form.IsAvailable" />
+                    <input class="form-check-input" type="checkbox" id="chkAvailable" @bind="form.IsAvailable"/>
                     <label class="form-check-label" for="chkAvailable">@L["MenuMgmt_ItemAvailable"]</label>
                 </div>
                 <div class="d-flex gap-2">
                     <button class="btn @(editingId.HasValue ? "btn-warning" : "btn-primary")"
                             @onclick="SaveItemAsync" disabled="@isSaving">
-                        @if (isSaving) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
                         @(editingId.HasValue ? L["MenuMgmt_SaveChanges"] : L["MenuMgmt_AddItem"])
                     </button>
                     @if (editingId.HasValue)
@@ -159,52 +184,61 @@
                 else
                 {
                     @foreach (var catGroup in items.GroupBy(i => i.CategoryId)
-                        .OrderBy(g => categories.FirstOrDefault(c => c.Id == g.Key)?.DisplayOrder ?? 999))
+                                      .OrderBy(g => categories.FirstOrDefault(c => c.Id == g.Key)?.DisplayOrder ?? 999))
                     {
                         var cat = categories.FirstOrDefault(c => c.Id == catGroup.Key);
                         <h6 class="mt-3 text-uppercase text-muted">@(cat is null ? "?" : GetCategoryName(cat))</h6>
                         <div class="table-responsive">
                             <table class="table table-sm table-hover">
-                                <thead><tr>
+                                <thead>
+                                <tr>
                                     <th>@L["MenuMgmt_ColName"]</th>
                                     <th>@L["MenuMgmt_ColPrice"]</th>
                                     <th>@L["MenuMgmt_ColAvailable"]</th>
                                     <th>@L["MenuMgmt_ColActions"]</th>
-                                </tr></thead>
+                                </tr>
+                                </thead>
                                 <tbody>
-                                    @foreach (var item in catGroup.OrderBy(i => i.Name))
-                                    {
-                                        <tr class="@(item.IsAvailable ? "" : "table-secondary")">
-                                            <td>
-                                                <strong>@item.Name</strong>
-                                                @if (!string.IsNullOrEmpty(item.Description))
+                                @foreach (var item in catGroup.OrderBy(i => i.Name))
+                                {
+                                    <tr class="@(item.IsAvailable ? "" : "table-secondary")">
+                                        <td>
+                                            <strong>@item.Name</strong>
+                                            @if (!string.IsNullOrEmpty(item.Description))
+                                            {
+                                                <br/>
+                                                <small class="text-muted">@item.Description</small>
+                                            }
+                                            @if (item.Allergens.Any())
+                                            {
+                                                <br/>
+                                                @foreach (var a in item.Allergens)
                                                 {
-                                                    <br /><small class="text-muted">@item.Description</small>
+                                                    <span class="badge bg-warning text-dark me-1"
+                                                          title="@L[$"Allergen_{a.Code}"]">@a.Icon @a.Code</span>
                                                 }
-                                                @if (item.Allergens.Any())
+                                            }
+                                        </td>
+                                        <td class="text-nowrap">@eventCurrencySymbol @((item.PriceInCents / 100.0).ToString("0.00"))</td>
+                                        <td>@(item.IsAvailable ? "✓" : "✗")</td>
+                                        <td class="text-nowrap">
+                                            <button class="btn btn-sm btn-outline-primary me-1"
+                                                    @onclick="() => EditItem(item)">@L["MenuMgmt_Edit"]</button>
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => ConfirmDeleteAsync(item.Id, item.Name)"
+                                                    disabled="@(deletingId == item.Id)">
+                                                @if (deletingId == item.Id)
                                                 {
-                                                    <br />
-                                                    @foreach (var a in item.Allergens)
-                                                    {
-                                                        <span class="badge bg-warning text-dark me-1"
-                                                              title="@L[$"Allergen_{a.Code}"]">@a.Icon @a.Code</span>
-                                                    }
+                                                    <span class="spinner-border spinner-border-sm"></span>
                                                 }
-                                            </td>
-                                            <td class="text-nowrap">@eventCurrencySymbol @((item.PriceInCents / 100.0).ToString("0.00"))</td>
-                                            <td>@(item.IsAvailable ? "✓" : "✗")</td>
-                                            <td class="text-nowrap">
-                                                <button class="btn btn-sm btn-outline-primary me-1"
-                                                        @onclick="() => EditItem(item)">@L["MenuMgmt_Edit"]</button>
-                                                <button class="btn btn-sm btn-outline-danger"
-                                                        @onclick="() => ConfirmDeleteAsync(item.Id, item.Name)"
-                                                        disabled="@(deletingId == item.Id)">
-                                                    @if (deletingId == item.Id) { <span class="spinner-border spinner-border-sm"></span> }
-                                                    else { @L["MenuMgmt_Delete"] }
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    }
+                                                else
+                                                {
+                                                    @L["MenuMgmt_Delete"]
+                                                }
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
                                 </tbody>
                             </table>
                         </div>
@@ -237,7 +271,10 @@
             <div class="form-text">@L["MenuAppearance_HtmlHint"]</div>
         </div>
         <button class="btn btn-primary" @onclick="SaveAppearanceAsync" disabled="@isSavingAppearance">
-            @if (isSavingAppearance) { <span class="spinner-border spinner-border-sm me-1"></span> }
+            @if (isSavingAppearance)
+            {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+            }
             @L["MenuMgmt_SaveChanges"]
         </button>
     </div>
@@ -322,7 +359,11 @@
             message = L["MenuAppearance_Saved"];
             messageSuccess = true;
         }
-        catch (Exception ex) { ShowError(string.Format(L["MenuMgmt_Error"], ex.Message)); }
+        catch (Exception ex)
+        {
+            ShowError(string.Format(L["MenuMgmt_Error"], ex.Message));
+        }
+
         isSavingAppearance = false;
     }
 
@@ -342,14 +383,32 @@
         };
     }
 
-    private void CancelEdit() { editingId = null; form = new ItemForm(); }
+    private void CancelEdit()
+    {
+        editingId = null;
+        form = new ItemForm();
+    }
 
     private async Task SaveItemAsync()
     {
         message = string.Empty;
-        if (string.IsNullOrWhiteSpace(form.Name)) { ShowError(L["MenuMgmt_NameRequired"]); return; }
-        if (form.PriceInCents < 0) { ShowError(L["MenuMgmt_PriceInvalid"]); return; }
-        if (form.CategoryId <= 0) { ShowError(L["MenuMgmt_CategoryRequired"]); return; }
+        if (string.IsNullOrWhiteSpace(form.Name))
+        {
+            ShowError(L["MenuMgmt_NameRequired"]);
+            return;
+        }
+
+        if (form.PriceInCents < 0)
+        {
+            ShowError(L["MenuMgmt_PriceInvalid"]);
+            return;
+        }
+
+        if (form.CategoryId <= 0)
+        {
+            ShowError(L["MenuMgmt_CategoryRequired"]);
+            return;
+        }
 
         isSaving = true;
         try
@@ -371,9 +430,18 @@
                 message = string.Format(L["MenuMgmt_ItemAdded"], r.Name);
                 messageSuccess = true;
             }
-            if (messageSuccess) { CancelEdit(); await LoadItemsAsync(); }
+
+            if (messageSuccess)
+            {
+                CancelEdit();
+                await LoadItemsAsync();
+            }
         }
-        catch (Exception ex) { ShowError(string.Format(L["MenuMgmt_Error"], ex.Message)); }
+        catch (Exception ex)
+        {
+            ShowError(string.Format(L["MenuMgmt_Error"], ex.Message));
+        }
+
         isSaving = false;
     }
 
@@ -386,9 +454,17 @@
             var r = await Mediator.SendAsync(new DeleteMenuItem.Command(id));
             message = r.Success ? string.Format(L["MenuMgmt_ItemDeleted"], name) : r.Message;
             messageSuccess = r.Success;
-            if (r.Success) { if (editingId == id) CancelEdit(); await LoadItemsAsync(); }
+            if (r.Success)
+            {
+                if (editingId == id) CancelEdit();
+                await LoadItemsAsync();
+            }
         }
-        catch (Exception ex) { ShowError(string.Format(L["MenuMgmt_Error"], ex.Message)); }
+        catch (Exception ex)
+        {
+            ShowError(string.Format(L["MenuMgmt_Error"], ex.Message));
+        }
+
         deletingId = null;
     }
 
@@ -400,7 +476,11 @@
         catForm = new CatForm { Name = c.Name, DisplayOrder = c.DisplayOrder };
     }
 
-    private void CancelCatEdit() { editingCatId = null; catForm = new CatForm(); }
+    private void CancelCatEdit()
+    {
+        editingCatId = null;
+        catForm = new CatForm();
+    }
 
     private async Task SaveCategoryAsync()
     {
@@ -410,6 +490,7 @@
             ShowError(L["MenuMgmt_CatNameRequired"]);
             return;
         }
+
         isSavingCat = true;
         try
         {
@@ -427,9 +508,18 @@
                 message = string.Format(L["MenuMgmt_CatAdded"], r.Name);
                 messageSuccess = true;
             }
-            if (messageSuccess) { CancelCatEdit(); await LoadCategoriesAsync(); }
+
+            if (messageSuccess)
+            {
+                CancelCatEdit();
+                await LoadCategoriesAsync();
+            }
         }
-        catch (Exception ex) { ShowError(string.Format(L["MenuMgmt_Error"], ex.Message)); }
+        catch (Exception ex)
+        {
+            ShowError(string.Format(L["MenuMgmt_Error"], ex.Message));
+        }
+
         isSavingCat = false;
     }
 
@@ -442,9 +532,17 @@
             var r = await Mediator.SendAsync(new DeleteMenuCategory.Command(id));
             message = r.Success ? L["MenuMgmt_CatDeleted"] : r.Message;
             messageSuccess = r.Success;
-            if (r.Success) { if (editingCatId == id) CancelCatEdit(); await LoadCategoriesAsync(); }
+            if (r.Success)
+            {
+                if (editingCatId == id) CancelCatEdit();
+                await LoadCategoriesAsync();
+            }
         }
-        catch (Exception ex) { ShowError(string.Format(L["MenuMgmt_Error"], ex.Message)); }
+        catch (Exception ex)
+        {
+            ShowError(string.Format(L["MenuMgmt_Error"], ex.Message));
+        }
+
         deletingCatId = null;
     }
 
@@ -456,7 +554,11 @@
         else form.AllergenIds.Remove(id);
     }
 
-    private void ShowError(string msg) { message = msg; messageSuccess = false; }
+    private void ShowError(string msg)
+    {
+        message = msg;
+        messageSuccess = false;
+    }
 
     private static int ToCents(string? input)
     {
@@ -491,4 +593,5 @@
         public string? Header { get; set; }
         public string? Footer { get; set; }
     }
+
 }

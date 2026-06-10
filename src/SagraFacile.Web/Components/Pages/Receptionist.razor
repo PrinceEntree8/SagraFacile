@@ -2,6 +2,10 @@
 @attribute [Authorize]
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
+@using SagraFacile.Domain.Features.Reservations
+@using SagraFacile.Web.Components.Modals
+@using SagraFacile.Web.Extensions
+@using SagraFacile.Web.Hubs
 @inject IMediator Mediator
 @inject NavigationManager Navigation
 @inject IStringLocalizer<SharedResource> L
@@ -37,19 +41,28 @@
 
                     <div class="mb-3">
                         <label class="form-label">@L["Receptionist_PartySize"]</label>
-                        <InputNumber @bind-Value="newReservation.PartySize"
-                                     class="@GetInputClass(partySizeError)"/>
+                        <div class="input-group">
+                            <InputNumber @bind-Value="newReservation.PartySize"
+                                         @ValueChanged="OnPartySizeChanged"
+                                         class="@GetInputClass(partySizeError)"/>
+                            @if (partyCompletionEnabled) {
+                                <span class="input-group-text">@L["Receptionist_Label_PartyComplete"]</span>
+                                <div class="input-group-text ">
+                                    <InputCheckbox @bind-Value="newReservation.PartyComplete" class="form-check-input m-0" id="partyCompleteCheck" />
+                                </div>
+                            }
+                        </div>
                         @if (partySizeError != string.Empty)
                         {
                             <div class="invalid-feedback">@partySizeError</div>
                         }
                     </div>
 
-                    <div class="mb-3">
+                    @*<div class="mb-3">
                         <label class="form-label">@L["Receptionist_Notes"]</label>
                         <InputTextArea @bind-Value="newReservation.Notes" class="form-control" rows="3"/>
                         <small class="form-text text-muted">@L["Receptionist_NotesHint"]</small>
-                    </div>
+                    </div>*@
 
                     <button type="submit" class="btn btn-primary" disabled="@(isCreating || actionInProgress != null)">
                         @if (isCreating)
@@ -82,9 +95,13 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3>@L["Receptionist_ActiveReservations"]</h3>
                 <div class="receptionist-filters">
-                    <button class="btn btn-sm btn-outline-primary" @onclick="@(() => LoadReservations("Waiting"))">@L["Receptionist_FilterWaiting"]</button>
-                    <button class="btn btn-sm btn-outline-secondary" @onclick="@(() => LoadReservations("Called"))">@L["Receptionist_FilterCalled"]</button>
-                    <button class="btn btn-sm btn-outline-info" @onclick="@(() => LoadReservations(null))">@L["Receptionist_FilterAll"]</button>
+                    <button class="btn btn-sm @(currentFilter == "Waiting" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => LoadReservations("Waiting"))">@L["Receptionist_FilterWaiting"]</button>
+                    @if (partyCompletionEnabled)
+                    {
+                        <button class="btn btn-sm @(currentFilter == "PartyCompleted" ? "btn-warning" : "btn-outline-warning")" @onclick="@(() => LoadReservations("PartyCompleted"))">@L["Reservation_Status_PartyCompleted"]</button>
+                    }
+                    <button class="btn btn-sm @(currentFilter == "Called" ? "btn-secondary" : "btn-outline-secondary")" @onclick="@(() => LoadReservations("Called"))">@L["Receptionist_FilterCalled"]</button>
+                    <button class="btn btn-sm @(currentFilter == null ? "btn-info" : "btn-outline-info")" @onclick="@(() => LoadReservations(null))">@L["Receptionist_FilterAll"]</button>
                 </div>
             </div>
             <div class="card-body">
@@ -101,25 +118,42 @@
                                 <span class="chip-queue" title="@L["Receptionist_ColQueue"]">@reservation.SequenceNumber</span>
                                 <span class="chip-name">@reservation.CustomerName</span>
                                 <span class="badge bg-info chip-party" title="@L["Receptionist_ColParty"]"><i class="bi bi-people"></i> @reservation.PartySize</span>
-                                <span class="badge @GetStatusBadge(reservation.Status) chip-status">@L["Reservation_Status_" + reservation.Status]</span>
+                                <span class="badge @GetStatusBadge(reservation.Status) border chip-status">@L["Reservation_Status_" + reservation.Status]</span>
                                 <span class="chip-wait text-muted ms-1" title="@L["Receptionist_ColWaiting"]">
                                     @if (reservation.TimeSinceLastCall.HasValue)
                                     {
-                                        @FormatTimeSpan(reservation.TimeSinceLastCall.Value)
+                                        @reservation.TimeSinceLastCall.Value.FormatTimeSpan()
                                     }
                                     else
                                     {
-                                        @FormatTimeSpan(reservation.WaitingTime)
+                                        @reservation.WaitingTime.FormatTimeSpan()
                                     }
                                 </span>
-                                @if (reservation.Status == "Waiting" || reservation.Status == "Called")
+                                @if (reservation.Status is "Waiting" or "Called" or "PartyCompleted")
                                 {
                                     <span class="chip-actions">
-                                        <button class="btn btn-sm btn-success" @onclick="@(() => CallReservationAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
-                                            @L["Receptionist_ActionCall"]
-                                        </button>
-                                        <button class="btn btn-sm btn-danger" @onclick="@(() => VoidReservationAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
-                                            @L["Receptionist_ActionVoid"]
+                                        @if (partyCompletionEnabled && reservation.Status == "Waiting")
+                                        {
+                                            <button class="btn btn-sm btn-warning" @onclick="@(() => MarkPartyCompleteAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
+                                                <i class="bi bi-person-arms-up"></i>
+                                                <span class="d-none d-xl-inline">@L["Receptionist_Button_PartyComplete"]</span>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-success" @onclick="@(() => CallReservationAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
+                                                <i class="bi bi-megaphone"></i>
+                                                <span class="d-none d-xl-inline">@L["Receptionist_ActionCall"]</span>
+                                            </button>
+                                        }
+                                        <button class="btn btn-sm btn-primary"
+                                                @onclick="@(() => OpenReservationEditModal(reservation))"
+                                                disabled="@(actionInProgress == reservation.Id)"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#reservationEditModal"
+                                                role="button">
+                                            <i class="bi bi-pencil-square"></i>
+                                            <span class="d-none d-xl-inline">@L["Receptionist_ActionEdit"]</span>
                                         </button>
                                     </span>
                                 }
@@ -167,10 +201,15 @@
     </div>
 </div>
 
+<EditReservationModal Reservation="selectedReservation"/>
+
 @code {
     private int activeEventId = 1; // TODO: replace with session-backed active event store
+    private bool partyCompletionEnabled = false;
+    private int minPartySize = 1;
     private HubConnection? hubConnection;
     private NewReservationModel newReservation = new();
+    private GetReservations.ReservationDto? selectedReservation;
     private List<GetReservations.ReservationDto> reservations = new();
     private int totalCount = 0;
     private int totalPeople = 0;
@@ -186,12 +225,30 @@
     private string partySizeError = string.Empty;
     private int? actionInProgress = null;
     private string? currentFilter = null;
+    
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadActiveEventOptions();
         await LoadCounters();
         await LoadReservations(null);
         await InitializeSignalR();
+    }
+
+    private async Task LoadActiveEventOptions()
+    {
+        var activeEvent = await Mediator.QueryAsync(new GetActiveEvent.Query());
+        if (activeEvent?.ActiveEvent != null)
+        {
+            activeEventId = activeEvent.ActiveEvent.Id;
+            var options = await Mediator.QueryAsync(new GetEventAdditionalOptions.Query(activeEventId));
+            if (options != null)
+            {
+                partyCompletionEnabled = options.AdditionalOptions.Reservations.PartyCompletion.Enabled;
+                minPartySize = options.AdditionalOptions.Reservations.PartyCompletion.MinPartySize;
+                newReservation.PartyComplete = newReservation.PartySize < minPartySize;
+            }
+        }
     }
 
     private async Task LoadCounters()
@@ -205,7 +262,7 @@
         totalCount = counters.Sum(c => c.Count);
         totalPeople = counters.Sum(c => c.TotalPeople);
 
-        var toBeSeated = counters.Where(c => c.Status is "Waiting" or "Called").ToList();
+        var toBeSeated = counters.Where(c => c.Status is "Waiting" or "Called" or "PartyCompleted").ToList();
         toBeSeatedCount = toBeSeated.Sum(c => c.Count);
         toBeSeatedPeople = toBeSeated.Sum(c => c.TotalPeople);
 
@@ -221,37 +278,19 @@
             .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.On<int, int, string, int>("ReservationCreated", async (id, sequenceNumber, name, size) =>
+        hubConnection.On<ReservationStatusChangedNotification>(nameof(IReservationHubClient.ReservationStatusChanged), async _ =>
         {
             await LoadReservations(currentFilter);
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<int, int, string, int, int>("ReservationCalled", async (id, sequenceNumber, customerName, partySize, callCount) =>
-        {
-            await LoadReservations(currentFilter);
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int, int>("ReservationVoided", async (id, sequenceNumber) =>
-        {
-            await LoadReservations(currentFilter);
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int, int>("ReservationSeated", async (id, sequenceNumber) =>
-        {
-            await LoadReservations(currentFilter);
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int>("AvailableSeatsUpdated", async (seats) =>
+        hubConnection.On<int>(nameof(IReservationHubClient.AvailableSeatsUpdated), async (seats) =>
         {
             availableSeats = seats;
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<List<GetCounters.ReservationCounter>>("CountersUpdated", async (counters) =>
+        hubConnection.On<List<GetCounters.ReservationCounter>>(nameof(IReservationHubClient.CountersUpdated), async (counters) =>
         {
             UpdateCounters(counters);
             await InvokeAsync(StateHasChanged);
@@ -271,9 +310,12 @@
     {
         isLoading = true;
         currentFilter = status;
+        
+        var filter = Enum.Parse<ReservationStatusFilter>(status ?? "AllWaiting");
+        
         try
         {
-            var query = new GetReservations.Query(EventId: activeEventId, Status: status, Page: 1, PageSize: 100);
+            var query = new GetReservations.Query(EventId: activeEventId, Page: 1, PageSize: 100, Filter: filter);
             var result = await Mediator.QueryAsync(query);
             reservations = result.Reservations;
         }
@@ -308,7 +350,8 @@
                 activeEventId,
                 newReservation.CustomerName,
                 newReservation.PartySize,
-                newReservation.Notes
+                newReservation.Notes,
+                newReservation.PartyComplete
             );
 
             var result = await Mediator.SendAsync(command);
@@ -334,8 +377,27 @@
         try
         {
             var command = new CallReservation.Command(reservationId, "Receptionist");
-            await Mediator.SendAsync(command);
+            var result = await Mediator.SendAsync(command);
+            if (!result.Success)
+            {
+                creationMessage = result.Message;
+            }
             
+            await LoadReservations(currentFilter);
+        }
+        finally
+        {
+            actionInProgress = null;
+        }
+    }
+
+    private async Task MarkPartyCompleteAsync(int reservationId)
+    {
+        actionInProgress = reservationId;
+        try
+        {
+            var command = new MarkPartyComplete.Command(reservationId, "Receptionist");
+            await Mediator.SendAsync(command);
             await LoadReservations(currentFilter);
         }
         finally
@@ -376,12 +438,13 @@
         }
     }
 
-    private string GetStatusBadge(string status) => status switch
+    private static string GetStatusBadge(string status) => status switch
     {
-        "Waiting" => "bg-warning",
-        "Called" => "bg-info",
-        "Seated" => "bg-success",
-        "Voided" => "bg-secondary",
+        "Waiting" => "reservation-status-waiting",
+        "PartyCompleted" => "reservation-status-partycomplete",
+        "Called" => "reservation-status-called",
+        "Seated" => "reservation-status-seated",
+        "Voided" => "reservation-status-voided",
         _ => "bg-secondary"
     };
 
@@ -390,16 +453,9 @@
 
     private string GetRowClass(GetReservations.ReservationDto reservation)
     {
-        if (reservation.WaitingTime.TotalMinutes > 30)
+        if (reservation.WaitingTime.TotalMinutes > 45)
             return "bg-danger bg-opacity-10";
         return "";
-    }
-
-    private string FormatTimeSpan(TimeSpan timeSpan)
-    {
-        if (timeSpan.TotalHours >= 1)
-            return $"{(int)timeSpan.TotalHours}h {timeSpan.Minutes}m";
-        return $"{(int)timeSpan.TotalMinutes}m";
     }
 
     public async ValueTask DisposeAsync()
@@ -415,5 +471,18 @@
         public string CustomerName { get; set; } = string.Empty;
         public int PartySize { get; set; } = 2;
         public string Notes { get; set; } = string.Empty;
+        public bool PartyComplete { get; set; } = true;
     }
+
+    private Task OpenReservationEditModal(GetReservations.ReservationDto reservation)
+    {
+        selectedReservation = reservation;
+        return Task.CompletedTask;
+    }
+
+    private void OnPartySizeChanged(int value)
+    {
+        newReservation.PartyComplete = value < minPartySize;
+    }
+
 }

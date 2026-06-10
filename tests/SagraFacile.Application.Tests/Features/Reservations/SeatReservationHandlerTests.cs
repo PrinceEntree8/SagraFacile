@@ -33,7 +33,14 @@ public class SeatReservationHandlerTests
         Assert.Equal(ReservationStatus.Seated, reservation.Status);
         Assert.NotNull(reservation.SeatedAt);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
-        await _notifier.Received(1).NotifyReservationSeatedAsync(1, 1, Arg.Any<CancellationToken>());
+        await _notifier.Received(1).EnqueueStatusChangedAsync(
+            Arg.Is<ReservationStatusChangedNotification>(x =>
+                x.ReservationId == 1 &&
+                x.SequenceNumber == 1 &&
+                x.NewStatus == ReservationStatus.Seated &&
+                x.OldStatus == ReservationStatus.Called &&
+                x.CallCount == null),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -49,7 +56,9 @@ public class SeatReservationHandlerTests
         // Assert
         Assert.False(result.Success);
         await _repository.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
-        await _notifier.DidNotReceive().NotifyReservationSeatedAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await _notifier.DidNotReceive().EnqueueStatusChangedAsync(
+            Arg.Any<ReservationStatusChangedNotification>(),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -65,7 +74,9 @@ public class SeatReservationHandlerTests
         // Assert
         Assert.False(result.Success);
         await _repository.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
-        await _notifier.DidNotReceive().NotifyReservationSeatedAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await _notifier.DidNotReceive().EnqueueStatusChangedAsync(
+            Arg.Any<ReservationStatusChangedNotification>(),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -83,6 +94,8 @@ public class SeatReservationHandlerTests
         // Assert
         Assert.False(result.Success);
         Assert.Contains("modified by another user", result.Message);
-        await _notifier.DidNotReceive().NotifyReservationSeatedAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await _notifier.DidNotReceive().EnqueueStatusChangedAsync(
+            Arg.Any<ReservationStatusChangedNotification>(),
+            Arg.Any<CancellationToken>());
     }
 }

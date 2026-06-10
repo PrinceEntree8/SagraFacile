@@ -83,7 +83,7 @@ public class ReservationRepositoryTests
         await repo.AddAsync(new Reservation { EventId = EventId2, SequenceNumber = 1, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
-        var (items, total) = await repo.GetPagedAsync(EventId1, null, 1, 50, CancellationToken.None);
+        var (items, total) = await repo.GetPagedAsync(EventId1, null, 1, 50, ReservationStatusFilter.All, CancellationToken.None);
 
         Assert.Equal(1, total);
         Assert.All(items, r => Assert.Equal(EventId1, r.EventId));
@@ -103,7 +103,7 @@ public class ReservationRepositoryTests
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act — null status = default (exclude Seated + Voided)
-        var (items, total) = await repo.GetPagedAsync(EventId1, null, 1, 50, CancellationToken.None);
+        var (items, total) = await repo.GetPagedAsync(EventId1, null, 1, 50, ReservationStatusFilter.All, CancellationToken.None);
 
         // Assert
         Assert.Equal(2, total);
@@ -208,7 +208,7 @@ public class ReservationRepositoryTests
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act
-        var items = await repo.GetByDateRangeAsync(EventId1, null, null, CancellationToken.None);
+        var items = await repo.GetByDateRangeAsync(EventId1, null, null, ReservationStatusFilter.All, CancellationToken.None);
 
         // Assert — no filter returns all
         Assert.Equal(3, items.Count);
@@ -228,7 +228,7 @@ public class ReservationRepositoryTests
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act
-        var items = await repo.GetByDateRangeAsync(EventId1, cutoff, null, CancellationToken.None);
+        var items = await repo.GetByDateRangeAsync(EventId1, cutoff, null, ReservationStatusFilter.All, CancellationToken.None);
 
         // Assert
         Assert.Single(items);
@@ -249,7 +249,7 @@ public class ReservationRepositoryTests
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act
-        var items = await repo.GetByDateRangeAsync(EventId1, null, cutoff, CancellationToken.None);
+        var items = await repo.GetByDateRangeAsync(EventId1, null, cutoff, ReservationStatusFilter.All, CancellationToken.None);
 
         // Assert
         Assert.Single(items);
@@ -270,7 +270,7 @@ public class ReservationRepositoryTests
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act
-        var items = await repo.GetByDateRangeAsync(EventId1, now.AddDays(-5), now.AddDays(-2), CancellationToken.None);
+        var items = await repo.GetByDateRangeAsync(EventId1, now.AddDays(-5), now.AddDays(-2), ReservationStatusFilter.All, CancellationToken.None);
 
         // Assert
         Assert.Single(items);
@@ -291,7 +291,7 @@ public class ReservationRepositoryTests
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act
-        var items = await repo.GetByDateRangeAsync(EventId1, null, null, CancellationToken.None);
+        var items = await repo.GetByDateRangeAsync(EventId1, null, null, ReservationStatusFilter.All, CancellationToken.None);
 
         // Assert — ordered by CreatedAt ascending
         Assert.Equal(3, items.Count);
@@ -313,7 +313,7 @@ public class ReservationRepositoryTests
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act — explicit status "Seated"
-        var (items, total) = await repo.GetPagedAsync(EventId1, "Seated", 1, 50, CancellationToken.None);
+        var (items, total) = await repo.GetPagedAsync(EventId1, "Seated", 1, 50, ReservationStatusFilter.All, CancellationToken.None);
 
         // Assert
         Assert.Equal(1, total);

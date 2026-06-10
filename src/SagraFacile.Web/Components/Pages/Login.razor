@@ -23,15 +23,20 @@
                 <EditForm Model="loginModel" OnSubmit="HandleLogin" FormName="LoginForm">
                     <div class="mb-3">
                         <label class="form-label">@L["Login_Username"]</label>
-                        <InputText @bind-Value="loginModel.Username" class="form-control" placeholder="@L["Login_UsernamePlaceholder"]" autocomplete="username" />
+                        <InputText @bind-Value="loginModel.Username" class="form-control"
+                                   placeholder="@L["Login_UsernamePlaceholder"]" autocomplete="username"/>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">@L["Login_Password"]</label>
-                        <InputText @bind-Value="loginModel.Password" type="password" class="form-control" placeholder="@L["Login_PasswordPlaceholder"]" autocomplete="current-password" />
+                        <InputText @bind-Value="loginModel.Password" type="password" class="form-control"
+                                   placeholder="@L["Login_PasswordPlaceholder"]" autocomplete="current-password"/>
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary" disabled="@isLoading">
-                            @if (isLoading) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                            @if (isLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
                             @L["Login_Submit"]
                         </button>
                     </div>
@@ -42,13 +47,11 @@
 </div>
 
 @code {
-    [SupplyParameterFromForm]
-    private LoginModel loginModel { get; set; } = default!;
+    [SupplyParameterFromForm] private LoginModel loginModel { get; set; } = default!;
     private string errorMessage = string.Empty;
     private bool isLoading = false;
 
-    [CascadingParameter]
-    private HttpContext? HttpContext { get; set; }
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -66,6 +69,7 @@
             errorMessage = L["Login_UsernameRequired"];
             return;
         }
+
         if (string.IsNullOrWhiteSpace(loginModel.Password))
         {
             errorMessage = L["Login_PasswordRequired"];
@@ -91,6 +95,7 @@
         {
             errorMessage = L["Login_InvalidCredentials"];
         }
+
         isLoading = false;
     }
 
@@ -99,4 +104,5 @@
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
     }
+
 }

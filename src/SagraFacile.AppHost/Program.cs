@@ -11,6 +11,7 @@ var postgres = builder.AddPostgres("DefaultConnection")
 builder.AddProject<Projects.SagraFacile_Web>("web")
     .WithReference(postgres)
     .WaitFor(postgres)
+    .WithExternalHttpEndpoints()
     .WithEnvironment("AllowHttp", "true");
 
 builder.Build().Run();

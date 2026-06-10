@@ -2,6 +2,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
+@using SagraFacile.Web.Hubs
 @inject IMediator Mediator
 @inject NavigationManager Navigation
 @inject IStringLocalizer<SharedResource> L
@@ -250,8 +251,19 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadActiveEventOptions();
         await LoadAllCalledReservations();
         await InitializeSignalR();
+    }
+
+    private async Task LoadActiveEventOptions()
+    {
+        var activeEvent = await Mediator.QueryAsync(new GetActiveEvent.Query());
+        if (activeEvent?.ActiveEvent != null)
+        {
+            activeEventId = activeEvent.ActiveEvent.Id;
+            var options = await Mediator.QueryAsync(new GetEventAdditionalOptions.Query(activeEventId));
+        }
     }
 
     private async Task InitializeSignalR()
@@ -261,34 +273,7 @@
             .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.On<int, int, string, int>("ReservationCreated", async (id, sequenceNumber, name, size) =>
-        {
-            if (coverCountForSearch > 0)
-                await SearchBestFit();
-            else
-                await LoadAllCalledReservations();
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int, int, string, int, int>("ReservationCalled", async (id, sequenceNumber, customerName, partySize, callCount) =>
-        {
-            if (coverCountForSearch > 0)
-                await SearchBestFit();
-            else
-                await LoadAllCalledReservations();
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int, int>("ReservationVoided", async (id, sequenceNumber) =>
-        {
-            if (coverCountForSearch > 0)
-                await SearchBestFit();
-            else
-                await LoadAllCalledReservations();
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<int, int>("ReservationSeated", async (id, sequenceNumber) =>
+        hubConnection.On<ReservationStatusChangedNotification>(nameof(IReservationHubClient.ReservationStatusChanged), async _ =>
         {
             if (coverCountForSearch > 0)
                 await SearchBestFit();

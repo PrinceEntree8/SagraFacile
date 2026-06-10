@@ -59,7 +59,7 @@ public static class GetReservationReport
                 }
             }
 
-            var reservations = await _repository.GetByDateRangeAsync(query.EventId, startUtc, endUtc, cancellationToken);
+            var reservations = await _repository.GetByDateRangeAsync(query.EventId, startUtc, endUtc, ReservationStatusFilter.AllCompleted, cancellationToken);
 
             var reports = reservations.Select(r =>
             {
@@ -82,7 +82,7 @@ public static class GetReservationReport
             }).ToList();
 
             var waitTimes = reports
-                .Where(r => r.Status == ReservationStatus.Seated.ToString() && r.TotalWaitTime.HasValue)
+                .Where(r => r is { Status: nameof(ReservationStatus.Seated), TotalWaitTime: not null })
                 .Select(r => r.TotalWaitTime!.Value)
                 .ToList();
 

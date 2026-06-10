@@ -18,8 +18,15 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
     public Task<Reservation?> GetByIdAsync(int id, CancellationToken cancellationToken)
         => _db.Reservations.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
+    public Task<Reservation?> GetByIdWithEventAsync(int id, CancellationToken cancellationToken)
+        => _db.Reservations
+            .Include(r => r.Event)
+            .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+
     public Task<Reservation?> GetByEventAndSequenceAsync(int eventId, int sequenceNumber, CancellationToken cancellationToken)
-        => _db.Reservations.FirstOrDefaultAsync(r => r.EventId == eventId && r.SequenceNumber == sequenceNumber, cancellationToken);
+        => _db.Reservations
+            .Include(r => r.Event)
+            .FirstOrDefaultAsync(r => r.EventId == eventId && r.SequenceNumber == sequenceNumber, cancellationToken);
 
     public async Task<int> GetNextSequenceNumberAsync(int eventId, CancellationToken cancellationToken)
     {
@@ -31,17 +38,14 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
     }
 
     public async Task<(List<Reservation> Items, int TotalCount)> GetPagedAsync(
-        int eventId, string? status, int page, int pageSize, CancellationToken cancellationToken)
+        int eventId, int page, int pageSize, ReservationStatusFilter filter, CancellationToken cancellationToken)
     {
         var query = _db.Reservations.Where(r => r.EventId == eventId);
 
-        if (string.IsNullOrEmpty(status))
+        if (filter != ReservationStatusFilter.None)
         {
-            query = query.Where(r => r.Status != ReservationStatus.Seated && r.Status != ReservationStatus.Voided);
-        }
-        else if (Enum.TryParse<ReservationStatus>(status, ignoreCase: true, out var parsedStatus))
-        {
-            query = query.Where(r => r.Status == parsedStatus);
+            var statusFilter = filter.ToStatusArray();
+            query = query.Where(r => statusFilter.Contains(r.Status));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -61,7 +65,7 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
             .ToListAsync(cancellationToken);
 
     public async Task<List<Reservation>> GetByDateRangeAsync(
-        int? eventId, DateTime? startDateUtc, DateTime? endDateUtc, CancellationToken cancellationToken)
+        int? eventId, DateTime? startDateUtc, DateTime? endDateUtc, ReservationStatusFilter filter, CancellationToken cancellationToken)
     {
         var query = _db.Reservations.AsQueryable();
 

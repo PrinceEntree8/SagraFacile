@@ -1,8 +1,13 @@
 @page "/menu"
 @*@layout DisplayLayout*@
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.SignalR.Client
+@using SagraFacile.Domain.Features.Reservations
+@using SagraFacile.Web.Hubs
 @inject IMediator Mediator
+@inject NavigationManager Navigation
 @inject IStringLocalizer<SharedResource> L
+@implements IAsyncDisposable
 
 <PageTitle>@L["PublicMenu_PageTitle"]</PageTitle>
 
@@ -22,6 +27,36 @@
         <div class="text-center mb-4">
             <h1>🍽️ @activeEvent.Name</h1>
         </div>
+
+        <div class="text-center mb-4">
+            <a class="btn btn-outline-primary btn-lg" href="/">
+                @L["PublicMenu_GoToHome"]
+            </a>
+        </div>
+
+        <section class="card mb-4">
+            <div class="card-body">
+                <h2 class="h5 mb-3">@L["PublicMenu_LatestCalled"]</h2>
+                @if (initialLoadFailed)
+                {
+                    <div class="alert alert-warning mb-3" role="alert">
+                        @L["NowCalling_LoadWarning"]
+                    </div>
+                }
+                @if (latestCalled is null)
+                {
+                    <p class="text-muted mb-0">@L["PublicMenu_NoCalledYet"]</p>
+                }
+                else
+                {
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge bg-primary fs-6">#@latestCalled.SequenceNumber</span>
+                        <span class="fw-semibold">@latestCalled.CustomerName</span>
+                        <span class="text-muted"><i class="bi bi-people"></i> @latestCalled.PartySize</span>
+                    </div>
+                }
+            </div>
+        </section>
         
         @if (!string.IsNullOrWhiteSpace(menuDetails?.WarningMessage))
         {
@@ -93,6 +128,10 @@
     private List<GetEventMenu.MenuItemDto> items = new();
     private List<GetMenuCategories.CategoryDto> categories = new();
     private GetMenuDetails.MenuDetailsDto? menuDetails;
+    private CalledEntry? latestCalled;
+    private HubConnection? hubConnection;
+    private bool initialLoadFailed;
+    private const string CalledStatus = "Called";
 
     protected override async Task OnInitializedAsync()
     {
@@ -103,11 +142,104 @@
             var catTask = Mediator.QueryAsync(new GetMenuCategories.Query());
             var menuTask = Mediator.QueryAsync(new GetEventMenu.Query(activeEvent.Id, IncludeUnavailable: false));
             var detailsTask = Mediator.QueryAsync(new GetMenuDetails.Query(activeEvent.Id));
-            await Task.WhenAll(catTask, menuTask, detailsTask);
+            var latestCalledTask = LoadLatestCalledAsync(activeEvent.Id);
+            await Task.WhenAll(catTask, menuTask, detailsTask, latestCalledTask);
             categories = (await catTask).Categories;
             items = (await menuTask).Items;
             menuDetails = (await detailsTask).Details;
+            await InitializeSignalRAsync();
         }
         isLoading = false;
     }
+
+    private async Task LoadLatestCalledAsync(int eventId)
+    {
+        try
+        {
+            var result = await Mediator.QueryAsync(new GetReservations.Query(EventId: eventId, Page: 1, PageSize: 10, ReservationStatusFilter.Called));
+            var latest = result.Reservations
+                .Where(r => r.LastCalledAt.HasValue)
+                .OrderByDescending(r => r.LastCalledAt!.Value)
+                .FirstOrDefault();
+
+            latestCalled = latest is null
+                ? null
+                : new CalledEntry(latest.Id, latest.SequenceNumber, latest.CustomerName, latest.PartySize);
+        }
+        catch
+        {
+            initialLoadFailed = true;
+        }
+    }
+
+    private async Task InitializeSignalRAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/hubs/reservations"))
+            .WithAutomaticReconnect()
+            .Build();
+        
+        hubConnection.On<ReservationStatusChangedNotification>(
+            nameof(IReservationHubClient.ReservationStatusChanged),
+            async notification =>
+            {
+                if (notification.NewStatus != ReservationStatus.Called) return;
+                latestCalled = new CalledEntry(
+                    notification.ReservationId, 
+                    notification.SequenceNumber, 
+                    notification.CustomerName, 
+                    notification.PartySize);
+
+                await InvokeAsync(StateHasChanged);
+            });
+        
+        hubConnection.On<int, int, string, int, int>(
+            "ReservationCalled",
+            async (id, sequenceNumber, customerName, partySize, _) =>
+            {
+                latestCalled = new CalledEntry(id, sequenceNumber, customerName, partySize);
+                await InvokeAsync(StateHasChanged);
+            });
+
+        hubConnection.On<int, int>("ReservationVoided", async (id, _) =>
+        {
+            if (activeEvent is not null && latestCalled?.Id == id)
+            {
+                await LoadLatestCalledAsync(activeEvent.Id);
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        hubConnection.On<int, int>("ReservationSeated", async (id, _) =>
+        {
+            if (activeEvent is not null && latestCalled?.Id == id)
+            {
+                await LoadLatestCalledAsync(activeEvent.Id);
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        try
+        {
+            await hubConnection.StartAsync();
+            if (hubConnection.State == HubConnectionState.Connected)
+            {
+                await hubConnection.SendAsync("JoinReservationGroup", "NOW_CALLING");
+            }
+        }
+        catch
+        {
+            // No-op: page still works with initial snapshot if connection fails.
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+
+    private record CalledEntry(int Id, int SequenceNumber, string CustomerName, int PartySize);
 }

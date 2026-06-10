@@ -20,12 +20,12 @@ public class GetReservationReportHandlerTests
     [Fact]
     public async Task Handle_NoEventFilter_CallsRepositoryWithNulls()
     {
-        _repository.GetByDateRangeAsync(null, null, null, Arg.Any<CancellationToken>())
+        _repository.GetByDateRangeAsync(null, null, null, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>())
             .Returns(new List<Reservation>());
 
         var result = await _handler.Handle(new GetReservationReport.Query(), CancellationToken.None);
 
-        await _repository.Received(1).GetByDateRangeAsync(null, null, null, Arg.Any<CancellationToken>());
+        await _repository.Received(1).GetByDateRangeAsync(null, null, null, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>());
         Assert.Empty(result.Reports);
         Assert.Equal(0, result.Statistics.TotalPeople);
     }
@@ -37,7 +37,7 @@ public class GetReservationReportHandlerTests
         _eventRepository.GetByIdAsync(7, Arg.Any<CancellationToken>())
             .Returns(new Event { Id = 7, Date = eventDate, Name = "Sagra test" });
 
-        _repository.GetByDateRangeAsync(Arg.Any<int?>(), Arg.Any<DateTime?>(), Arg.Any<DateTime?>(), Arg.Any<CancellationToken>())
+        _repository.GetByDateRangeAsync(Arg.Any<int?>(), Arg.Any<DateTime?>(), Arg.Any<DateTime?>(), Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>())
             .Returns(new List<Reservation>());
 
         await _handler.Handle(new GetReservationReport.Query(7), CancellationToken.None);
@@ -45,8 +45,8 @@ public class GetReservationReportHandlerTests
         await _repository.Received(1).GetByDateRangeAsync(
             7,
             Arg.Is<DateTime?>(d => d == new DateTime(2026, 8, 20, 0, 0, 0, DateTimeKind.Utc)),
-            Arg.Is<DateTime?>(d => d == new DateTime(2026, 8, 20, 23, 59, 59, 999, DateTimeKind.Utc).AddTicks(9999)),
-            Arg.Any<CancellationToken>());
+            Arg.Is<DateTime?>(d => d == new DateTime(2026, 8, 20, 23, 59, 59, 999, DateTimeKind.Utc).AddTicks(9999)), 
+            Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public class GetReservationReportHandlerTests
                 VoidedAt = null, CallCount = 2
             },
         };
-        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<CancellationToken>()).Returns(reservations);
+        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>()).Returns(reservations);
 
         var result = await _handler.Handle(new GetReservationReport.Query(1), CancellationToken.None);
 
@@ -100,7 +100,7 @@ public class GetReservationReportHandlerTests
                 VoidedAt = now.AddMinutes(-5), CallCount = 0
             },
         };
-        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<CancellationToken>()).Returns(reservations);
+        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>()).Returns(reservations);
 
         var result = await _handler.Handle(new GetReservationReport.Query(1), CancellationToken.None);
 
@@ -120,7 +120,7 @@ public class GetReservationReportHandlerTests
                 Status = ReservationStatus.Waiting, CreatedAt = now.AddMinutes(-5), CallCount = 0
             },
         };
-        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<CancellationToken>()).Returns(reservations);
+        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>()).Returns(reservations);
 
         var result = await _handler.Handle(new GetReservationReport.Query(1), CancellationToken.None);
 
@@ -141,7 +141,7 @@ public class GetReservationReportHandlerTests
                 FirstCalledAt = now.AddMinutes(-5), CallCount = 1
             },
         };
-        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<CancellationToken>()).Returns(reservations);
+        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>()).Returns(reservations);
 
         var result = await _handler.Handle(new GetReservationReport.Query(1), CancellationToken.None);
 
@@ -159,7 +159,7 @@ public class GetReservationReportHandlerTests
                 Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow, CallCount = 0
             },
         };
-        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<CancellationToken>()).Returns(reservations);
+        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>()).Returns(reservations);
 
         var result = await _handler.Handle(new GetReservationReport.Query(1), CancellationToken.None);
 
@@ -183,7 +183,7 @@ public class GetReservationReportHandlerTests
                 Status = ReservationStatus.Called, CreatedAt = created, FirstCalledAt = firstCalled, CallCount = 1
             },
         };
-        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<CancellationToken>()).Returns(reservations);
+        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>()).Returns(reservations);
 
         var result = await _handler.Handle(new GetReservationReport.Query(1), CancellationToken.None);
 
@@ -204,7 +204,7 @@ public class GetReservationReportHandlerTests
             new() { Id = 2, EventId = 1, SequenceNumber = 2, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Seated, CreatedAt = now.AddMinutes(-20), SeatedAt = now.AddMinutes(-10), CallCount = 0 },
             new() { Id = 3, EventId = 1, SequenceNumber = 3, CustomerName = "C", PartySize = 3, Status = ReservationStatus.Seated, CreatedAt = now.AddMinutes(-30), SeatedAt = now.AddMinutes(-15), CallCount = 0 },
         };
-        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<CancellationToken>()).Returns(reservations);
+        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>()).Returns(reservations);
 
         var result = await _handler.Handle(new GetReservationReport.Query(1), CancellationToken.None);
 
@@ -222,7 +222,7 @@ public class GetReservationReportHandlerTests
             new() { Id = 1, EventId = 1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Seated, CreatedAt = now.AddMinutes(-10), SeatedAt = now.AddMinutes(-6), CallCount = 0 },
             new() { Id = 2, EventId = 1, SequenceNumber = 2, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Seated, CreatedAt = now.AddMinutes(-20), SeatedAt = now, CallCount = 0 },
         };
-        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<CancellationToken>()).Returns(reservations);
+        _repository.GetByDateRangeAsync(1, null, null, Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>()).Returns(reservations);
 
         var result = await _handler.Handle(new GetReservationReport.Query(1), CancellationToken.None);
 

@@ -22,7 +22,9 @@ builder.Services.AddRazorComponents()
 builder.Services.AddLocalization();
 
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<ReservationNotificationChannel>();
 builder.Services.AddScoped<IReservationNotifier, SignalRReservationNotifier>();
+builder.Services.AddHostedService<ReservationNotificationDispatcher>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Host=localhost;Port=5432;Database=sagrafacile;Username=postgres;Password=postgres";
@@ -63,6 +65,22 @@ builder.Services.AddAuthentication()
             ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "SagraFacile",
             ValidAudience = builder.Configuration["Jwt:Audience"] ?? "SagraFacile",
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    path.StartsWithSegments("/hubs/reservations"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
         };
     });
 

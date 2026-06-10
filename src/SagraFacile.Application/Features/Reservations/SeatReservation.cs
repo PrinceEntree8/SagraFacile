@@ -51,6 +51,7 @@ public static class SeatReservation
                     throw new ArgumentOutOfRangeException(nameof(reservation), reservation.Status, null);
             }
 
+            const ReservationStatus oldStatus = ReservationStatus.Called;
             reservation.Status = ReservationStatus.Seated;
             reservation.SeatedAt = DateTime.UtcNow;
 
@@ -63,10 +64,20 @@ public static class SeatReservation
                 return new Result(false, "This reservation was modified by another user. Please refresh and try again.");
             }
 
-            await _notifier.NotifyReservationSeatedAsync(reservation.Id, reservation.SequenceNumber, cancellationToken);
+            await _notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
+                reservation.Id,
+                reservation.SequenceNumber,
+                reservation.CustomerName,
+                reservation.PartySize,
+                NewStatus: ReservationStatus.Seated,
+                OldStatus: oldStatus,
+                CallCount: null
+            ), cancellationToken);
 
             var counters = await _repository.GetCountersAsync(reservation.EventId, cancellationToken);
-            await _notifier.NotifyCountersUpdatedAsync(counters, cancellationToken).ConfigureAwait(false);
+            await _notifier.EnqueueCountersUpdatedAsync(
+                new CountersUpdatedNotification(counters),
+                cancellationToken).ConfigureAwait(false);
 
             return new Result(true, $"Reservation {reservation.SequenceNumber} seated successfully");
         }
