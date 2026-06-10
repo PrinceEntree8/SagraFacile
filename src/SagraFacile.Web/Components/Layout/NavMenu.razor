@@ -87,17 +87,16 @@
                 </AuthorizeView>
 
             </div>
-            
-            @if (activeEvent is not null)
-            {
-                <span class="badge bg-light text-dark">@activeEvent.Name</span>
-            }
 
             <div class="navbar-nav ms-auto align-items-center gap-2">
+                @if (activeEvent is not null)
+                {
+                    <span class="float-end badge bg-light text-dark">@activeEvent.Name</span>
+                }
                 <AuthorizeView>
                     <Authorized>
                         <form method="post" action="/logout">
-                            <AntiforgeryToken />
+                            <AntiforgeryToken/>
                             <button type="submit" class="btn btn-outline-light btn-sm">
                                 @L["Nav_Logout"]
                             </button>
