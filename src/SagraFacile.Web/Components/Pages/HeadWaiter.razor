@@ -251,8 +251,19 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadActiveEventOptions();
         await LoadAllCalledReservations();
         await InitializeSignalR();
+    }
+
+    private async Task LoadActiveEventOptions()
+    {
+        var activeEvent = await Mediator.QueryAsync(new GetActiveEvent.Query());
+        if (activeEvent?.ActiveEvent != null)
+        {
+            activeEventId = activeEvent.ActiveEvent.Id;
+            var options = await Mediator.QueryAsync(new GetEventAdditionalOptions.Query(activeEventId));
+        }
     }
 
     private async Task InitializeSignalR()
