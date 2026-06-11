@@ -165,7 +165,7 @@ app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapControllers();
-app.MapHub<ReservationHub>("/hubs/reservations").DisableAntiforgery();
+app.MapHub<ReservationHub>("/hubs/reservations");
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
