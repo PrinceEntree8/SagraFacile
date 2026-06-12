@@ -103,7 +103,7 @@ public class ReservationRepositoryTests
         await repo.SaveChangesAsync(CancellationToken.None);
 
         // Act — null status = default (exclude Seated + Voided)
-        var (items, total) = await repo.GetPagedAsync(EventId1, 1, 50, ReservationStatusFilter.All, CancellationToken.None);
+        var (items, total) = await repo.GetPagedAsync(EventId1, 1, 50, ReservationStatusFilter.Default, CancellationToken.None);
 
         // Assert
         Assert.Equal(2, total);
