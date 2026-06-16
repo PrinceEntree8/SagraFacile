@@ -231,7 +231,7 @@ dotnet test
 - **Backend**: ASP.NET Core 10, Blazor Server & WebAssembly
 - **Database**: PostgreSQL 17 with Entity Framework Core
 - **Real-time**: SignalR
-- **Patterns**: CQRS with Wolverine, Vertical Slice Architecture
+- **Patterns**: CQRS, Vertical Slice Architecture
 - **Validation**: FluentValidation
 - **Containerization**: Docker & Docker Compose
 
