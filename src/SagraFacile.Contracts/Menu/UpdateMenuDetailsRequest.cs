@@ -1,0 +1,2 @@
+namespace SagraFacile.Contracts.Menu;
+
