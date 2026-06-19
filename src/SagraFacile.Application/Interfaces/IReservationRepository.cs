@@ -1,4 +1,5 @@
 using SagraFacile.Application.Features.Reservations;
+using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Features.Reservations;
 
 namespace SagraFacile.Application.Interfaces;
@@ -14,7 +15,7 @@ public interface IReservationRepository
     Task<List<Reservation>> GetCalledReservationsOrderedByCreatedAtAsync(int eventId, CancellationToken cancellationToken = default);
     Task<List<Reservation>> GetByDateRangeAsync(
         int? eventId, DateTime? startDateUtc, DateTime? endDateUtc, ReservationStatusFilter filter, CancellationToken cancellationToken = default);
-    Task<List<GetCounters.ReservationCounter>> GetCountersAsync(int eventId, CancellationToken cancellationToken = default);
+    Task<List<ReservationCounterDto>> GetCountersAsync(int eventId, CancellationToken cancellationToken = default);
     Task AddAsync(Reservation reservation, CancellationToken cancellationToken = default);
     Task AddCallAsync(ReservationCall call, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);

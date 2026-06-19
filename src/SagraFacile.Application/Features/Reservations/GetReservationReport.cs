@@ -59,7 +59,12 @@ public static class GetReservationReport
                 }
             }
 
-            var reservations = await _repository.GetByDateRangeAsync(query.EventId, startUtc, endUtc, ReservationStatusFilter.AllCompleted, cancellationToken);
+            var reservations = await _repository.GetByDateRangeAsync(
+                query.EventId, 
+                startUtc, 
+                endUtc, 
+                ReservationStatusFilter.AllCompleted, 
+                cancellationToken);
 
             var reports = reservations.Select(r =>
             {

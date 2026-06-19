@@ -3,6 +3,7 @@ using NSubstitute.ExceptionExtensions;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Features.Reservations;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Features.Reservations;
 
 namespace SagraFacile.Application.Tests.Features.Reservations;

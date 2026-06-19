@@ -2,14 +2,16 @@ using FluentValidation;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Common;
+using SagraFacile.Contracts.Reservations;
+using SagraFacile.Domain.Extensions;
 using SagraFacile.Domain.Features.Reservations;
 
 namespace SagraFacile.Application.Features.Reservations;
 
 public static class SeatReservation
 {
-    public record Command(int ReservationId) : ICommand<Result>;
-    public record Result(bool Success, string Message);
+    public record Command(int ReservationId) : ICommand<CommandResult>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -19,32 +21,25 @@ public static class SeatReservation
         }
     }
 
-    public class Handler : ICommandHandler<Command, Result>
+    public class Handler(IReservationRepository repository, IReservationNotifier notifier)
+        : ICommandHandler<Command, CommandResult>
     {
-        private readonly IReservationRepository _repository;
-        private readonly IReservationNotifier _notifier;
 
-        public Handler(IReservationRepository repository, IReservationNotifier notifier)
+        public async Task<CommandResult> Handle(Command command, CancellationToken cancellationToken)
         {
-            _repository = repository;
-            _notifier = notifier;
-        }
-
-        public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
-        {
-            var reservation = await _repository.GetByIdAsync(command.ReservationId, cancellationToken);
+            var reservation = await repository.GetByIdAsync(command.ReservationId, cancellationToken);
 
             if (reservation == null)
-                return new Result(false, "Reservation not found");
+                return new CommandResult(false, "Reservation not found");
 
             switch (reservation.Status)
             {
                 case ReservationStatus.Voided:
-                    return new Result(false, "Cannot seat a voided reservation");
+                    return new CommandResult(false, "Cannot seat a voided reservation");
                 case ReservationStatus.Waiting:
-                    return new Result(false, "Cannot seat a waiting reservation");
+                    return new CommandResult(false, "Cannot seat a waiting reservation");
                 case ReservationStatus.Seated:
-                    return new Result(false, "Reservation is already seated");
+                    return new CommandResult(false, "Reservation is already seated");
                 case ReservationStatus.Called:
                     break;
                 default:
@@ -57,29 +52,32 @@ public static class SeatReservation
 
             try
             {
-                await _repository.SaveChangesAsync(cancellationToken);
+                await repository.SaveChangesAsync(cancellationToken);
             }
             catch (RepositoryConcurrencyException)
             {
-                return new Result(false, "This reservation was modified by another user. Please refresh and try again.");
+                return new CommandResult(false, "This reservation was modified by another user. Please refresh and try again.");
             }
-
-            await _notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
+            
+            notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
                 reservation.Id,
                 reservation.SequenceNumber,
                 reservation.CustomerName,
                 reservation.PartySize,
-                NewStatus: ReservationStatus.Seated,
+                NewStatus: reservation.Status,
                 OldStatus: oldStatus,
-                CallCount: null
-            ), cancellationToken);
+                CallCount: reservation.CallCount
+            ), cancellationToken).Forget();
 
-            var counters = await _repository.GetCountersAsync(reservation.EventId, cancellationToken);
-            await _notifier.EnqueueCountersUpdatedAsync(
+            var counters = (await repository.GetCountersAsync(reservation.EventId, cancellationToken))
+                .Select(x => new ReservationCounterDto(x.Status, x.Count, x.TotalPeople))
+                .ToList();
+            
+            notifier.EnqueueCountersUpdatedAsync(
                 new CountersUpdatedNotification(counters),
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken).Forget();
 
-            return new Result(true, $"Reservation {reservation.SequenceNumber} seated successfully");
+            return new CommandResult(true, $"Reservation {reservation.SequenceNumber} seated successfully");
         }
     }
 }

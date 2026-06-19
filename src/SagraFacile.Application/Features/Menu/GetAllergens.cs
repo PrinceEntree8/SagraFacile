@@ -1,5 +1,6 @@
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Menu;
 
 namespace SagraFacile.Application.Features.Menu;
 
@@ -7,7 +8,6 @@ public static class GetAllergens
 {
     public record Query() : IQuery<Result>;
     public record Result(List<AllergenDto> Allergens);
-    public record AllergenDto(int Id, string Code, string Icon);
 
     public class Handler : IQueryHandler<Query, Result>
     {

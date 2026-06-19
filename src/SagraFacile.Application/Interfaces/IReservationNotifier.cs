@@ -1,4 +1,4 @@
-using SagraFacile.Application.Features.Reservations;
+using SagraFacile.Contracts.Reservations;
 
 namespace SagraFacile.Application.Interfaces;
 
@@ -10,9 +10,9 @@ public interface IReservationNotifier
 {
     ValueTask EnqueueStatusChangedAsync(
         ReservationStatusChangedNotification notification,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken = default);
 
     ValueTask EnqueueCountersUpdatedAsync(
         CountersUpdatedNotification notification,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken = default);
 }

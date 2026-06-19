@@ -1,5 +1,6 @@
 using SagraFacile.Application.Features.Reservations;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Reservations;
 
 namespace SagraFacile.Web.Hubs;
 

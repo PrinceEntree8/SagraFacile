@@ -1,14 +1,22 @@
 using FluentValidation;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Common;
+using SagraFacile.Contracts.Reservations;
+using SagraFacile.Domain.Extensions;
 using SagraFacile.Domain.Features.Reservations;
 
 namespace SagraFacile.Application.Features.Reservations;
 
 public static class EditReservation
 {
-    public record Command(int Id, string? CustomerName = null, int? PartySize = null, string? Notes = null, ReservationStatus? Status = null) : ICommand<Result>;
-    public record Result(bool Success, string Message);
+    public record Command(
+        int Id,
+        string? CustomerName = null,
+        int? PartySize = null,
+        string? Notes = null,
+        ReservationStatus? Status = null
+    ) : ICommand<CommandResult>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -29,16 +37,18 @@ public static class EditReservation
     }
     
     public class Handler(IReservationRepository repository, IReservationNotifier notifier)
-        : ICommandHandler<Command, Result>
+        : ICommandHandler<Command, CommandResult>
     {
-        public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
+        public async Task<CommandResult> Handle(Command command, CancellationToken cancellationToken)
         {
             var reservation = await repository.GetByIdAsync(command.Id, cancellationToken);
-
+            
             if (reservation == null)
             {
-                return new Result(false, "Failed to update reservation");
+                return new CommandResult(false, Message: "Failed to update reservation");
             }
+            
+            var oldStatus = reservation.Status;
 
             if (command.PartySize.HasValue)
             {
@@ -61,16 +71,26 @@ public static class EditReservation
             }
             
             await repository.SaveChangesAsync(cancellationToken);
-            await notifier.EnqueueStatusChangedAsync(
-                new ReservationStatusChangedNotification(
-                    reservation.Id,
-                    reservation.SequenceNumber,
-                    reservation.CustomerName,
-                    reservation.PartySize,
-                    reservation.Status
-                ), cancellationToken);
             
-            return new Result(true, $"Reservation {reservation.Id} has been updated");
+            notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
+                reservation.Id,
+                reservation.SequenceNumber,
+                reservation.CustomerName,
+                reservation.PartySize,
+                NewStatus: reservation.Status,
+                OldStatus: oldStatus,
+                CallCount: reservation.CallCount
+            ), cancellationToken).Forget();
+
+            var counters = (await repository.GetCountersAsync(reservation.EventId, cancellationToken))
+                .Select(x => new ReservationCounterDto(x.Status, x.Count, x.TotalPeople))
+                .ToList();
+            
+            notifier.EnqueueCountersUpdatedAsync(
+                new CountersUpdatedNotification(counters),
+                cancellationToken).Forget();
+            
+            return new CommandResult(true, $"Reservation {reservation.Id} has been updated");
         }
     }
 }

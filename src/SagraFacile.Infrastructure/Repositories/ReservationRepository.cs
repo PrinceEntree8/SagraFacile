@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Features.Reservations;
 using SagraFacile.Infrastructure.Data;
 
@@ -11,9 +12,15 @@ namespace SagraFacile.Infrastructure.Repositories;
 public class ReservationRepository : IReservationRepository, IAsyncDisposable
 {
     private readonly ApplicationDbContext _db;
+    private readonly IReservationNotifier _notifier;
 
-    public ReservationRepository(IDbContextFactory<ApplicationDbContext> factory)
-        => _db = factory.CreateDbContext();
+    public ReservationRepository(
+        IDbContextFactory<ApplicationDbContext> factory,
+        IReservationNotifier notifier)
+    {
+        _db = factory.CreateDbContext();
+        _notifier = notifier;
+    }
 
     public Task<Reservation?> GetByIdAsync(int id, CancellationToken cancellationToken)
         => _db.Reservations.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
@@ -81,12 +88,12 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
         return await query.OrderBy(r => r.CreatedAt).ToListAsync(cancellationToken);
     }
 
-    public async Task<List<GetCounters.ReservationCounter>> GetCountersAsync(int eventId, CancellationToken cancellationToken)
+    public async Task<List<ReservationCounterDto>> GetCountersAsync(int eventId, CancellationToken cancellationToken)
     {
         return await _db.Reservations
             .Where(r => r.EventId == eventId)
             .GroupBy(r => r.Status)
-            .Select(g => new GetCounters.ReservationCounter(
+            .Select(g => new ReservationCounterDto(
                 g.Key.ToString(),
                 g.Count(),
                 g.Sum(r => r.PartySize)
@@ -112,7 +119,7 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
         {
             throw new RepositoryConcurrencyException();
         }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23505")
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" })
         {
             throw new RepositoryUniqueConstraintException("A unique constraint violation occurred.", ex);
         }

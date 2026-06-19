@@ -1,47 +1,44 @@
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Common;
+using SagraFacile.Contracts.Reservations;
 
 namespace SagraFacile.Application.Features.Reservations;
 
 public static class GetBestFitReservation
 {
-    public record Query(int EventId, int TableCoverCount) : IQuery<Result>;
-    public record Result(List<ReservationMatchDto> Matches);
-    public record ReservationMatchDto(
-        int Id,
-        int SequenceNumber,
-        string CustomerName,
-        int PartySize,
-        string? Notes,
-        DateTime CreatedAt,
-        TimeSpan WaitingTime,
-        int CallCount,
-        DateTime? LastCalledAt,
-        string MatchQuality);
+    public record Query(int EventId, int TableCoverCount) : IQuery<IList<ReservationMatchDto>>;
 
-    public class Handler : IQueryHandler<Query, Result>
+    public class Handler : IQueryHandler<Query, IList<ReservationMatchDto>>
     {
         private readonly IReservationRepository _repository;
 
         public Handler(IReservationRepository repository) => _repository = repository;
 
-        public async Task<Result> Handle(Query query, CancellationToken cancellationToken)
+        public async Task<IList<ReservationMatchDto>> Handle(Query query, CancellationToken cancellationToken)
         {
             var now = DateTime.UtcNow;
             var reservations = await _repository.GetCalledReservationsOrderedByCreatedAtAsync(query.EventId, cancellationToken);
-            var matches = new List<ReservationMatchDto>();
 
             // If coverCount is 0, return ALL Called reservations without filtering
             if (query.TableCoverCount == 0)
             {
-                foreach (var r in reservations)
-                {
-                    matches.Add(new ReservationMatchDto(
-                        r.Id, r.SequenceNumber, r.CustomerName, r.PartySize, r.Notes,
-                        r.CreatedAt, now - r.CreatedAt, r.CallCount, r.LastCalledAt, "All"));
-                }
-                return new Result(matches);
+                return reservations.Select(r => new ReservationMatchDto(
+                    r.Id,
+                    r.SequenceNumber,
+                    r.CustomerName,
+                    r.PartySize,
+                    r.Notes,
+                    r.CreatedAt,
+                    now - r.CreatedAt,
+                    r.CallCount,
+                    r.LastCalledAt,
+                    "All"
+                    ))
+                    .ToList();
             }
+
+            var matches = new List<ReservationMatchDto>();
 
             foreach (var r in reservations)
             {
@@ -73,7 +70,7 @@ public static class GetBestFitReservation
                 .ThenBy(m => m.CreatedAt)
                 .ToList();
 
-            return new Result(sorted);
+            return sorted;
         }
 
         private static int MatchQualityOrder(string quality) => quality switch

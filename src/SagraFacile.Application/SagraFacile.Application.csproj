@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\SagraFacile.Contracts\SagraFacile.Contracts.csproj" />
     <ProjectReference Include="..\SagraFacile.Domain\SagraFacile.Domain.csproj" />
   </ItemGroup>
 
