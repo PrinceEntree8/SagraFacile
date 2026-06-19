@@ -1,0 +1,127 @@
+@inject IStringLocalizer<SharedResource> L
+@inject IReservationService ReservationService
+@inject IJSRuntime JS
+
+<div class="modal fade" id="reservationEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">@L["ReservationEdit_ModalTitle"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                @if (_editReservation is not null)
+                {
+                    <div class="modal-body">
+                        <EditForm Model="@_editReservation" OnValidSubmit="@SaveReservationAsync">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <strong># @(Reservation?.SequenceNumber ?? 0)</strong>
+                                <span class="badge @Reservation?.Status">
+                                    @L["Reservation_Status_" + _editReservation.Status]
+                                </span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="reservationName">@L["Receptionist_CustomerName"]</label>
+                                <InputText id="reservationName"
+                                           class="form-control"
+                                           @bind-Value="_editReservation.CustomerName"
+                                           autocomplete="off"/>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label"
+                                       for="reservationPartySize">@L["Receptionist_PartySize"]</label>
+                                <InputNumber id="reservationPartySize"
+                                             class="form-control"
+                                             @bind-Value="_editReservation.PartySize"/>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="reservationStatus">Status</label>
+                                <InputSelect id="reservationStatus"
+                                             class="form-select"
+                                             @bind-Value="_editReservation.Status">
+                                    <option value="Waiting">@L["Reservation_Status_Waiting"]</option>
+                                    <option value="PartyCompleted">@L["Reservation_Status_PartyCompleted"]</option>
+                                    <option value="Called">@L["Reservation_Status_Called"]</option>
+                                    <option value="Seated">@L["Reservation_Status_Seated"]</option>
+                                    <option value="Voided">@L["Reservation_Status_Voided"]</option>
+                                </InputSelect>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="reservationNotes">@L["Receptionist_Notes"]</label>
+                                <InputTextArea id="reservationNotes"
+                                               class="form-control"
+                                               rows="3"
+                                               @bind-Value="_editReservation.Notes"/>
+                            </div>
+                            
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">
+                                    @L["Common_Save"]
+                                </button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    @L["Common_Close"]
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+@code {
+
+    [Parameter]
+    public required ReservationDto? Reservation
+    {
+        get;
+        set
+        {
+            field = value;
+            _editReservation = value is not null
+                ? new EditReservationModel()
+                {
+                    Id = value.Id,
+                    CustomerName = value.CustomerName,
+                    Notes = value.Notes ?? string.Empty,
+                    PartySize = value.PartySize,
+                    Status = value.Status
+                }
+                : new EditReservationModel();
+        }
+    }
+
+    private EditReservationModel? _editReservation;
+
+    private async Task SaveReservationAsync(EditContext arg)
+    {
+        if (arg.Model is not EditReservationModel reservation)
+        {
+            return;
+        }
+
+        await ReservationService.EditAsync(
+            reservation.Id,
+            new EditReservationRequest(reservation.CustomerName, reservation.PartySize, reservation.Notes),
+            CancellationToken.None);
+    }
+
+    private sealed record EditReservationModel
+    {
+        public int Id { get; init; }
+        public string CustomerName { get; set; } = string.Empty;
+        public int PartySize { get; set; }
+        public string Notes { get; set; } = string.Empty;
+        public string Status { get; set; } = "Waiting";
+    }
+
+}

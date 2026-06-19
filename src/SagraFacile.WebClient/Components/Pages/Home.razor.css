@@ -1,0 +1,25 @@
+.home-menu-button {
+    min-width: 220px;
+}
+
+.home-last-called-card {
+    border-left: 0.35rem solid var(--bs-primary);
+}
+
+.home-latest-list .list-group-item {
+    gap: 1rem;
+}
+
+.home-entry-queue {
+    font-weight: 700;
+    min-width: 4.5rem;
+}
+
+.home-entry-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.home-entry-party {
+    white-space: nowrap;
+}

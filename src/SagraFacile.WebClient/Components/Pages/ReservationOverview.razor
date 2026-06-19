@@ -1,0 +1,179 @@
+@page "/reservation-overview"
+@attribute [Authorize(Roles = "Admin,Supervisore")]
+@using Microsoft.AspNetCore.SignalR.Client
+@using SagraFacile.Domain.Features.Reservations
+@using SagraFacile.WebClient.Components.Modals
+@using SagraFacile.WebClient.Extensions
+@inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> L
+@inject IEventService EventService
+@inject IReservationService ReservationService
+@implements IAsyncDisposable
+
+<PageTitle>@L["ReservationOverview_PageTitle"]</PageTitle>
+
+<h1 class="mb-3">@L["ReservationOverview_Title"]</h1>
+
+@if (isLoading)
+{
+    <p><em>@L["ReservationOverview_Loading"]</em></p>
+}
+else if (activeEvent is null)
+{
+    <p><em>@L["ReservationOverview_NoActiveEvent"]</em></p>
+}
+else if (reservations.Count == 0)
+{
+    <p><em>@L["Receptionist_NoReservations"]</em></p>
+}
+else
+{
+    <div class="row row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-8 g-2">
+        @foreach (var reservation in reservations)
+        {
+            <div class="col">
+                <div class="overview-cell @reservation.Status.GetStatusClass()"
+                     @onclick="() => SelectReservation(reservation)"
+                     data-bs-toggle="modal"
+                     data-bs-target="#reservationDetailModal"
+                     role="button">
+                    <span class="seq">@reservation.SequenceNumber</span>
+                    <span class="d-none d-xl-inline name">@reservation.CustomerName</span>
+                    <span class="party badge bg-light text-dark">
+                        <i class="bi bi-people"></i> @reservation.PartySize
+                    </span>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<ViewReservationModal Reservation="selectedReservation"/>
+
+@code {
+    // TODO: raise some exception in the backend
+
+    private HubConnection? hubConnection;
+    private EventDto? activeEvent;
+    private readonly List<ReservationDto> reservations = [];
+    private ReservationDto? selectedReservation;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        activeEvent = await EventService.GetActiveEventAsync();
+
+        if (activeEvent is not null)
+        {
+            var result = await ReservationService.GetReservationsAsync(activeEvent.Id, nameof(ReservationStatusFilter.Active), 1, 1000);
+            reservations.Clear();
+            reservations.AddRange(result.Reservations.OrderBy(r => r.SequenceNumber));
+            await InitializeSignalRAsync();
+        }
+
+        isLoading = false;
+    }
+
+    private async Task InitializeSignalRAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/hubs/reservations"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On<ReservationStatusChangedNotification>(nameof(IReservationHubClient.ReservationStatusChanged), async r =>
+        {
+            Console.WriteLine($"{nameof(IReservationHubClient.ReservationStatusChanged)}: {r}");
+            switch (r.NewStatus)
+            {
+                case ReservationStatus.Waiting:
+                    reservations.RemoveAll(a => a.Id == r.ReservationId);
+                    reservations.Insert(reservations.Count, CreateReservationDto(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString()));
+                    break;
+                case ReservationStatus.Called:
+                case ReservationStatus.Seated:
+                case ReservationStatus.PartyCompleted:
+                    PatchReservationStatus(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString());
+                    break;
+                case ReservationStatus.Voided:
+                    reservations.RemoveAll(a => a.Id == r.ReservationId);
+                    break;
+
+                case ReservationStatus.None:
+                    break;
+                case ReservationStatus.Left:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        try
+        {
+            await hubConnection.StartAsync();
+        }
+        catch
+        {
+            // No-op: page still works with initial snapshot if connection fails.
+        }
+    }
+
+    private void SelectReservation(ReservationDto reservation)
+    {
+        selectedReservation = reservation;
+        StateHasChanged();
+    }
+
+    private static ReservationDto CreateReservationDto(int id, int sequenceNumber, string customerName, int partySize, string status)
+    {
+        var now = DateTime.UtcNow;
+        DateTime? calledAt = status == "Called" ? now : null;
+
+        return new ReservationDto(
+            id,
+            sequenceNumber,
+            customerName,
+            partySize,
+            status,
+            null,
+            now,
+            calledAt,
+            calledAt,
+            calledAt is null ? 0 : 1,
+            TimeSpan.Zero,
+            calledAt is null ? null : TimeSpan.Zero);
+    }
+
+    private void PatchReservationStatus(int id, int? sequenceNumber, string? customerName, int? partySize, string status)
+    {
+        var index = reservations.FindIndex(r => r.Id == id);
+        if (index < 0)
+        {
+            if (sequenceNumber.HasValue && customerName is not null && partySize.HasValue)
+            {
+                reservations.Insert(0, CreateReservationDto(id, sequenceNumber.Value, customerName, partySize.Value, status));
+            }
+
+            return;
+        }
+
+        var current = reservations[index];
+        reservations[index] = current with { Status = status };
+
+        if (selectedReservation?.Id == id)
+        {
+            selectedReservation = reservations[index];
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+
+}
