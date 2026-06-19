@@ -1,0 +1,21 @@
+2026-06-18 08:37:15.646 +02:00 [INF] [ThreadId:5] NBomber 5.8.2 started a new session: 2026-06-18_06.37.57_session_f626d5d8
+2026-06-18 08:37:15.673 +02:00 [INF] [ThreadId:5] NBomber started as single node
+2026-06-18 08:37:15.675 +02:00 [INF] [ThreadId:5] License validation....
+2026-06-18 08:37:15.675 +02:00 [WRN] [ThreadId:5] THIS VERSION IS FREE ONLY FOR PERSONAL USE. You can't use it for an organization.
+2026-06-18 08:37:15.685 +02:00 [INF] [ThreadId:5] Reports folder: /Users/edoardomacri/repos/SagraFacile/tests/SagraFacile.Tests.Smoke/bin/Debug/net10.0/reports
+2026-06-18 08:37:15.685 +02:00 [INF] [ThreadId:5] Plugins: no plugins were loaded
+2026-06-18 08:37:15.685 +02:00 [INF] [ThreadId:5] Reporting sinks: no reporting sinks were loaded
+2026-06-18 08:37:15.685 +02:00 [INF] [ThreadId:5] Starting init...
+2026-06-18 08:37:15.689 +02:00 [INF] [ThreadId:5] Target scenarios: signalr_listeners, reservation_lifecycle
+2026-06-18 08:37:15.690 +02:00 [INF] [ThreadId:5] Start init scenario: signalr_listeners
+2026-06-18 08:37:15.694 +02:00 [INF] [ThreadId:5] Init finished
+2026-06-18 08:37:15.702 +02:00 [INF] [ThreadId:5] Starting warm up...
+2026-06-18 08:37:15.703 +02:00 [INF] [ThreadId:5] Warm up for scenarios: signalr_listeners, reservation_lifecycle
+2026-06-18 08:37:15.704 +02:00 [INF] [ThreadId:5] Warm up duration: 00:00:30
+2026-06-18 08:37:46.756 +02:00 [INF] [ThreadId:8] Starting bombing...
+2026-06-18 08:38:18.797 +02:00 [INF] [ThreadId:29] Waiting on scenarios completion...
+2026-06-18 08:38:19.839 +02:00 [WRN] [ThreadId:25] Stopping test early: stop command activated by CLI
+2026-06-18 08:38:22.806 +02:00 [INF] [ThreadId:25] Calculating final statistics...
+2026-06-18 08:38:22.808 +02:00 [INF] [ThreadId:8] Start cleaning scenario: signalr_listeners
+2026-06-18 08:38:23.096 +02:00 [INF] [ThreadId:18] Reports saved in folder: /Users/edoardomacri/repos/SagraFacile/tests/SagraFacile.Tests.Smoke/reports
+2026-06-18 08:38:23.096 +02:00 [WRN] [ThreadId:18] THIS VERSION IS FREE ONLY FOR PERSONAL USE. You can't use it for an organization.
