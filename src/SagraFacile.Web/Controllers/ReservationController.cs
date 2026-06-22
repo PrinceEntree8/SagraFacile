@@ -41,6 +41,32 @@ public class ReservationController(IMediator mediator) : ControllerBase
         });
     }
 
+        [HttpGet("last-called")]
+        [AllowAnonymous]
+    public async Task<IActionResult> Get(
+        [FromQuery] int eventId,
+        CancellationToken ct = default)
+    {
+        var result = await mediator.QueryAsync(new GetReservations.Query(eventId, 1, 10, ReservationStatusFilter.Called), ct);
+        return Ok(new
+        {
+            Reservations = result.Reservations.Select(r => new ReservationDto(
+                r.Id,
+                r.SequenceNumber,
+                r.CustomerName,
+                r.PartySize,
+                r.Status,
+                r.Notes,
+                r.CreatedAt,
+                r.FirstCalledAt,
+                r.LastCalledAt,
+                r.CallCount,
+                r.WaitingTime,
+                r.TimeSinceLastCall)),
+            result.TotalCount
+        });
+    }
+
     [HttpGet("counters")]
     public async Task<IActionResult> GetCounters([FromQuery] int eventId, CancellationToken ct)
     {

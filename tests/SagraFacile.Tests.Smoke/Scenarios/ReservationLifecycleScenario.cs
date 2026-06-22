@@ -94,7 +94,7 @@ public static class ReservationLifecycleScenario
                 ),
                 Simulation.Inject(
                     rate: config.CreateRatePerMinute,
-                    interval: TimeSpan.FromSeconds(10),
+                    interval: TimeSpan.FromSeconds(30),
                     during: duration > warmup ? duration - warmup : TimeSpan.Zero)
                 );
     }

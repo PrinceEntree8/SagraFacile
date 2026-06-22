@@ -99,7 +99,7 @@
     {
         try
         {
-            var result = await ReservationService.GetReservationsAsync(eventId, nameof(ReservationStatusFilter.Called), 1, MaxEntries);
+            var result = await ReservationService.GetLastCalledReservationsAsync(eventId);
             var sorted = result.Reservations
                 .Where(r => r.LastCalledAt.HasValue)
                 .OrderByDescending(r => r.LastCalledAt!.Value)

@@ -19,6 +19,7 @@ var webclient = builder.AddProject<Projects.SagraFacile_WebClient>("webclient")
     .WaitFor(api);
 
 var gateway = builder.AddYarp("gateway")
+    .WithHostPort(5100)
     .WithConfiguration(yarp =>
     {
         yarp.AddRoute(webclient);
