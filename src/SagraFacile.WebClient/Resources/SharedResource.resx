@@ -190,6 +190,7 @@
     <data name="Receptionist_ColCalls" xml:space="preserve"><value>Calls</value></data>
     <data name="Receptionist_ColActions" xml:space="preserve"><value>Actions</value></data>
     <data name="Receptionist_ActionCall" xml:space="preserve"><value>Call</value></data>
+    <data name="Receptionist_ActionSeat" xml:space="preserve"><value>Seat</value></data>
     <data name="Receptionist_ActionVoid" xml:space="preserve"><value>Void</value></data>
     <data name="Receptionist_LastCall" xml:space="preserve"><value>Last call: {0}</value></data>
     <data name="Receptionist_ToBeSeated" xml:space="preserve"><value>To Be Seated</value></data>

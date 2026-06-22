@@ -185,6 +185,7 @@
   <data name="Receptionist_ColCalls" xml:space="preserve"><value>Chiamate</value></data>
   <data name="Receptionist_ColActions" xml:space="preserve"><value>Azioni</value></data>
   <data name="Receptionist_ActionCall" xml:space="preserve"><value>Chiama</value></data>
+  <data name="Receptionist_ActionSeat" xml:space="preserve"><value>Accomoda</value></data>
   <data name="Receptionist_ActionVoid" xml:space="preserve"><value>Annulla</value></data>
   <data name="Receptionist_LastCall" xml:space="preserve"><value>Ultima chiamata: {0}</value></data>
   <data name="Receptionist_ToBeSeated" xml:space="preserve"><value>Da Sedere</value></data>

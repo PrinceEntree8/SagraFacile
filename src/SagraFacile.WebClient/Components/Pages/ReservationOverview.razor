@@ -1,6 +1,7 @@
 @page "/reservation-overview"
 @attribute [Authorize(Roles = "Admin,Supervisore")]
 @using SagraFacile.Domain.Features.Reservations
+@using SagraFacile.WebClient.Components.Buttons
 @using SagraFacile.WebClient.Components.Modals
 @using SagraFacile.WebClient.Extensions
 @inject IStringLocalizer<SharedResource> L
@@ -47,7 +48,12 @@ else
     </div>
 }
 
-<ViewReservationModal Reservation="selectedReservation"/>
+<ViewReservationModal Reservation="selectedReservation"
+                      PartyCompletionEnabled="partyCompletionEnabled"
+                      OnCall="@(new EventCallback(this, async () => { if (selectedReservation is not null) await CallReservationAsync(selectedReservation.Id); }))"
+                      OnMarkPartyComplete="@(new EventCallback(this, async () => { if (selectedReservation is not null) await MarkPartyCompleteAsync(selectedReservation.Id); }))"
+                      OnSeat="@(new EventCallback(this, async () => { if (selectedReservation is not null) await SeatReservationAsync(selectedReservation.Id); }))"
+                      IsActionDisabled="isActionInProgress" />
 
 @code {
     // TODO: raise some exception in the backend
@@ -57,6 +63,8 @@ else
     private readonly List<ReservationDto> reservations = [];
     private ReservationDto? selectedReservation;
     private bool isLoading = true;
+    private bool partyCompletionEnabled;
+    private bool isActionInProgress;
 
     protected override async Task OnInitializedAsync()
     {
@@ -64,6 +72,10 @@ else
 
         if (activeEvent is not null)
         {
+            var options = await EventService.GetEventOptionsAsync(activeEvent.Id);
+            if (options is not null)
+                partyCompletionEnabled = options.IsPartyCompletionEnabled;
+                
             var result = await ReservationService.GetReservationsAsync(activeEvent.Id, nameof(ReservationStatusFilter.Active), 1, 1000);
             reservations.Clear();
             reservations.AddRange(result.Reservations.OrderBy(r => r.SequenceNumber));
@@ -118,6 +130,27 @@ else
     {
         selectedReservation = reservation;
         StateHasChanged();
+    }
+
+    private async Task CallReservationAsync(int id)
+    {
+        isActionInProgress = true;
+        try { await ReservationService.CallAsync(id, new CallReservationRequest("Receptionist")); }
+        finally { isActionInProgress = false; }
+    }
+
+    private async Task MarkPartyCompleteAsync(int id)
+    {
+        isActionInProgress = true;
+        try { await ReservationService.MarkPartyCompleteAsync(id); }
+        finally { isActionInProgress = false; }
+    }
+
+    private async Task SeatReservationAsync(int id)
+    {
+        isActionInProgress = true;
+        try { await ReservationService.SeatAsync(id); }
+        finally { isActionInProgress = false; }
     }
 
     private static ReservationDto CreateReservationDto(int id, int sequenceNumber, string customerName, int partySize, string status)

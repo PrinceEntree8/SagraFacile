@@ -1,0 +1,31 @@
+@using SagraFacile.Contracts.Reservations
+@using SagraFacile.WebClient.Resources
+@inject IStringLocalizer<SharedResource> L
+
+@if (_isVisible)
+{
+    <button class="btn btn-sm @_btnClass"
+            @onclick="_callback"
+            disabled="@IsDisabled">
+        <i class="bi @_icon"></i>
+        <span class="d-none d-xl-inline">@L[_labelKey]</span>
+    </button>
+}
+
+@code {
+    [Parameter] public required ReservationDto Reservation { get; set; }
+    [Parameter] public bool PartyCompletionEnabled { get; set; }
+    [Parameter] public EventCallback OnMarkPartyComplete { get; set; }
+    [Parameter] public EventCallback OnCall { get; set; }
+    [Parameter] public EventCallback OnSeat { get; set; }
+    [Parameter] public bool IsDisabled { get; set; }
+
+    private bool _isPartyCompleteAction => PartyCompletionEnabled && Reservation.Status == "Waiting";
+    private bool _isCallAction => Reservation.Status == "Waiting" && !PartyCompletionEnabled;
+    private bool _isSeatAction => Reservation.Status is "Called" or "PartyCompleted";
+    private bool _isVisible => _isPartyCompleteAction || _isCallAction || _isSeatAction;
+    private string _btnClass => _isPartyCompleteAction ? "btn-warning" : _isSeatAction ? "btn-success" : "btn-primary";
+    private string _icon => _isPartyCompleteAction ? "bi-person-arms-up" : _isSeatAction ? "bi-door-open" : "bi-megaphone";
+    private string _labelKey => _isPartyCompleteAction ? "Receptionist_Button_PartyComplete" : _isSeatAction ? "Receptionist_ActionSeat" : "Receptionist_ActionCall";
+    private EventCallback _callback => _isPartyCompleteAction ? OnMarkPartyComplete : _isSeatAction ? OnSeat : OnCall;
+}

@@ -1,5 +1,6 @@
 @page "/receptionist"
 @attribute [Authorize]
+@using SagraFacile.WebClient.Components.Buttons
 @using SagraFacile.WebClient.Components.Modals
 @using SagraFacile.WebClient.Extensions
 @inject IReservationService ReservationService
@@ -129,20 +130,12 @@
                                 @if (reservation.Status is "Waiting" or "Called" or "PartyCompleted")
                                 {
                                     <span class="chip-actions">
-                                        @if (partyCompletionEnabled && reservation.Status == "Waiting")
-                                        {
-                                            <button class="btn btn-sm btn-warning" @onclick="@(() => MarkPartyCompleteAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
-                                                <i class="bi bi-person-arms-up"></i>
-                                                <span class="d-none d-xl-inline">@L["Receptionist_Button_PartyComplete"]</span>
-                                            </button>
-                                        }
-                                        else
-                                        {
-                                            <button class="btn btn-sm btn-success" @onclick="@(() => CallReservationAsync(reservation.Id))" disabled="@(actionInProgress == reservation.Id)">
-                                                <i class="bi bi-megaphone"></i>
-                                                <span class="d-none d-xl-inline">@L["Receptionist_ActionCall"]</span>
-                                            </button>
-                                        }
+                                        <ServiceButton Reservation="reservation"
+                                                       PartyCompletionEnabled="partyCompletionEnabled"
+                                                       OnMarkPartyComplete="@(() => MarkPartyCompleteAsync(reservation.Id))"
+                                                       OnCall="@(() => CallReservationAsync(reservation.Id))"
+                                                       OnSeat="@(() => SeatReservationAsync(reservation.Id))"
+                                                       IsDisabled="@(actionInProgress == reservation.Id)" />
                                         <button class="btn btn-sm btn-primary"
                                                 @onclick="@(() => OpenReservationEditModal(reservation))"
                                                 disabled="@(actionInProgress == reservation.Id)"
@@ -384,6 +377,20 @@
         try
         {
             await ReservationService.MarkPartyCompleteAsync(reservationId);
+            await LoadReservations(currentFilter);
+        }
+        finally
+        {
+            actionInProgress = null;
+        }
+    }
+
+    private async Task SeatReservationAsync(int reservationId)
+    {
+        actionInProgress = reservationId;
+        try
+        {
+            await ReservationService.SeatAsync(reservationId);
             await LoadReservations(currentFilter);
         }
         finally
