@@ -1,12 +1,10 @@
 @page "/receptionist"
 @attribute [Authorize]
-@using Microsoft.AspNetCore.SignalR.Client
 @using SagraFacile.WebClient.Components.Modals
 @using SagraFacile.WebClient.Extensions
 @inject IReservationService ReservationService
 @inject IEventService EventService
-@inject TokenStorageService TokenStorage
-@inject NavigationManager Navigation
+@inject IReservationRealtimeService ReservationRealtimeService
 @inject IStringLocalizer<SharedResource> L
 @implements IAsyncDisposable
 
@@ -206,7 +204,9 @@
     private int activeEventId = 1; // TODO: replace with session-backed active event store
     private bool partyCompletionEnabled = false;
     private int minPartySize = 1;
-    private HubConnection? hubConnection;
+    private IDisposable? reservationStatusSubscription;
+    private IDisposable? availableSeatsSubscription;
+    private IDisposable? countersSubscription;
     private NewReservationModel newReservation = new();
     private ReservationDto? selectedReservation;
     private List<ReservationDto> reservations = [];
@@ -272,29 +272,19 @@
 
     private async Task InitializeSignalR()
     {
-        hubConnection = new HubConnectionBuilder()
-            .WithUrl(Navigation.ToAbsoluteUri("/hubs/reservations"), options =>
-            {
-                options.AccessTokenProvider = () => TokenStorage.GetTokenAsync().AsTask();
-            })
-            .WithAutomaticReconnect()
-            .Build();
-
-        hubConnection.On<ReservationStatusChangedNotification>(
-            nameof(IReservationHubClient.ReservationStatusChanged), 
-            async notification =>
-            {
-                await LoadReservations(currentFilter);
-                await InvokeAsync(StateHasChanged);
+        reservationStatusSubscription = ReservationRealtimeService.SubscribeReservationStatusChanged(async _ =>
+        {
+            await LoadReservations(currentFilter);
+            await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<int>("AvailableSeatsUpdated", async (seats) =>
+        availableSeatsSubscription = ReservationRealtimeService.SubscribeAvailableSeatsUpdated(async seats =>
         {
             availableSeats = seats;
             await InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<List<ReservationCounterDto>>("CountersUpdated", async (counters) =>
+        countersSubscription = ReservationRealtimeService.SubscribeCountersUpdated(async counters =>
         {
             UpdateCounters(counters);
             await InvokeAsync(StateHasChanged);
@@ -302,7 +292,7 @@
 
         try
         {
-            await hubConnection.StartAsync();
+            await ReservationRealtimeService.EnsureStartedAsync();
         }
         catch (Exception ex)
         {
@@ -424,10 +414,10 @@
 
     public async ValueTask DisposeAsync()
     {
-        if (hubConnection is not null)
-        {
-            await hubConnection.DisposeAsync();
-        }
+        reservationStatusSubscription?.Dispose();
+        availableSeatsSubscription?.Dispose();
+        countersSubscription?.Dispose();
+        await Task.CompletedTask;
     }
 
     private class NewReservationModel

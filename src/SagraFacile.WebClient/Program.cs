@@ -17,6 +17,7 @@ builder.Services.AddScoped<JwtAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthStateProvider>());
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AuthorizationMessageHandler>();
+builder.Services.AddSingleton<IReservationRealtimeService, ReservationRealtimeService>();
 
 builder.Services.AddLocalization();
 

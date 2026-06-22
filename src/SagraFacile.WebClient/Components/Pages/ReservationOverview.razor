@@ -1,13 +1,12 @@
 @page "/reservation-overview"
 @attribute [Authorize(Roles = "Admin,Supervisore")]
-@using Microsoft.AspNetCore.SignalR.Client
 @using SagraFacile.Domain.Features.Reservations
 @using SagraFacile.WebClient.Components.Modals
 @using SagraFacile.WebClient.Extensions
-@inject NavigationManager Navigation
 @inject IStringLocalizer<SharedResource> L
 @inject IEventService EventService
 @inject IReservationService ReservationService
+@inject IReservationRealtimeService ReservationRealtimeService
 @implements IAsyncDisposable
 
 <PageTitle>@L["ReservationOverview_PageTitle"]</PageTitle>
@@ -53,7 +52,7 @@ else
 @code {
     // TODO: raise some exception in the backend
 
-    private HubConnection? hubConnection;
+    private IDisposable? reservationStatusSubscription;
     private EventDto? activeEvent;
     private readonly List<ReservationDto> reservations = [];
     private ReservationDto? selectedReservation;
@@ -76,12 +75,7 @@ else
 
     private async Task InitializeSignalRAsync()
     {
-        hubConnection = new HubConnectionBuilder()
-            .WithUrl(Navigation.ToAbsoluteUri("/hubs/reservations"))
-            .WithAutomaticReconnect()
-            .Build();
-
-        hubConnection.On<ReservationStatusChangedNotification>(nameof(IReservationHubClient.ReservationStatusChanged), async r =>
+        reservationStatusSubscription = ReservationRealtimeService.SubscribeReservationStatusChanged(async r =>
         {
             Console.WriteLine($"{nameof(IReservationHubClient.ReservationStatusChanged)}: {r}");
             switch (r.NewStatus)
@@ -112,7 +106,7 @@ else
 
         try
         {
-            await hubConnection.StartAsync();
+            await ReservationRealtimeService.EnsureStartedAsync();
         }
         catch
         {
@@ -170,10 +164,8 @@ else
 
     public async ValueTask DisposeAsync()
     {
-        if (hubConnection is not null)
-        {
-            await hubConnection.DisposeAsync();
-        }
+        reservationStatusSubscription?.Dispose();
+        await Task.CompletedTask;
     }
 
 }
