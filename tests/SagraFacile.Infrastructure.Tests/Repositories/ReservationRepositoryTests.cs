@@ -1,6 +1,7 @@
+using NSubstitute;
+using SagraFacile.Application.Interfaces;
 using SagraFacile.Domain.Features.Reservations;
 using SagraFacile.Infrastructure.Repositories;
-using SagraFacile.Infrastructure.Tests;
 
 namespace SagraFacile.Infrastructure.Tests.Repositories;
 
@@ -14,7 +15,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
         var r = new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "Mario", PartySize = 4, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow };
 
         // Act
@@ -34,7 +35,7 @@ public class ReservationRepositoryTests
     public async Task GetNextSequenceNumberAsync_NoReservations_Returns1()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
 
         var next = await repo.GetNextSequenceNumberAsync(EventId1, CancellationToken.None);
 
@@ -45,7 +46,7 @@ public class ReservationRepositoryTests
     public async Task GetNextSequenceNumberAsync_ExistingReservations_ReturnsMaxPlusOne()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 3, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
@@ -60,7 +61,7 @@ public class ReservationRepositoryTests
     public async Task GetNextSequenceNumberAsync_MultipleEvents_ReturnsPerEventScope()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 5, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Reservation { EventId = EventId2, SequenceNumber = 2, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
@@ -77,7 +78,7 @@ public class ReservationRepositoryTests
     public async Task GetPagedByEventAsync_FiltersByEventId()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Reservation { EventId = EventId2, SequenceNumber = 1, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
@@ -94,7 +95,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc) }, CancellationToken.None);
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 2, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Seated, CreatedAt = new DateTime(2026, 1, 1, 10, 5, 0, DateTimeKind.Utc) }, CancellationToken.None);
@@ -115,7 +116,7 @@ public class ReservationRepositoryTests
     public async Task GetCountersByEventAsync_GroupsByStatusString()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 2, CustomerName = "B", PartySize = 3, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
@@ -137,7 +138,7 @@ public class ReservationRepositoryTests
     public async Task GetCountersByEventAsync_FiltersByEventId_NotOtherEvents()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Reservation { EventId = EventId2, SequenceNumber = 1, CustomerName = "B", PartySize = 3, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
@@ -155,7 +156,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
         var now = DateTime.UtcNow;
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 2, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Called, CreatedAt = now }, CancellationToken.None);
@@ -177,7 +178,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
 
         var reservation = new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow };
         await repo.AddAsync(reservation, CancellationToken.None);
@@ -199,7 +200,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
         var now = DateTime.UtcNow;
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = now.AddDays(-5) }, CancellationToken.None);
@@ -219,7 +220,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
         var now = DateTime.UtcNow;
         var cutoff = now.AddDays(-2);
 
@@ -240,7 +241,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
         var now = DateTime.UtcNow;
         var cutoff = now.AddDays(-2);
 
@@ -261,7 +262,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
         var now = DateTime.UtcNow;
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "TooOld", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = now.AddDays(-10) }, CancellationToken.None);
@@ -282,7 +283,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
         var now = DateTime.UtcNow;
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 3, CustomerName = "Third", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = now.AddMinutes(-1) }, CancellationToken.None);
@@ -305,7 +306,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory);
+        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 2, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Seated, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
