@@ -29,8 +29,8 @@ public class GetBestFitReservationHandlerTests
         var result = await _handler.Handle(new GetBestFitReservation.Query(1, 4), CancellationToken.None);
 
         // Assert
-        Assert.Single(result.Matches);
-        Assert.Equal("Perfect", result.Matches[0].MatchQuality);
+        Assert.Single(result);
+        Assert.Equal("Perfect", result[0].MatchQuality);
     }
 
     [Fact]
@@ -47,8 +47,8 @@ public class GetBestFitReservationHandlerTests
         var result = await _handler.Handle(new GetBestFitReservation.Query(1, 4), CancellationToken.None);
 
         // Assert
-        Assert.Single(result.Matches);
-        Assert.Equal("Good", result.Matches[0].MatchQuality);
+        Assert.Single(result);
+        Assert.Equal("Good", result[0].MatchQuality);
     }
 
     [Fact]
@@ -66,8 +66,8 @@ public class GetBestFitReservationHandlerTests
         var result = await _handler.Handle(new GetBestFitReservation.Query(1, 0), CancellationToken.None);
 
         // Assert
-        Assert.Equal(2, result.Matches.Count);
-        Assert.All(result.Matches, m => Assert.Equal("All", m.MatchQuality));
+        Assert.Equal(2, result.Count);
+        Assert.All(result, m => Assert.Equal("All", m.MatchQuality));
     }
 
     [Fact]
@@ -84,6 +84,6 @@ public class GetBestFitReservationHandlerTests
         var result = await _handler.Handle(new GetBestFitReservation.Query(1, 4), CancellationToken.None);
 
         // Assert
-        Assert.Empty(result.Matches);
+        Assert.Empty(result);
     }
 }
