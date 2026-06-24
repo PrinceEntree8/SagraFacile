@@ -1,12 +1,12 @@
-@using SagraFacile.Contracts.Reservations
-@using SagraFacile.WebClient.Resources
+@using SagraFacile.Domain.Features.Reservations
 @inject IStringLocalizer<SharedResource> L
 
 @if (_isVisible)
 {
-    <button class="btn btn-sm @_btnClass"
+    <button class="btn @_btnClass @(IsSmall ? "btn-sm" : "")"
             @onclick="_callback"
-            disabled="@IsDisabled">
+            disabled="@IsDisabled"
+            data-bs-dismiss="modal">
         <i class="bi @_icon"></i>
         <span class="d-none d-xl-inline">@L[_labelKey]</span>
     </button>
@@ -19,13 +19,62 @@
     [Parameter] public EventCallback OnCall { get; set; }
     [Parameter] public EventCallback OnSeat { get; set; }
     [Parameter] public bool IsDisabled { get; set; }
+    [Parameter] public bool IsSmall { get; set; }
 
-    private bool _isPartyCompleteAction => PartyCompletionEnabled && Reservation.Status == "Waiting";
-    private bool _isCallAction => Reservation.Status == "Waiting" && !PartyCompletionEnabled;
-    private bool _isSeatAction => Reservation.Status is "Called" or "PartyCompleted";
+    private bool _isPartyCompleteAction => PartyCompletionEnabled && _nextStatus is ReservationStatus.PartyCompleted;
+    private bool _isCallAction => _nextStatus is ReservationStatus.Called;
+    private bool _isSeatAction => _nextStatus is ReservationStatus.Seated;
     private bool _isVisible => _isPartyCompleteAction || _isCallAction || _isSeatAction;
-    private string _btnClass => _isPartyCompleteAction ? "btn-warning" : _isSeatAction ? "btn-success" : "btn-primary";
-    private string _icon => _isPartyCompleteAction ? "bi-person-arms-up" : _isSeatAction ? "bi-door-open" : "bi-megaphone";
-    private string _labelKey => _isPartyCompleteAction ? "Receptionist_Button_PartyComplete" : _isSeatAction ? "Receptionist_ActionSeat" : "Receptionist_ActionCall";
-    private EventCallback _callback => _isPartyCompleteAction ? OnMarkPartyComplete : _isSeatAction ? OnSeat : OnCall;
+    
+    private string _btnClass => _nextStatus switch
+    {
+        ReservationStatus.None => "",
+        ReservationStatus.Waiting => "reservation-status-waiting",
+        ReservationStatus.Called => "reservation-status-called",
+        ReservationStatus.Seated => "reservation-status-seated",
+        ReservationStatus.Voided => "reservation-status-voided",
+        ReservationStatus.PartyCompleted => "reservation-status-partycomplete",
+        ReservationStatus.Left => throw new InvalidOperationException("Invalid reservation status"),
+        _ => throw new ArgumentOutOfRangeException()
+    };
+    
+    private string _icon => _nextStatus switch
+    {
+        ReservationStatus.PartyCompleted => "bi-person-arms-up",
+        ReservationStatus.Seated => "bi-fork-knife",
+        ReservationStatus.Called => "bi-megaphone",
+        _ => throw new InvalidOperationException("Invalid reservation status")
+    };
+    
+    private string _labelKey => _nextStatus switch
+    {
+        ReservationStatus.PartyCompleted => "Receptionist_Button_PartyComplete",
+        ReservationStatus.Seated => "Receptionist_ActionSeat",
+        ReservationStatus.Called => "Receptionist_ActionCall",
+        _ => throw new InvalidOperationException("Invalid reservation status")
+    }; 
+        
+    
+    private EventCallback _callback => _nextStatus switch
+        {
+            ReservationStatus.PartyCompleted => OnMarkPartyComplete,
+            ReservationStatus.Seated => OnSeat,
+            ReservationStatus.Called => OnCall,
+            ReservationStatus.Left => throw new InvalidOperationException("Invalid reservation status"),
+            ReservationStatus.Voided => throw new InvalidOperationException("Invalid reservation status"),
+            _ => throw new InvalidOperationException("Invalid reservation status")
+        };
+
+    private ReservationStatus _nextStatus => (Reservation.Status, PartyCompletionEnabled) switch
+    {
+        (nameof(ReservationStatus.Waiting), true) => ReservationStatus.PartyCompleted,
+        (nameof(ReservationStatus.Waiting), false) => ReservationStatus.Called,
+        (nameof(ReservationStatus.Called), _) => ReservationStatus.Seated,
+        (nameof(ReservationStatus.PartyCompleted), _) => ReservationStatus.Called,
+        (nameof(ReservationStatus.Seated), _) => ReservationStatus.Left,
+        (nameof(ReservationStatus.Left), _) => ReservationStatus.Left,
+        (nameof(ReservationStatus.Voided), _) => ReservationStatus.Voided,
+        _ => ReservationStatus.None
+    };
+
 }

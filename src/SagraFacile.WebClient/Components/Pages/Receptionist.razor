@@ -130,12 +130,12 @@
                                 @if (reservation.Status is "Waiting" or "Called" or "PartyCompleted")
                                 {
                                     <span class="chip-actions">
-                                        <ServiceButton Reservation="reservation"
-                                                       PartyCompletionEnabled="partyCompletionEnabled"
-                                                       OnMarkPartyComplete="@(() => MarkPartyCompleteAsync(reservation.Id))"
-                                                       OnCall="@(() => CallReservationAsync(reservation.Id))"
-                                                       OnSeat="@(() => SeatReservationAsync(reservation.Id))"
-                                                       IsDisabled="@(actionInProgress == reservation.Id)" />
+                                        <ServiceButton Reservation="reservation" IsSmall="true"
+                                           PartyCompletionEnabled="partyCompletionEnabled"
+                                           OnMarkPartyComplete="@(() => MarkPartyCompleteAsync(reservation.Id))"
+                                           OnCall="@(() => CallReservationAsync(reservation.Id))"
+                                           OnSeat="@(() => SeatReservationAsync(reservation.Id))"
+                                           IsDisabled="@(actionInProgress == reservation.Id)" />
                                         <button class="btn btn-sm btn-primary"
                                                 @onclick="@(() => OpenReservationEditModal(reservation))"
                                                 disabled="@(actionInProgress == reservation.Id)"
@@ -339,13 +339,18 @@
                 newReservation.Notes,
                 newReservation.PartyComplete
             );
-
-            var reservationId = await ReservationService.CreateAsync(request);
-            
-            creationMessage = string.Format(L["Receptionist_ReservationCreated"].ToString(), reservationId);
-            newReservation = new();
-            
-            await LoadReservations(currentFilter);
+            var result = await ReservationService.CreateAsync(request);
+            if (result.Success)
+            {
+                var id = result.Data.Id;
+                creationMessage = string.Format(L["Receptionist_ReservationCreated"].ToString(), id);
+                newReservation = new();
+                await LoadReservations(currentFilter);
+            }
+            else
+            {
+                creationMessage = string.Format(L["Receptionist_Error"].ToString(), result.Message ?? "");
+            }
         }
         catch (Exception ex)
         {
@@ -362,8 +367,9 @@
         actionInProgress = reservationId;
         try
         {
-            await ReservationService.CallAsync(reservationId, new CallReservationRequest("Receptionist"));
-            await LoadReservations(currentFilter);
+            var result = await ReservationService.CallAsync(reservationId, new CallReservationRequest("Receptionist"));
+            if (result.Success)
+                await LoadReservations(currentFilter);
         }
         finally
         {
@@ -376,8 +382,9 @@
         actionInProgress = reservationId;
         try
         {
-            await ReservationService.MarkPartyCompleteAsync(reservationId);
-            await LoadReservations(currentFilter);
+            var result = await ReservationService.MarkPartyCompleteAsync(reservationId);
+            if (result.Success)
+                await LoadReservations(currentFilter);
         }
         finally
         {
@@ -390,8 +397,9 @@
         actionInProgress = reservationId;
         try
         {
-            await ReservationService.SeatAsync(reservationId);
-            await LoadReservations(currentFilter);
+            var result = await ReservationService.SeatAsync(reservationId);
+            if (result.Success)
+                await LoadReservations(currentFilter);
         }
         finally
         {

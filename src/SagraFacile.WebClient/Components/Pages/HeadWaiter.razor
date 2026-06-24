@@ -378,7 +378,12 @@
         seatError = string.Empty;
         try
         {
-            await ReservationService.SeatAsync(reservationId);
+            var result = await ReservationService.SeatAsync(reservationId);
+            if (!result.Success)
+            {
+                seatError = string.Format(L["HeadWaiter_ErrorSeating"], result.Message);
+                return;
+            }
             
             if (coverCountForSearch > 0)
                 await SearchBestFit();
@@ -419,7 +424,7 @@
             
             if (result.Success)
             {
-                manualSeatSuccess = result.Message;
+                manualSeatSuccess = result.Message ?? L["HeadWaiter_ManualSeatSuccess"];
                 manualSeatQueueNumber = string.Empty;
 
                 if (coverCountForSearch > 0)
@@ -429,7 +434,7 @@
             }
             else
             {
-                manualSeatError = result.Message;
+                manualSeatError = result.Message ?? L["HeadWaiter_ManualSeatError"];
             }
         }
         catch (Exception ex)

@@ -26,13 +26,15 @@
                         @L["Receptionist_ColParty"]:
                         <span class="badge bg-secondary"><i class="bi bi-people"></i> @Reservation.PartySize</span>
                     </div>
-                    
-                    <div class="mb-2">
-                        @L["Receptionist_ColWaiting"]: 
-                        <span class="chip-wait text-muted ms-1">
-                            @WaitingTimeFormatted
-                        </span>
-                    </div>
+
+                    @if(Reservation.Status is not ("Seated" or "Left")) {
+                        <div class="mb-2">
+                            @L["Receptionist_ColWaiting"]:
+                            <span class="chip-wait text-muted ms-1">
+                                @WaitingTimeFormatted
+                            </span>
+                        </div>
+                    }
                     
                     @if (!string.IsNullOrWhiteSpace(Reservation.Notes))
                     {

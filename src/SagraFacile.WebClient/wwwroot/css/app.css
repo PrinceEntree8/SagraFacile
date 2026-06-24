@@ -113,32 +113,63 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
 .reservation-status-waiting {
     --status-color: 255 193 7;
     --background-color: rgba(var(--status-color));
+    --bs-btn-bg: var(--background-color);
+    --bs-btn-color: var(--bs-light);
+    --bs-btn-hover-bg: rgba(var(--status-color) / .1);
+    --bs-btn-hover-border-color: var(--background-color);
+    --bs-btn-hover-color: var(--background-color);
 }
 
 .reservation-status-partycomplete {
     --status-color: 253 126 20;
     --background-color: rgba(var(--status-color));
+    --bs-btn-bg: var(--background-color);
+    --bs-btn-color: var(--bs-light);
+    --bs-btn-hover-bg: rgba(var(--status-color) / .1);
+    --bs-btn-hover-border-color: var(--background-color);
+    --bs-btn-hover-color: var(--background-color);
 }
 
 .reservation-status-called {
     --status-color: 13 110 253;
     --background-color: rgba(var(--status-color));
+    --bs-btn-bg: var(--background-color);
+    --bs-btn-color: var(--bs-light);
+    --bs-btn-hover-bg: rgba(var(--status-color) / .1);
+    --bs-btn-hover-border-color: var(--background-color);
+    --bs-btn-hover-color: var(--background-color);
 }
 
 .reservation-status-seated {
     --status-color: 25 135 84;
     --background-color: rgba(var(--status-color));
+    --bs-btn-bg: var(--background-color);
+    --bs-btn-color: var(--bs-light);
+    --bs-btn-hover-bg: rgba(var(--status-color) / .1);
+    --bs-btn-hover-border-color: var(--background-color);
+    --bs-btn-hover-color: var(--background-color);
 }
 
 .reservation-status-voided {
     --status-color: 33 37 41;
     --background-color: rgba(var(--status-color));
+    --bs-btn-bg: var(--background-color);
+    --bs-btn-color: var(--bs-light);
+    --bs-btn-hover-bg: rgba(var(--status-color) / .1);
+    --bs-btn-hover-border-color: var(--background-color);
+    --bs-btn-hover-color: var(--background-color);
 }
 
 .reservation-status-left {
     --status-color: 108 117 125;
     --background-color: rgba(var(--status-color));
+    --bs-btn-bg: var(--background-color);
+    --bs-btn-color: var(--bs-light);
+    --bs-btn-hover-bg: rgba(var(--status-color) / .1);
+    --bs-btn-hover-border-color: var(--background-color);
+    --bs-btn-hover-color: var(--background-color);
 }
