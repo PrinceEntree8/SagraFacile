@@ -1,3 +1,4 @@
+@using SagraFacile.Domain.Features.Reservations;
 @inject IStringLocalizer<SharedResource> L
 @inject IReservationService ReservationService
 @inject IJSRuntime JS
@@ -111,7 +112,12 @@
 
         await ReservationService.EditAsync(
             reservation.Id,
-            new EditReservationRequest(reservation.CustomerName, reservation.PartySize, reservation.Notes),
+            new EditReservationRequest(
+                CustomerName: reservation.CustomerName,
+                PartySize: reservation.PartySize,
+                Notes: reservation.Notes,
+                Status: Enum.Parse<ReservationStatus>(reservation.Status)
+            ),
             CancellationToken.None);
     }
 

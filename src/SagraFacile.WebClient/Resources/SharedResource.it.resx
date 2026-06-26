@@ -83,6 +83,7 @@
   <data name="Nav_DropdownAdmin" xml:space="preserve"><value>Admin</value></data>
   <data name="ReservationOverview_PageTitle" xml:space="preserve"><value>Panoramica Prenotazioni</value></data>
   <data name="ReservationOverview_Title" xml:space="preserve"><value>Panoramica</value></data>
+  <data name="ReservationOverview_ShowVoided" xml:space="preserve"><value>Mostra annullate</value></data>
   <data name="ReservationOverview_NoActiveEvent" xml:space="preserve"><value>Nessun evento attivo</value></data>
   <data name="ReservationOverview_Loading" xml:space="preserve"><value>Caricamento...</value></data>
   <data name="ReservationOverview_ModalTitle" xml:space="preserve"><value>Dettagli Prenotazione</value></data>
@@ -176,6 +177,7 @@
   <data name="Receptionist_FilterWaiting" xml:space="preserve"><value>In Attesa</value></data>
   <data name="Receptionist_FilterCalled" xml:space="preserve"><value>Chiamati</value></data>
   <data name="Receptionist_FilterAll" xml:space="preserve"><value>Tutti</value></data>
+  <data name="Receptionist_FilterVoided" xml:space="preserve"><value>Annullate</value></data>
   <data name="Receptionist_LoadingReservations" xml:space="preserve"><value>Caricamento prenotazioni...</value></data>
   <data name="Receptionist_ColQueue" xml:space="preserve"><value>Numero</value></data>
   <data name="Receptionist_ColName" xml:space="preserve"><value>Nome</value></data>
@@ -187,6 +189,7 @@
   <data name="Receptionist_ActionCall" xml:space="preserve"><value>Chiama</value></data>
   <data name="Receptionist_ActionSeat" xml:space="preserve"><value>Accomoda</value></data>
   <data name="Receptionist_ActionVoid" xml:space="preserve"><value>Annulla</value></data>
+  <data name="Receptionist_ActionRestore" xml:space="preserve"><value>Ripristina</value></data>
   <data name="Receptionist_LastCall" xml:space="preserve"><value>Ultima chiamata: {0}</value></data>
   <data name="Receptionist_ToBeSeated" xml:space="preserve"><value>Da Sedere</value></data>
   <data name="Receptionist_Seated" xml:space="preserve"><value>Accomodati</value></data>

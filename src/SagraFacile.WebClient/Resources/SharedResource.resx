@@ -86,6 +86,7 @@
     <data name="Nav_SectionManagement" xml:space="preserve"><value>Management</value></data>
     <data name="Nav_DropdownPublic" xml:space="preserve"><value>Public</value></data>
     <data name="Nav_DropdownAdmin" xml:space="preserve"><value>Admin</value></data>
+    <data name="ReservationOverview_ShowVoided" xml:space="preserve"><value>Show voided</value></data>
     <data name="ReservationOverview_PageTitle" xml:space="preserve"><value>Reservation Overview</value></data>
     <data name="ReservationOverview_Title" xml:space="preserve"><value>Reservation Overview</value></data>
     <data name="ReservationOverview_NoActiveEvent" xml:space="preserve"><value>No active event</value></data>
@@ -181,6 +182,7 @@
     <data name="Receptionist_FilterWaiting" xml:space="preserve"><value>Waiting</value></data>
     <data name="Receptionist_FilterCalled" xml:space="preserve"><value>Called</value></data>
     <data name="Receptionist_FilterAll" xml:space="preserve"><value>All</value></data>
+    <data name="Receptionist_FilterVoided" xml:space="preserve"><value>Voided</value></data>
     <data name="Receptionist_LoadingReservations" xml:space="preserve"><value>Loading reservations...</value></data>
     <data name="Receptionist_ColQueue" xml:space="preserve"><value>Queue #</value></data>
     <data name="Receptionist_ColName" xml:space="preserve"><value>Name</value></data>
@@ -192,6 +194,7 @@
     <data name="Receptionist_ActionCall" xml:space="preserve"><value>Call</value></data>
     <data name="Receptionist_ActionSeat" xml:space="preserve"><value>Seat</value></data>
     <data name="Receptionist_ActionVoid" xml:space="preserve"><value>Void</value></data>
+    <data name="Receptionist_ActionRestore" xml:space="preserve"><value>Restore</value></data>
     <data name="Receptionist_LastCall" xml:space="preserve"><value>Last call: {0}</value></data>
     <data name="Receptionist_ToBeSeated" xml:space="preserve"><value>To Be Seated</value></data>
     <data name="Receptionist_Seated" xml:space="preserve"><value>Seated</value></data>

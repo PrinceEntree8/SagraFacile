@@ -1,3 +1,5 @@
+using SagraFacile.Domain.Features.Reservations;
+
 namespace SagraFacile.Contracts.Reservations;
 
 public record CallAndSeatRequest(int EventId, int SequenceNumber);
@@ -12,4 +14,4 @@ public record CreateReservationRequest(
     bool PartyComplete = false
 );
 
-public record EditReservationRequest(string? CustomerName, int? PartySize, string? Notes);
+public record EditReservationRequest(string? CustomerName, int? PartySize, string? Notes, ReservationStatus? Status = null);

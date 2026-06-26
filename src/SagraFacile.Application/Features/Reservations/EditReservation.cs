@@ -33,6 +33,9 @@ public static class EditReservation
             RuleFor(x => x.Notes)
                 .MaximumLength(500).WithMessage("Notes must not exceed 500 characters")
                 .When(x => x.Notes != null);
+            RuleFor(x => x.Status)
+                .IsInEnum().WithMessage("Invalid status")
+                .When(x => x.Status != null);
         }
     }
     
