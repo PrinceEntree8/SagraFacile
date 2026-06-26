@@ -164,7 +164,7 @@
  
   <!-- Receptionist -->
   <data name="Receptionist_PageTitle" xml:space="preserve"><value>Receptionist - Prenotazioni Tavoli</value></data>
-  <data name="Receptionist_Heading" xml:space="preserve"><value>Receptionist - Prenotazioni Tavoli</value></data>
+  <data name="Receptionist_Heading" xml:space="preserve"><value>Prenotazioni Tavoli</value></data>
   <data name="Receptionist_AvailableSeats" xml:space="preserve"><value>Posti Disponibili</value></data>
   <data name="Receptionist_AnnouncedBy" xml:space="preserve"><value>Comunicato dal Capo Cameriere</value></data>
   <data name="Receptionist_NewReservation" xml:space="preserve"><value>Crea Nuova Prenotazione</value></data>
@@ -204,8 +204,8 @@
   <data name="Receptionist_SeatsContextFull" xml:space="preserve"><value>Nessun posto disponibile</value></data>
 
   <!-- Head Waiter -->
-  <data name="HeadWaiter_PageTitle" xml:space="preserve"><value>Capo Cameriere - Posti Disponibili</value></data>
-  <data name="HeadWaiter_Heading" xml:space="preserve"><value>Capo Cameriere - Posti Disponibili</value></data>
+  <data name="HeadWaiter_PageTitle" xml:space="preserve"><value>Capo Cameriere - Accomoda</value></data>
+  <data name="HeadWaiter_Heading" xml:space="preserve"><value>Accomoda</value></data>
   <data name="HeadWaiter_AnnounceSeats" xml:space="preserve"><value>Annuncia Posti Disponibili</value></data>
   <data name="HeadWaiter_NumberOfSeats" xml:space="preserve"><value>Numero di Posti Disponibili</value></data>
   <data name="HeadWaiter_Announce" xml:space="preserve"><value>Annuncia</value></data>

@@ -169,7 +169,7 @@
 
     <!-- Receptionist -->
     <data name="Receptionist_PageTitle" xml:space="preserve"><value>Receptionist - Table Reservations</value></data>
-    <data name="Receptionist_Heading" xml:space="preserve"><value>Receptionist - Table Reservations</value></data>
+    <data name="Receptionist_Heading" xml:space="preserve"><value>Table Reservations</value></data>
     <data name="Receptionist_AvailableSeats" xml:space="preserve"><value>Available Seats</value></data>
     <data name="Receptionist_AnnouncedBy" xml:space="preserve"><value>Announced by Head Waiter</value></data>
     <data name="Receptionist_NewReservation" xml:space="preserve"><value>Create New Reservation</value></data>
@@ -210,7 +210,7 @@
 
     <!-- Head Waiter -->
     <data name="HeadWaiter_PageTitle" xml:space="preserve"><value>Head Waiter - Available Seats</value></data>
-    <data name="HeadWaiter_Heading" xml:space="preserve"><value>Head Waiter - Available Seats</value></data>
+    <data name="HeadWaiter_Heading" xml:space="preserve"><value>HAvailable Seats</value></data>
     <data name="HeadWaiter_AnnounceSeats" xml:space="preserve"><value>Announce Available Seats</value></data>
     <data name="HeadWaiter_NumberOfSeats" xml:space="preserve"><value>Number of Available Seats</value></data>
     <data name="HeadWaiter_Announce" xml:space="preserve"><value>Announce</value></data>
