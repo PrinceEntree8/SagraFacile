@@ -50,7 +50,7 @@ builder.Services.AddAuthentication(options =>
         {
             ValidateIssuer = true,
             ValidateAudience = true,
-            ValidateLifetime = false,
+            ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "SagraFacile",
             ValidAudience = builder.Configuration["Jwt:Audience"] ?? "SagraFacile",
