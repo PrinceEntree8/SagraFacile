@@ -81,6 +81,10 @@ public class ReservationHub(IMediator mediator) : Hub<IReservationHubClient>
         => await mediator.SendAsync(new VoidReservation.Command(reservationId));
 
     [Authorize(Policy = "Cassiere")]
+    public async Task<CommandResult> RestoreReservation(int reservationId)
+        => await mediator.SendAsync(new RestoreReservation.Command(reservationId));
+
+    [Authorize(Policy = "Cassiere")]
     public async Task<CommandResult> UpdateTableCover(
         int? tableId,
         string? tableNumber,

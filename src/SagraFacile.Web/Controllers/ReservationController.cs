@@ -120,7 +120,7 @@ public class ReservationController(IMediator mediator) : ControllerBase
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Edit(int id, [FromBody] EditReservationRequest req, CancellationToken ct)
-        => Ok(await mediator.SendAsync(new EditReservation.Command(id, req.CustomerName, req.PartySize, req.Notes), ct));
+        => Ok(await mediator.SendAsync(new EditReservation.Command(id, req.CustomerName, req.PartySize, req.Notes, req.Status), ct));
 
     [HttpPost("{id:int}/party-complete")]
     public async Task<IActionResult> MarkPartyComplete(int id, CancellationToken ct)
@@ -129,6 +129,10 @@ public class ReservationController(IMediator mediator) : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Void(int id, CancellationToken ct)
         => Ok(await mediator.SendAsync(new VoidReservation.Command(id), ct));
+
+    [HttpPost("{id:int}/restore")]
+    public async Task<IActionResult> Restore(int id, CancellationToken ct)
+        => Ok(await mediator.SendAsync(new RestoreReservation.Command(id), ct));
 
     private static ReservationStatusFilter ParseFilter(string? status)
     {

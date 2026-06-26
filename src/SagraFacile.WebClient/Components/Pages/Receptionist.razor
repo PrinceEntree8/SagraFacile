@@ -100,6 +100,7 @@
                     }
                     <button class="btn btn-sm @(currentFilter == "Called" ? "btn-secondary" : "btn-outline-secondary")" @onclick="@(() => LoadReservations("Called"))">@L["Receptionist_FilterCalled"]</button>
                     <button class="btn btn-sm @(currentFilter == null ? "btn-info" : "btn-outline-info")" @onclick="@(() => LoadReservations(null))">@L["Receptionist_FilterAll"]</button>
+                    <button class="btn btn-sm @(currentFilter == "Voided" ? "btn-danger" : "btn-outline-danger")" @onclick="@(() => LoadReservations("Voided"))">@L["Receptionist_FilterVoided"]</button>
                 </div>
             </div>
             <div class="card-body">
@@ -127,7 +128,7 @@
                                         @reservation.WaitingTime.FormatTimeSpan()
                                     }
                                 </span>
-                                @if (reservation.Status is "Waiting" or "Called" or "PartyCompleted")
+                                @if (reservation.Status is "Waiting" or "Called" or "PartyCompleted" or "Voided")
                                 {
                                     <span class="chip-actions">
                                         <ServiceButton Reservation="reservation" IsSmall="true"
@@ -135,16 +136,20 @@
                                            OnMarkPartyComplete="@(() => MarkPartyCompleteAsync(reservation.Id))"
                                            OnCall="@(() => CallReservationAsync(reservation.Id))"
                                            OnSeat="@(() => SeatReservationAsync(reservation.Id))"
+                                           OnRestore="@(() => RestoreReservationAsync(reservation.Id))"
                                            IsDisabled="@(actionInProgress == reservation.Id)" />
-                                        <button class="btn btn-sm btn-primary"
-                                                @onclick="@(() => OpenReservationEditModal(reservation))"
-                                                disabled="@(actionInProgress == reservation.Id)"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#reservationEditModal"
-                                                role="button">
-                                            <i class="bi bi-pencil-square"></i>
-                                            <span class="d-none d-xl-inline">@L["Receptionist_ActionEdit"]</span>
-                                        </button>
+                                        @if (reservation.Status is not "Voided")
+                                        {
+                                            <button class="btn btn-sm btn-primary"
+                                                    @onclick="@(() => OpenReservationEditModal(reservation))"
+                                                    disabled="@(actionInProgress == reservation.Id)"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#reservationEditModal"
+                                                    role="button">
+                                                <i class="bi bi-pencil-square"></i>
+                                                <span class="d-none d-xl-inline">@L["Receptionist_ActionEdit"]</span>
+                                            </button>
+                                        }
                                     </span>
                                 }
                             </div>
@@ -398,6 +403,21 @@
         try
         {
             var result = await ReservationService.SeatAsync(reservationId);
+            if (result.Success)
+                await LoadReservations(currentFilter);
+        }
+        finally
+        {
+            actionInProgress = null;
+        }
+    }
+
+    private async Task RestoreReservationAsync(int reservationId)
+    {
+        actionInProgress = reservationId;
+        try
+        {
+            var result = await ReservationService.RestoreAsync(reservationId);
             if (result.Success)
                 await LoadReservations(currentFilter);
         }

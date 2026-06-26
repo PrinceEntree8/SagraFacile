@@ -51,6 +51,7 @@
                                    OnMarkPartyComplete="OnMarkPartyComplete"
                                    OnCall="OnCall"
                                    OnSeat="OnSeat"
+                                   OnRestore="OnRestore"
                                    IsDisabled="IsActionDisabled" />
                 }
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@L["Common_Close"]</button>
@@ -65,6 +66,7 @@
     [Parameter] public EventCallback OnMarkPartyComplete { get; set; }
     [Parameter] public EventCallback OnCall { get; set; }
     [Parameter] public EventCallback OnSeat { get; set; }
+    [Parameter] public EventCallback OnRestore { get; set; }
     [Parameter] public bool IsActionDisabled { get; set; }
 
     private string WaitingTimeFormatted {

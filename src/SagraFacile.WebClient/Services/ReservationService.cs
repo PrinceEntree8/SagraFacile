@@ -58,6 +58,13 @@ public class ReservationService(HttpClient httpClient) : IReservationService
         return await response.Content.ReadFromJsonAsync<CommandResult>(cancellationToken: ct) ?? throw new InvalidOperationException();
     }
 
+    public async Task<CommandResult> RestoreAsync(int id, CancellationToken ct = default)
+    {
+        var response = await httpClient.PostAsync($"api/reservations/{id}/restore", null, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CommandResult>(cancellationToken: ct) ?? throw new InvalidOperationException();
+    }
+
     public async Task<CommandResult> EditAsync(int id, EditReservationRequest request, CancellationToken ct = default)
     {
         var response = await httpClient.PutAsJsonAsync($"api/reservations/{id}", request, ct);

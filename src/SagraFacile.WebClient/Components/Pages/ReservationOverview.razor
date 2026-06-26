@@ -12,7 +12,14 @@
 
 <PageTitle>@L["ReservationOverview_PageTitle"]</PageTitle>
 
-<h1 class="mb-3">@L["ReservationOverview_Title"]</h1>
+<div class="d-flex align-items-center gap-3 mb-3">
+    <h1 class="mb-0">@L["ReservationOverview_Title"]</h1>
+    <div class="form-check form-switch ms-auto mb-0">
+        <input class="form-check-input" type="checkbox" id="showVoidedToggle"
+               @bind="showVoided" @bind:after="OnShowVoidedChangedAsync" />
+        <label class="form-check-label" for="showVoidedToggle">@L["ReservationOverview_ShowVoided"]</label>
+    </div>
+</div>
 
 @if (isLoading)
 {
@@ -53,6 +60,7 @@ else
                       OnCall="@(new EventCallback(this, async () => { if (selectedReservation is not null) await CallReservationAsync(selectedReservation.Id); }))"
                       OnMarkPartyComplete="@(new EventCallback(this, async () => { if (selectedReservation is not null) await MarkPartyCompleteAsync(selectedReservation.Id); }))"
                       OnSeat="@(new EventCallback(this, async () => { if (selectedReservation is not null) await SeatReservationAsync(selectedReservation.Id); }))"
+                      OnRestore="@(new EventCallback(this, async () => { if (selectedReservation is not null) await RestoreReservationAsync(selectedReservation.Id); }))"
                       IsActionDisabled="isActionInProgress" />
 
 @code {
@@ -65,6 +73,7 @@ else
     private bool isLoading = true;
     private bool partyCompletionEnabled;
     private bool isActionInProgress;
+    private bool showVoided;
 
     protected override async Task OnInitializedAsync()
     {
@@ -75,14 +84,27 @@ else
             var options = await EventService.GetEventOptionsAsync(activeEvent.Id);
             if (options is not null)
                 partyCompletionEnabled = options.IsPartyCompletionEnabled;
-                
-            var result = await ReservationService.GetReservationsAsync(activeEvent.Id, nameof(ReservationStatusFilter.Active), 1, 1000);
-            reservations.Clear();
-            reservations.AddRange(result.Reservations.OrderBy(r => r.SequenceNumber));
+
+            await LoadReservationsAsync();
             await InitializeSignalRAsync();
         }
 
         isLoading = false;
+    }
+
+    private async Task LoadReservationsAsync()
+    {
+        if (activeEvent is null) return;
+        var filter = showVoided ? nameof(ReservationStatusFilter.All) : nameof(ReservationStatusFilter.Active);
+        var result = await ReservationService.GetReservationsAsync(activeEvent.Id, filter, 1, 1000);
+        reservations.Clear();
+        reservations.AddRange(result.Reservations.OrderBy(r => r.SequenceNumber));
+    }
+
+    private async Task OnShowVoidedChangedAsync()
+    {
+        await LoadReservationsAsync();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task InitializeSignalRAsync()
@@ -93,8 +115,9 @@ else
             switch (r.NewStatus)
             {
                 case ReservationStatus.Waiting:
-                    reservations.RemoveAll(a => a.Id == r.ReservationId);
-                    reservations.Insert(reservations.Count, CreateReservationDto(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString()));
+                    if (reservations.All(a => a.Id != r.ReservationId))
+                        reservations.Insert(reservations.Count, CreateReservationDto(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString()));
+                    else PatchReservationStatus(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString());
                     break;
                 case ReservationStatus.Called:
                 case ReservationStatus.Seated:
@@ -102,7 +125,10 @@ else
                     PatchReservationStatus(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString());
                     break;
                 case ReservationStatus.Voided:
-                    reservations.RemoveAll(a => a.Id == r.ReservationId);
+                    if (showVoided)
+                        PatchReservationStatus(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString());
+                    else
+                        reservations.RemoveAll(a => a.Id == r.ReservationId);
                     break;
 
                 case ReservationStatus.None:
@@ -150,6 +176,13 @@ else
     {
         isActionInProgress = true;
         try { await ReservationService.SeatAsync(id); }
+        finally { isActionInProgress = false; }
+    }
+
+    private async Task RestoreReservationAsync(int id)
+    {
+        isActionInProgress = true;
+        try { await ReservationService.RestoreAsync(id); }
         finally { isActionInProgress = false; }
     }
 

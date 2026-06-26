@@ -1,7 +1,17 @@
 @using SagraFacile.Domain.Features.Reservations
 @inject IStringLocalizer<SharedResource> L
 
-@if (_isVisible)
+@if (_isRestoreAction)
+{
+    <button class="btn reservation-status-voided @(IsSmall ? "btn-sm" : "")"
+            @onclick="OnRestore"
+            disabled="@IsDisabled"
+            data-bs-dismiss="modal">
+        <i class="bi bi-arrow-counterclockwise"></i>
+        <span class="d-none d-xl-inline">@L["Receptionist_ActionRestore"]</span>
+    </button>
+}
+else if (_isVisible)
 {
     <button class="btn @_btnClass @(IsSmall ? "btn-sm" : "")"
             @onclick="_callback"
@@ -18,9 +28,11 @@
     [Parameter] public EventCallback OnMarkPartyComplete { get; set; }
     [Parameter] public EventCallback OnCall { get; set; }
     [Parameter] public EventCallback OnSeat { get; set; }
+    [Parameter] public EventCallback OnRestore { get; set; }
     [Parameter] public bool IsDisabled { get; set; }
     [Parameter] public bool IsSmall { get; set; }
 
+    private bool _isRestoreAction => Reservation.Status == nameof(ReservationStatus.Voided);
     private bool _isPartyCompleteAction => PartyCompletionEnabled && _nextStatus is ReservationStatus.PartyCompleted;
     private bool _isCallAction => _nextStatus is ReservationStatus.Called;
     private bool _isSeatAction => _nextStatus is ReservationStatus.Seated;
