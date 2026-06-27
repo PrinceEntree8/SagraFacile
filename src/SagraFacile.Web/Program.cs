@@ -130,10 +130,14 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseBlazorFrameworkFiles();
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<ReservationHub>("/hubs/reservations");
+app.MapFallbackToFile("index.html");
 
 app.Run();

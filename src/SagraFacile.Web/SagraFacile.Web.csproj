@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -20,6 +21,7 @@
     <ProjectReference Include="..\SagraFacile.Contracts\SagraFacile.Contracts.csproj" />
     <ProjectReference Include="..\SagraFacile.Infrastructure\SagraFacile.Infrastructure.csproj" />
     <ProjectReference Include="..\SagraFacile.ServiceDefaults\SagraFacile.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\SagraFacile.WebClient\SagraFacile.WebClient.csproj" />
   </ItemGroup>
 
 </Project>
