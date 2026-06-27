@@ -125,5 +125,18 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
         }
     }
 
-    public ValueTask DisposeAsync() => _db.DisposeAsync();
+    public Task<List<Reservation>> GetLastCalledAsync(int eventId, CancellationToken cancellationToken = default)
+    {
+        return _db.Reservations
+            .Where(r => r.EventId == eventId && r.Status == ReservationStatus.Called)
+            .OrderByDescending(r => r.LastCalledAt)
+            .Take(10)
+            .ToListAsync(cancellationToken);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        return _db.DisposeAsync();
+    }
 }

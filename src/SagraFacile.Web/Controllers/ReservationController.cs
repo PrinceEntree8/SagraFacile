@@ -47,24 +47,8 @@ public class ReservationController(IMediator mediator) : ControllerBase
         [FromQuery] int eventId,
         CancellationToken ct = default)
     {
-        var result = await mediator.QueryAsync(new GetReservations.Query(eventId, 1, 10, ReservationStatusFilter.Called), ct);
-        return Ok(new
-        {
-            Reservations = result.Reservations.Select(r => new ReservationDto(
-                r.Id,
-                r.SequenceNumber,
-                r.CustomerName,
-                r.PartySize,
-                r.Status,
-                r.Notes,
-                r.CreatedAt,
-                r.FirstCalledAt,
-                r.LastCalledAt,
-                r.CallCount,
-                r.WaitingTime,
-                r.TimeSinceLastCall)),
-            result.TotalCount
-        });
+        var result = await mediator.QueryAsync(new GetLastCalled.Query(eventId), ct);
+        return Ok(result);
     }
 
     [HttpGet("counters")]

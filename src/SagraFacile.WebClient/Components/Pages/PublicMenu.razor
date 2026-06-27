@@ -1,12 +1,11 @@
 @page "/menu"
 @*@layout DisplayLayout*@
 @using Microsoft.AspNetCore.SignalR.Client
-@using SagraFacile.Domain.Features.Reservations
-@inject NavigationManager Navigation
 @inject IStringLocalizer<SharedResource> L
 @inject IMenuService MenuService
 @inject IEventService EventService
 @inject IReservationService ReservationService
+@inject IJSRuntime JS
 
 <PageTitle>@L["PublicMenu_PageTitle"]</PageTitle>
 
@@ -151,14 +150,9 @@
         try
         {
             var result = await ReservationService.GetLastCalledReservationsAsync(eventId);
-            var latest = result.Reservations
-                .Where(r => r.LastCalledAt.HasValue)
-                .OrderByDescending(r => r.LastCalledAt!.Value)
-                .FirstOrDefault();
+            var latest = result.FirstOrDefault();
 
-            latestCalled = latest is null
-                ? null
-                : new CalledEntry(latest.Id, latest.SequenceNumber, latest.CustomerName, latest.PartySize);
+            latestCalled = latest;
         }
         catch
         {
@@ -166,5 +160,33 @@
         }
     }
     
-    private record CalledEntry(int Id, int SequenceNumber, string CustomerName, int PartySize);
+    private DotNetObjectReference<PublicMenu>? _dotNetRef;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("visibilityHelpers.register", _dotNetRef);
+        }
+    }
+    
+    [JSInvokable("OnVisibilityChanged")]
+    public async Task OnVisibilityChanged(bool visible)
+    {
+        if (visible && activeEvent is not null)
+        {
+            await LoadLatestCalledAsync(activeEvent.Id);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    
+    public async ValueTask DisposeAsync()
+    {
+        _dotNetRef?.Dispose();
+        try { await JS.InvokeVoidAsync("visibilityHelpers.unregister"); }
+        catch
+        {
+            // ignored
+        }
+    }
 }

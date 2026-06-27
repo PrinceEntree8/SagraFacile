@@ -1,4 +1,3 @@
-using SagraFacile.Application.Features.Reservations;
 using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Features.Reservations;
 
@@ -19,4 +18,5 @@ public interface IReservationRepository
     Task AddAsync(Reservation reservation, CancellationToken cancellationToken = default);
     Task AddCallAsync(ReservationCall call, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<List<Reservation>> GetLastCalledAsync(int eventId, CancellationToken cancellationToken = default);
 }

@@ -1,9 +1,9 @@
 @page "/"
-@using SagraFacile.Domain.Features.Reservations
 @inject NavigationManager Navigation
 @inject IStringLocalizer<SharedResource> L
 @inject IEventService EventService
 @inject IReservationService ReservationService
+@inject IJSRuntime JS
 
 <PageTitle>@L["Home_PageTitle"]</PageTitle>
 
@@ -81,8 +81,6 @@
     private bool isLoading = true;
     private EventDto? activeEvent;
     private readonly List<CalledEntry> calledEntries = [];
-    private const int MaxEntries = 10;
-    private const string CalledStatus = "Called";
     private bool initialLoadFailed;
 
     protected override async Task OnInitializedAsync()
@@ -100,17 +98,9 @@
         try
         {
             var result = await ReservationService.GetLastCalledReservationsAsync(eventId);
-            var sorted = result.Reservations
-                .Where(r => r.LastCalledAt.HasValue)
-                .OrderByDescending(r => r.LastCalledAt!.Value)
-                .Take(MaxEntries);
 
             calledEntries.Clear();
-            calledEntries.AddRange(sorted.Select(r => new CalledEntry(
-                r.Id,
-                r.SequenceNumber,
-                r.CustomerName,
-                r.PartySize)));
+            calledEntries.AddRange(result);
         }
         catch
         {
@@ -118,5 +108,33 @@
         }
     }
 
-    private record CalledEntry(int Id, int SequenceNumber, string CustomerName, int PartySize);
+    private DotNetObjectReference<Home>? _dotNetRef;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("visibilityHelpers.register", _dotNetRef);
+        }
+    }
+    
+    [JSInvokable("OnVisibilityChanged")]
+    public async Task OnVisibilityChanged(bool visible)
+    {
+        if (visible && activeEvent is not null)
+        {
+            await LoadInitialCalledReservationsAsync(activeEvent.Id);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    
+    public async ValueTask DisposeAsync()
+    {
+        _dotNetRef?.Dispose();
+        try { await JS.InvokeVoidAsync("visibilityHelpers.unregister"); }
+        catch
+        {
+            // ignored
+        }
+    }
 }

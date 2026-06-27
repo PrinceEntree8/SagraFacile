@@ -41,8 +41,8 @@
                         <label class="form-label">@L["Receptionist_PartySize"]</label>
                         <div class="input-group">
                             <InputNumber @bind-Value="newReservation.PartySize"
-                                         @ValueChanged="OnPartySizeChanged"
-                                         class="@GetInputClass(partySizeError)"/>
+                                         @bind-Value:after="() => OnPartySizeChanged(newReservation.PartySize)"
+                                         class="@GetInputClass(partySizeError)" />
                             @if (partyCompletionEnabled) {
                                 <span class="input-group-text">@L["Receptionist_Label_PartyComplete"]</span>
                                 <div class="input-group-text ">
