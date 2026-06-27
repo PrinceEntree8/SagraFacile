@@ -14,7 +14,7 @@ COPY src/SagraFacile.ServiceDefaults/SagraFacile.ServiceDefaults.csproj ./src/Sa
 COPY src/SagraFacile.AppHost/SagraFacile.AppHost.csproj ./src/SagraFacile.AppHost/
 COPY src/SagraFacile.WebClient/SagraFacile.WebClient.csproj ./src/SagraFacile.WebClient/
 COPY src/SagraFacile.Contracts/SagraFacile.Contracts.csproj ./src/SagraFacile.Contracts/
-COPY tests/SagraFacile.Tests.Smoke/SagrFacile.Tests.Smoke.csproj ./tests/SagraFacile.Tests.Smoke/
+COPY tests/SagraFacile.Tests.Smoke/SagraFacile.Tests.Smoke.csproj ./tests/SagraFacile.Tests.Smoke/
 COPY tests/SagraFacile.Application.Tests/SagraFacile.Application.Tests.csproj ./tests/SagraFacile.Application.Tests/
 COPY tests/SagraFacile.Infrastructure.Tests/SagraFacile.Infrastructure.Tests.csproj ./tests/SagraFacile.Infrastructure.Tests/
 
