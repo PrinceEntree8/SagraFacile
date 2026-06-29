@@ -6,6 +6,7 @@
 @inject IReservationService ReservationService
 @inject TokenStorageService TokenStorage
 @inject NavigationManager Navigation
+@inject IReservationRealtimeService ReservationRealtimeService
 @inject IStringLocalizer<SharedResource> L
 @implements IAsyncDisposable
 
@@ -103,16 +104,14 @@
 
     /// <summary>LIFO list of called reservations (newest first).</summary>
     private readonly List<CalledEntry> calledEntries = [];
+    private const int MaxEntries = 20;
 
-    private HubConnection? hubConnection;
     private bool isConnected;
     private bool isLoading = true;
     private EventDto? activeEvent;
 
-    /// <summary>Maximum number of entries kept in the LIFO list.</summary>
-    private const int MaxEntries = 10;
-
     private bool initialLoadFailed;
+    private IDisposable? reservationSubscription;
 
     // ── Lifecycle ──────────────────────────────────────────────────────
 
@@ -138,22 +137,16 @@
     {
         try
         {
-            var (reservations, _) = await ReservationService.GetReservationsAsync(eventId, "Called", 1, MaxEntries);
-
+            var reservations = await ReservationService.GetLastCalledReservationsAsync(eventId);
+            calledEntries.Clear();
             // Sort descending by LastCalledAt so the most recently called is first.
-            var sorted = reservations
-                .Where(r => r.LastCalledAt.HasValue)
-                .OrderByDescending(r => r.LastCalledAt!.Value)
-                .Take(MaxEntries);
-
-            foreach (var r in sorted)
+            foreach (var r in reservations)
             {
                 calledEntries.Add(new CalledEntry(
                     r.Id,
                     r.SequenceNumber,
                     r.CustomerName,
-                    r.PartySize,
-                    r.LastCalledAt!.Value));
+                    r.PartySize));
             }
         }
         catch
@@ -170,84 +163,38 @@
     /// </summary>
     private async Task InitializeSignalRAsync()
     {
-        var token = await TokenStorage.GetTokenAsync();
 
-        hubConnection = new HubConnectionBuilder()
-            .WithUrl(Navigation.ToAbsoluteUri("/hubs/reservations"), options =>
-            {
-                options.AccessTokenProvider = () => Task.FromResult(token);
-            })
-            .WithAutomaticReconnect()
-            .Build();
+        await ReservationRealtimeService.EnsureStartedAsync();
 
-        // Track connection state for the live indicator.
-        hubConnection.Reconnecting += _ =>
+        reservationSubscription = ReservationRealtimeService.SubscribeReservationStatusChanged(async notification =>
         {
-            isConnected = false;
-            InvokeAsync(StateHasChanged);
-            return Task.CompletedTask;
-        };
+            // Listen for new reservation calls (LIFO prepend).
+            if (notification.NewStatus != ReservationStatus.Called)
+                return;
 
-        hubConnection.Reconnected += _ =>
-        {
-            isConnected = true;
-            InvokeAsync(StateHasChanged);
-            return Task.CompletedTask;
-        };
+            var entry = new CalledEntry(
+                notification.ReservationId,
+                notification.SequenceNumber,
+                notification.CustomerName,
+                notification.PartySize);
 
-        // Listen for new reservation calls (LIFO prepend).
-        hubConnection.On<ReservationStatusChangedNotification>(
-            nameof(IReservationHubClient.ReservationStatusChanged),
-            async notification =>
-            {
-                if (notification.NewStatus != ReservationStatus.Called)
-                    return;
-                
-                var entry = new CalledEntry(
-                    notification.ReservationId,
-                    notification.SequenceNumber,
-                    notification.CustomerName,
-                    notification.PartySize,
-                    DateTime.UtcNow);
+            // Remove any existing entry for the same reservation (re-call scenario).
+            calledEntries.RemoveAll(e => e.Id == notification.ReservationId);
 
-                // Remove any existing entry for the same reservation (re-call scenario).
-                calledEntries.RemoveAll(e => e.Id == notification.ReservationId);
+            // Prepend the new call at the front (LIFO).
+            calledEntries.Insert(0, entry);
 
-                // Prepend the new call at the front (LIFO).
-                calledEntries.Insert(0, entry);
+            // Trim to the configured maximum.
+            if (calledEntries.Count > MaxEntries)
+                calledEntries.RemoveRange(MaxEntries, calledEntries.Count - MaxEntries);
 
-                // Trim to the configured maximum.
-                if (calledEntries.Count > MaxEntries)
-                    calledEntries.RemoveRange(MaxEntries, calledEntries.Count - MaxEntries);
-
-                await InvokeAsync(StateHasChanged);
-            });
-
-        try
-        {
-            await hubConnection.StartAsync();
-            isConnected = hubConnection.State == HubConnectionState.Connected;
-
-            // Join the "NOW_CALLING" SignalR group so the server can target
-            // display-board clients specifically.
-            if (isConnected)
-                await hubConnection.SendAsync("JoinReservationGroup", "NOW_CALLING");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[DEBUG_LOG] SignalR initialization failed: {ex}");
-            isConnected = false;
-        }
+            await InvokeAsync(StateHasChanged);
+            await InvokeAsync(StateHasChanged);
+        });
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (hubConnection is not null)
-            await hubConnection.DisposeAsync();
+        reservationSubscription?.Dispose();
     }
-
-    // ── Local model ────────────────────────────────────────────────────
-
-    /// <summary>Lightweight record for a single "Now Calling" entry.</summary>
-    private record CalledEntry(int Id, int SequenceNumber, string CustomerName, int PartySize, DateTime CalledAt);
 }
