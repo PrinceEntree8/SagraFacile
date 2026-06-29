@@ -17,6 +17,8 @@ public class CallReservationHandlerTests
 
     public CallReservationHandlerTests()
     {
+        _repository.GetCountersAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new List<ReservationCounterDto>());
         _handler = new CallReservation.Handler(_repository, _notifier);
     }
 

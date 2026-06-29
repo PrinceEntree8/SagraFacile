@@ -20,6 +20,8 @@ public class CreateReservationHandlerTests
     {
         _eventRepository.GetByIdAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(ci => new Event { Id = ci.Arg<int>() });
+        _repository.GetCountersAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new List<ReservationCounterDto>());
         _handler = new CreateReservation.Handler(_repository, _notifier, _eventRepository);
     }
 
@@ -52,7 +54,7 @@ public class CreateReservationHandlerTests
                 x.PartySize == command.PartySize &&
                 x.NewStatus == ReservationStatus.Waiting &&
                 x.OldStatus == null &&
-                x.CallCount == null),
+                x.CallCount == 0),
             Arg.Any<CancellationToken>());
     }
 

@@ -16,6 +16,8 @@ public class SeatReservationHandlerTests
 
     public SeatReservationHandlerTests()
     {
+        _repository.GetCountersAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new List<ReservationCounterDto>());
         _handler = new SeatReservation.Handler(_repository, _notifier);
     }
 
@@ -40,7 +42,7 @@ public class SeatReservationHandlerTests
                 x.SequenceNumber == 1 &&
                 x.NewStatus == ReservationStatus.Seated &&
                 x.OldStatus == ReservationStatus.Called &&
-                x.CallCount == null),
+                x.CallCount == 0),
             Arg.Any<CancellationToken>());
     }
 
