@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using NBomber.Contracts;
 using NBomber.CSharp;
+using SagraFacile.Contracts.Common;
 using SagraFacile.Contracts.Reservations;
 
 namespace SagraFacile.Tests.Smoke.Scenarios;
@@ -33,11 +34,11 @@ public static class ReservationLifecycleScenario
                     if (!response.IsSuccessStatusCode)
                         return Response.Fail();
 
-                    var createResult = await response.Content.ReadFromJsonAsync<CreateReservationResult>(cancellationToken: ctx.ScenarioCancellationToken);
-                    if (createResult is null || createResult.Id <= 0)
+                    var createResult = await response.Content.ReadFromJsonAsync<CommandResult<CreateReservationResult>>(cancellationToken: ctx.ScenarioCancellationToken);
+                    if (createResult is null || !createResult.Success || createResult.Data is null || createResult.Data.Id <= 0)
                         return Response.Fail(message: "Create response does not contain a valid reservation id");
 
-                    ctx.Data["reservationId"] = createResult.Id;
+                    ctx.Data["reservationId"] = createResult.Data.Id;
                     return Response.Ok(sizeBytes: (int)(response.Content.Headers.ContentLength ?? 0));
                 });
 
@@ -98,6 +99,4 @@ public static class ReservationLifecycleScenario
                     during: duration > warmup ? duration - warmup : TimeSpan.Zero)
                 );
     }
-
-    private sealed record CreateReservationResult(int Id);
 }

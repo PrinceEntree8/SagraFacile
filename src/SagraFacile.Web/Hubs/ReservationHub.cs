@@ -38,7 +38,7 @@ public class ReservationHub(IMediator mediator) : Hub<IReservationHubClient>
         => await mediator.QueryAsync(new GetBestFitReservation.Query(eventId, tableCoverCount));
 
     [Authorize(Policy = "Cassiere")]
-    public async Task<CommandResult<(int Id, int SequenceNumber)>> CreateReservation(
+    public async Task<CommandResult<CreateReservationResult>> CreateReservation(
         int eventId,
         string customerName,
         int partySize,

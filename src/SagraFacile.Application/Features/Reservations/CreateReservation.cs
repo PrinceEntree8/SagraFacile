@@ -17,7 +17,7 @@ public static class CreateReservation
         int PartySize,
         string? Notes = null,
         bool PartyComplete = false
-    ) : ICommand<CommandResult<(int Id, int SequenceNumber)>>;
+    ) : ICommand<CommandResult<CreateReservationResult>>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -38,10 +38,10 @@ public static class CreateReservation
     }
 
     public class Handler(IReservationRepository repository, IReservationNotifier notifier, IEventRepository eventRepository)
-        : ICommandHandler<Command, CommandResult<(int Id, int SequenceNumber)>>
+        : ICommandHandler<Command, CommandResult<CreateReservationResult>>
     {
 
-        public async Task<CommandResult<(int Id, int SequenceNumber)>> Handle(Command command, CancellationToken cancellationToken)
+        public async Task<CommandResult<CreateReservationResult>> Handle(Command command, CancellationToken cancellationToken)
         {
             var reservationEvent = await eventRepository.GetByIdAsync(command.EventId, cancellationToken);
             var partyCompletionEnabled = reservationEvent?.AdditionalOptions.Reservations.PartyCompletion.Enabled ?? false;
@@ -90,7 +90,8 @@ public static class CreateReservation
                         new CountersUpdatedNotification(counters),
                         cancellationToken).Forget();
 
-                    return new CommandResult<(int Id, int SequenceNumber)>(true, (reservation.Id, reservation.SequenceNumber));
+                    return new CommandResult<CreateReservationResult>(true,
+                        new CreateReservationResult(reservation.Id, reservation.SequenceNumber));
                 }
                 catch (RepositoryUniqueConstraintException)
                 {
@@ -98,7 +99,7 @@ public static class CreateReservation
                 }
             }
 
-            return new CommandResult<(int Id, int SequenceNumber)>(false, default,
+            return new CommandResult<CreateReservationResult>(false, default,
                 Message: "Failed to create reservation after maximum retries.");
         }
     }

@@ -46,3 +46,5 @@ public record ReservationMatchDto(
     string MatchQuality);
     
 public record CalledEntry(int Id, int SequenceNumber, string CustomerName, int PartySize);
+
+public record CreateReservationResult(int Id, int SequenceNumber);

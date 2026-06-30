@@ -23,11 +23,11 @@ public class ReservationService(HttpClient httpClient) : IReservationService
         return response ?? [];
     }
 
-    public async Task<CommandResult<(int Id, int SequenceNumber)>> CreateAsync(CreateReservationRequest request, CancellationToken ct = default)
+    public async Task<CommandResult<CreateReservationResult>> CreateAsync(CreateReservationRequest request, CancellationToken ct = default)
     {
         var response = await httpClient.PostAsJsonAsync("api/reservations", request, ct);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<CommandResult<(int Id, int SequenceNumber)>>(cancellationToken: ct) ?? throw new InvalidOperationException();
+        return await response.Content.ReadFromJsonAsync<CommandResult<CreateReservationResult>>(cancellationToken: ct) ?? throw new InvalidOperationException();
     }
 
     public async Task<CommandResult> CallAsync(int id, CallReservationRequest request, CancellationToken ct = default)

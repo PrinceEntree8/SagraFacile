@@ -9,7 +9,7 @@ public interface IReservationHubClient
     Task CountersUpdated(List<ReservationCounterDto> counters);
     Task AvailableSeatsUpdated(int availableSeats);
 
-    Task<CommandResult<(int Id, int SequenceNumber)>> CreateReservation(
+    Task<CommandResult<CreateReservationResult>> CreateReservation(
         int eventId,
         string customerName,
         int partySize,
