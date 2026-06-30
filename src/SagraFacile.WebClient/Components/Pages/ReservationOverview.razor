@@ -116,7 +116,7 @@ else
             {
                 case ReservationStatus.Waiting:
                     if (reservations.All(a => a.Id != r.ReservationId))
-                        reservations.Insert(reservations.Count, CreateReservationDto(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString()));
+                        InsertReservationOrdered(CreateReservationDto(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString()));
                     else PatchReservationStatus(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString());
                     break;
                 case ReservationStatus.Called:
@@ -206,6 +206,16 @@ else
             calledAt is null ? null : TimeSpan.Zero);
     }
 
+    private void InsertReservationOrdered(ReservationDto dto)
+    {
+        // Insert while maintaining ascending SequenceNumber order.
+        var insertIndex = reservations.FindIndex(r => r.SequenceNumber > dto.SequenceNumber);
+        if (insertIndex < 0)
+            reservations.Add(dto);
+        else
+            reservations.Insert(insertIndex, dto);
+    }
+
     private void PatchReservationStatus(int id, int? sequenceNumber, string? customerName, int? partySize, string status)
     {
         var index = reservations.FindIndex(r => r.Id == id);
@@ -213,7 +223,7 @@ else
         {
             if (sequenceNumber.HasValue && customerName is not null && partySize.HasValue)
             {
-                reservations.Insert(0, CreateReservationDto(id, sequenceNumber.Value, customerName, partySize.Value, status));
+                InsertReservationOrdered(CreateReservationDto(id, sequenceNumber.Value, customerName, partySize.Value, status));
             }
 
             return;
