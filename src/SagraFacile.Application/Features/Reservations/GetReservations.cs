@@ -28,12 +28,12 @@ public static class GetReservations
                 r.PartySize,
                 r.Status.ToString(),
                 r.Notes,
-                r.CreatedAt,
-                r.FirstCalledAt,
-                r.LastCalledAt,
+                r.CreatedAt.AsUtc(),
+                r.FirstCalledAt.AsUtc(),
+                r.LastCalledAt.AsUtc(),
                 r.CallCount,
-                now - r.CreatedAt,
-                r.LastCalledAt.HasValue ? now - r.LastCalledAt.Value : null)).ToList();
+                now - r.CreatedAt.AsUtc(),
+                r.LastCalledAt.HasValue ? now - r.LastCalledAt.Value.AsUtc() : null)).ToList();
 
             return new ReservationsDto(dtos, total);
         }

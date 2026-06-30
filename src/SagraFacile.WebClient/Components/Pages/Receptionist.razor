@@ -257,15 +257,15 @@
     private void UpdateCounters(IReadOnlyList<ReservationCounterDto> counters)
     {
         totalCount = counters.Sum(c => c.Count);
-        totalPeople = reservations.Sum(r => r.PartySize);
+        totalPeople = counters.Sum(c => c.TotalPeople);
 
         var toBeSeated = counters.Where(c => c.Status is "Waiting" or "Called" or "PartyCompleted").ToList();
         toBeSeatedCount = toBeSeated.Sum(c => c.Count);
-        toBeSeatedPeople = reservations.Where(r => r.Status is "Waiting" or "Called" or "PartyCompleted").Sum(r => r.PartySize);
+        toBeSeatedPeople = toBeSeated.Sum(c => c.TotalPeople);
 
         var seated = counters.Where(c => c.Status == "Seated").ToList();
         seatedCount = seated.Sum(c => c.Count);
-        seatedPeople = reservations.Where(r => r.Status == "Seated").Sum(r => r.PartySize);
+        seatedPeople = seated.Sum(c => c.TotalPeople);
     }
 
     private async Task InitializeSignalR()

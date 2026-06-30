@@ -146,5 +146,8 @@ public class GetReservationsHandlerTests
         Assert.Equal(firstCalled, dto.FirstCalledAt);
         Assert.Equal(lastCalled, dto.LastCalledAt);
         Assert.Equal(2, dto.CallCount);
+        Assert.Equal(DateTimeKind.Utc, dto.CreatedAt.Kind);
+        Assert.Equal(DateTimeKind.Utc, dto.FirstCalledAt!.Value.Kind);
+        Assert.Equal(DateTimeKind.Utc, dto.LastCalledAt!.Value.Kind);
     }
 }
