@@ -11,9 +11,11 @@ public sealed class ReservationRealtimeService : IReservationRealtimeService, IA
     private readonly HubConnection hubConnection;
 
     private readonly SemaphoreSlim startLock = new(1, 1);
+    private readonly WeakAsyncEvent<ReservationConnectionState> connectionStateChanged = new();
     private readonly WeakAsyncEvent<ReservationStatusChangedNotification> reservationStatusChanged = new();
     private readonly WeakAsyncEvent<int> availableSeatsUpdated = new();
     private readonly WeakAsyncEvent<List<ReservationCounterDto>> countersUpdated = new();
+    private bool lifecycleHandlersRegistered;
 
     public ReservationRealtimeService(TokenStorageService tokenStorage, NavigationManager navigationManager)
     {
@@ -25,6 +27,8 @@ public sealed class ReservationRealtimeService : IReservationRealtimeService, IA
             })
             .WithAutomaticReconnect()
             .Build();
+
+        RegisterLifecycleHandlers();
     }
 
     public Task EnsureStartedAsync() => EnsureConnectedAsync();
@@ -35,6 +39,8 @@ public sealed class ReservationRealtimeService : IReservationRealtimeService, IA
         await hubConnection.SendAsync("NotifyAvailableSeatsUpdated", seats);
     }
 
+    public IDisposable SubscribeConnectionStateChanged(Func<ReservationConnectionState, Task> handler) => connectionStateChanged.Subscribe(handler);
+
     public IDisposable SubscribeReservationStatusChanged(Func<ReservationStatusChangedNotification, Task> handler) => reservationStatusChanged.Subscribe(handler);
 
     public IDisposable SubscribeAvailableSeatsUpdated(Func<int, Task> handler) => availableSeatsUpdated.Subscribe(handler);
@@ -43,7 +49,7 @@ public sealed class ReservationRealtimeService : IReservationRealtimeService, IA
 
     private async Task EnsureConnectedAsync()
     {
-        if (hubConnection.State == HubConnectionState.Connected)
+        if (hubConnection.State is HubConnectionState.Connected or HubConnectionState.Connecting or HubConnectionState.Reconnecting)
         {
             return;
         }
@@ -51,10 +57,21 @@ public sealed class ReservationRealtimeService : IReservationRealtimeService, IA
         await startLock.WaitAsync();
         try
         {
-            if (hubConnection.State != HubConnectionState.Connected)
+            if (hubConnection.State == HubConnectionState.Disconnected)
             {
                 await RegisterHandlersIfNeededAsync();
-                await hubConnection.StartAsync();
+                await connectionStateChanged.RaiseAsync(ReservationConnectionState.Connecting);
+
+                try
+                {
+                    await hubConnection.StartAsync();
+                    await connectionStateChanged.RaiseAsync(ReservationConnectionState.Connected);
+                }
+                catch
+                {
+                    await connectionStateChanged.RaiseAsync(ReservationConnectionState.Disconnected);
+                    throw;
+                }
             }
         }
         finally
@@ -64,6 +81,20 @@ public sealed class ReservationRealtimeService : IReservationRealtimeService, IA
     }
 
     private bool handlersRegistered;
+
+    private void RegisterLifecycleHandlers()
+    {
+        if (lifecycleHandlersRegistered)
+        {
+            return;
+        }
+
+        lifecycleHandlersRegistered = true;
+
+        hubConnection.Reconnecting += _ => connectionStateChanged.RaiseAsync(ReservationConnectionState.Reconnecting);
+        hubConnection.Reconnected += _ => connectionStateChanged.RaiseAsync(ReservationConnectionState.Connected);
+        hubConnection.Closed += _ => connectionStateChanged.RaiseAsync(ReservationConnectionState.Disconnected);
+    }
 
     private Task RegisterHandlersIfNeededAsync()
     {

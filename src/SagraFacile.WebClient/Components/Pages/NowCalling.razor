@@ -1,11 +1,8 @@
 @page "/now-calling"
 @layout DisplayLayout
-@using Microsoft.AspNetCore.SignalR.Client
 @using SagraFacile.Domain.Features.Reservations
 @inject IEventService EventService
 @inject IReservationService ReservationService
-@inject TokenStorageService TokenStorage
-@inject NavigationManager Navigation
 @inject IReservationRealtimeService ReservationRealtimeService
 @inject IStringLocalizer<SharedResource> L
 @implements IAsyncDisposable
@@ -21,8 +18,9 @@
             <a class="nc-menu-link" href="/menu">@L["NowCalling_BackToMenu"]</a>
             @if (activeEvent is not null)
             {
-                <span class="nc-status @(isConnected ? "nc-status--live" : "nc-status--offline")">
-                    @(isConnected ? L["NowCalling_Live"].Value : L["NowCalling_Reconnecting"].Value)
+                <span class="nc-status @GetConnectionStatusClass()">
+                    <i class="@GetConnectionStatusIconClass() nc-status-icon" aria-hidden="true"></i>
+                    <span>@GetConnectionStatusText()</span>
                 </span>
             }
         </div>
@@ -106,11 +104,12 @@
     private readonly List<CalledEntry> calledEntries = [];
     private const int MaxEntries = 20;
 
-    private bool isConnected;
+    private ReservationConnectionState connectionState = ReservationConnectionState.Disconnected;
     private bool isLoading = true;
     private EventDto? activeEvent;
 
     private bool initialLoadFailed;
+    private IDisposable? connectionSubscription;
     private IDisposable? reservationSubscription;
 
     // ── Lifecycle ──────────────────────────────────────────────────────
@@ -120,6 +119,12 @@
         activeEvent = await EventService.GetActiveEventAsync();
         if (activeEvent is not null)
         {
+            connectionSubscription = ReservationRealtimeService.SubscribeConnectionStateChanged(async state =>
+            {
+                connectionState = state;
+                await InvokeAsync(StateHasChanged);
+            });
+
             // Pre-populate the list with reservations already in "Called" state
             // so that the board shows the correct state when opened mid-event.
             await LoadInitialCalledReservationsAsync(activeEvent.Id);
@@ -163,38 +168,71 @@
     /// </summary>
     private async Task InitializeSignalRAsync()
     {
-
-        await ReservationRealtimeService.EnsureStartedAsync();
-
-        reservationSubscription = ReservationRealtimeService.SubscribeReservationStatusChanged(async notification =>
+        try
         {
-            // Listen for new reservation calls (LIFO prepend).
-            if (notification.NewStatus != ReservationStatus.Called)
-                return;
+            await ReservationRealtimeService.EnsureStartedAsync();
 
-            var entry = new CalledEntry(
-                notification.ReservationId,
-                notification.SequenceNumber,
-                notification.CustomerName,
-                notification.PartySize);
+            reservationSubscription = ReservationRealtimeService.SubscribeReservationStatusChanged(async notification =>
+            {
+                // Listen for new reservation calls (LIFO prepend).
+                if (notification.NewStatus != ReservationStatus.Called)
+                    return;
 
-            // Remove any existing entry for the same reservation (re-call scenario).
-            calledEntries.RemoveAll(e => e.Id == notification.ReservationId);
+                var entry = new CalledEntry(
+                    notification.ReservationId,
+                    notification.SequenceNumber,
+                    notification.CustomerName,
+                    notification.PartySize);
 
-            // Prepend the new call at the front (LIFO).
-            calledEntries.Insert(0, entry);
+                // Remove any existing entry for the same reservation (re-call scenario).
+                calledEntries.RemoveAll(e => e.Id == notification.ReservationId);
 
-            // Trim to the configured maximum.
-            if (calledEntries.Count > MaxEntries)
-                calledEntries.RemoveRange(MaxEntries, calledEntries.Count - MaxEntries);
+                // Prepend the new call at the front (LIFO).
+                calledEntries.Insert(0, entry);
 
-            await InvokeAsync(StateHasChanged);
-            await InvokeAsync(StateHasChanged);
-        });
+                // Trim to the configured maximum.
+                if (calledEntries.Count > MaxEntries)
+                    calledEntries.RemoveRange(MaxEntries, calledEntries.Count - MaxEntries);
+
+                await InvokeAsync(StateHasChanged);
+            });
+        }
+        catch
+        {
+            // Keep the board usable even if the realtime hub is temporarily unavailable.
+        }
     }
 
     public async ValueTask DisposeAsync()
     {
+        connectionSubscription?.Dispose();
         reservationSubscription?.Dispose();
     }
+
+    private string GetConnectionStatusClass() => connectionState switch
+    {
+        ReservationConnectionState.Connected => "nc-status--live",
+        ReservationConnectionState.Connecting => "nc-status--connecting",
+        ReservationConnectionState.Reconnecting => "nc-status--offline",
+        ReservationConnectionState.Disconnected => "nc-status--offline",
+        _ => "nc-status--offline"
+    };
+
+    private string GetConnectionStatusIconClass() => connectionState switch
+    {
+        ReservationConnectionState.Connected => "bi bi-wifi",
+        ReservationConnectionState.Connecting => "bi bi-plug",
+        ReservationConnectionState.Reconnecting => "bi bi-arrow-repeat",
+        ReservationConnectionState.Disconnected => "bi bi-wifi-off",
+        _ => "bi bi-wifi-off"
+    };
+
+    private string GetConnectionStatusText() => connectionState switch
+    {
+        ReservationConnectionState.Connected => L["NowCalling_Live"].Value,
+        ReservationConnectionState.Connecting => L["NowCalling_Connecting"].Value,
+        ReservationConnectionState.Reconnecting => L["NowCalling_Reconnecting"].Value,
+        ReservationConnectionState.Disconnected => L["NowCalling_Offline"].Value,
+        _ => L["NowCalling_Offline"].Value
+    };
 }

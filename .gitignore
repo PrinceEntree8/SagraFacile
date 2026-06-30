@@ -61,4 +61,7 @@ nunit-*.xml
 [Bb]in*/
 .junie/
 
+.air
+.idea
+
 .DS_Store

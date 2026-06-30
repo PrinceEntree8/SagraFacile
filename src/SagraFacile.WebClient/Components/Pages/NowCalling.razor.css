@@ -77,11 +77,23 @@
 
 /* Live / offline status badge */
 .nc-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     font-size: clamp(0.75rem, 1.8vw, 1rem);
     font-weight: 600;
     padding: 0.3em 0.75em;
     border-radius: 2em;
     letter-spacing: 0.05em;
+}
+
+.nc-status-icon {
+    font-size: 0.95em;
+}
+
+.nc-status--connecting {
+    background: rgba(88, 166, 255, 0.18);
+    color: #79c0ff;
 }
 
 .nc-status--live {

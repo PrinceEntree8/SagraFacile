@@ -250,7 +250,9 @@
   <data name="NowCalling_PageTitle" xml:space="preserve"><value>In Chiamata – SagraFacile</value></data>
   <data name="NowCalling_Header" xml:space="preserve"><value>In Chiamata</value></data>
   <data name="NowCalling_Live" xml:space="preserve"><value>● LIVE</value></data>
+  <data name="NowCalling_Connecting" xml:space="preserve"><value>Connessione…</value></data>
   <data name="NowCalling_Reconnecting" xml:space="preserve"><value>⚠ Riconnessione…</value></data>
+  <data name="NowCalling_Offline" xml:space="preserve"><value>Offline</value></data>
   <data name="NowCalling_LoadWarning" xml:space="preserve"><value>⚠ Impossibile caricare le chiamate precedenti. Gli aggiornamenti in tempo reale sono attivi.</value></data>
   <data name="NowCalling_WaitingForCall" xml:space="preserve"><value>In attesa della prima chiamata…</value></data>
   <data name="NowCalling_CurrentCall" xml:space="preserve"><value>CHIAMATA CORRENTE</value></data>
