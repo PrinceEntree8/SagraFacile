@@ -1,24 +1,18 @@
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Reservations;
 
 namespace SagraFacile.Application.Features.Reservations;
 
 public static class GetCounters
 {
-    public record Query(int EventId) : IQuery<Result>;
-    public record Result(List<ReservationCounter> Counters);
-    public record ReservationCounter(string Status, int Count, int TotalPeople);
-
-    public class Handler : IQueryHandler<Query, Result>
+    public record Query(int EventId) : IQuery<IList<ReservationCounterDto>>;
+    public class Handler(IReservationRepository repository) : IQueryHandler<Query, IList<ReservationCounterDto>>
     {
-        private readonly IReservationRepository _repository;
-
-        public Handler(IReservationRepository repository) => _repository = repository;
-
-        public async Task<Result> Handle(Query query, CancellationToken cancellationToken)
+        public async Task<IList<ReservationCounterDto>> Handle(Query query, CancellationToken cancellationToken)
         {
-            var counters = await _repository.GetCountersAsync(query.EventId, cancellationToken).ConfigureAwait(false);
-            return new Result(counters);
+            var counters = await repository.GetCountersAsync(query.EventId, cancellationToken).ConfigureAwait(false);
+            return counters.Select(c => new ReservationCounterDto(c.Status, c.Count, c.TotalPeople)).ToList();
         }
     }
 }

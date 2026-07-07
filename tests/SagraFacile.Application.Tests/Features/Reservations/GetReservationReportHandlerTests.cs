@@ -191,6 +191,8 @@ public class GetReservationReportHandlerTests
         var report = result.Reports[0];
         Assert.NotNull(report.WaitTimeUntilFirstCall);
         Assert.Equal(firstCalled - created, report.WaitTimeUntilFirstCall!.Value);
+        Assert.Equal(DateTimeKind.Utc, report.CreatedAt.Kind);
+        Assert.Equal(DateTimeKind.Utc, report.FirstCalledAt!.Value.Kind);
     }
 
     [Fact]
@@ -210,6 +212,7 @@ public class GetReservationReportHandlerTests
 
         // wait times: 2min, 10min, 15min → median = 10min
         Assert.Equal(TimeSpan.FromMinutes(10), result.Statistics.MedianWaitTime);
+        Assert.All(result.Reports, report => Assert.Equal(DateTimeKind.Utc, report.CreatedAt.Kind));
     }
 
     [Fact]
@@ -228,5 +231,6 @@ public class GetReservationReportHandlerTests
 
         // wait times: 4min, 20min → median = 12min
         Assert.Equal(TimeSpan.FromMinutes(12), result.Statistics.MedianWaitTime);
+        Assert.All(result.Reports, report => Assert.Equal(DateTimeKind.Utc, report.CreatedAt.Kind));
     }
 }

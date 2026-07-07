@@ -1,0 +1,238 @@
+@page "/now-calling"
+@layout DisplayLayout
+@using SagraFacile.Domain.Features.Reservations
+@inject IEventService EventService
+@inject IReservationService ReservationService
+@inject IReservationRealtimeService ReservationRealtimeService
+@inject IStringLocalizer<SharedResource> L
+@implements IAsyncDisposable
+
+<PageTitle>@L["NowCalling_PageTitle"]</PageTitle>
+
+<div class="nc-container">
+
+    @* ── Header ──────────────────────────────────────────────── *@
+    <header class="nc-header">
+        <span class="nc-title">🔔 @L["NowCalling_Header"]</span>
+        <div class="nc-header-actions">
+            <a class="nc-menu-link" href="/menu">@L["NowCalling_BackToMenu"]</a>
+            @if (activeEvent is not null)
+            {
+                <span class="nc-status @GetConnectionStatusClass()">
+                    <i class="@GetConnectionStatusIconClass() nc-status-icon" aria-hidden="true"></i>
+                    <span>@GetConnectionStatusText()</span>
+                </span>
+            }
+        </div>
+    </header>
+
+    @* ── Main content area ───────────────────────────────────── *@
+    <div class="nc-body">
+
+        @if (isLoading)
+        {
+            <div class="nc-idle" role="status" aria-live="polite">
+                <p class="nc-idle-text">@L["PublicMenu_Loading"]</p>
+            </div>
+        }
+        else if (activeEvent is null)
+        {
+            <div class="nc-idle" role="status" aria-live="polite">
+                <div class="nc-idle-icon">🍽️</div>
+                <p class="nc-idle-text">@L["NowCalling_NoActiveEvent"]</p>
+            </div>
+        }
+        else
+        {
+            @if (initialLoadFailed)
+            {
+                <div class="nc-load-warning" role="alert">
+                    @L["NowCalling_LoadWarning"]
+                </div>
+            }
+
+            @if (calledEntries.Count == 0)
+            {
+                @* Idle state – shown when no reservation has been called yet. *@
+                <div class="nc-idle" role="status" aria-live="polite">
+                    <div class="nc-idle-icon">🎟️</div>
+                    <p class="nc-idle-text">@L["NowCalling_WaitingForCall"]</p>
+                </div>
+            }
+            else
+            {
+                @* ── Current / most-recently-called reservation ── *@
+                var latest = calledEntries[0];
+                <section class="nc-current" aria-label="Current call" aria-live="assertive">
+                    <div class="nc-current-label">@L["NowCalling_CurrentCall"]</div>
+                    <div class="nc-current-queue" aria-label="Queue number @latest.SequenceNumber">
+                        @latest.SequenceNumber
+                    </div>
+                    <div class="nc-current-name">@latest.CustomerName</div>
+                    <div class="nc-current-party">
+                        <span class="nc-party-badge"><i class="bi bi-people"></i> @latest.PartySize</span>
+                    </div>
+                </section>
+
+                @* ── Previous calls (LIFO order, newest first) ── *@
+                @if (calledEntries.Count > 1)
+                {
+                    <section class="nc-history" aria-label="Previous calls">
+                        <h2 class="nc-history-title">@L["NowCalling_PreviousCalls"]</h2>
+                        <ul class="nc-history-list" role="list">
+                            @foreach (var entry in calledEntries.Skip(1))
+                            {
+                                <li class="nc-history-item" role="listitem">
+                                    <span class="nc-history-queue">@entry.SequenceNumber</span>
+                                    <span class="nc-history-name">@entry.CustomerName</span>
+                                    <span class="nc-history-party"><i class="bi bi-people"></i> @entry.PartySize</span>
+                                </li>
+                            }
+                        </ul>
+                    </section>
+                }
+            }
+        }
+
+    </div>
+</div>
+
+@code {
+    // ── State ──────────────────────────────────────────────────────────
+
+    /// <summary>LIFO list of called reservations (newest first).</summary>
+    private readonly List<CalledEntry> calledEntries = [];
+    private const int MaxEntries = 20;
+
+    private ReservationConnectionState connectionState = ReservationConnectionState.Disconnected;
+    private bool isLoading = true;
+    private EventDto? activeEvent;
+
+    private bool initialLoadFailed;
+    private IDisposable? connectionSubscription;
+    private IDisposable? reservationSubscription;
+
+    // ── Lifecycle ──────────────────────────────────────────────────────
+
+    protected override async Task OnInitializedAsync()
+    {
+        activeEvent = await EventService.GetActiveEventAsync();
+        if (activeEvent is not null)
+        {
+            connectionSubscription = ReservationRealtimeService.SubscribeConnectionStateChanged(async state =>
+            {
+                connectionState = state;
+                await InvokeAsync(StateHasChanged);
+            });
+
+            // Pre-populate the list with reservations already in "Called" state
+            // so that the board shows the correct state when opened mid-event.
+            await LoadInitialCalledReservationsAsync(activeEvent.Id);
+            await InitializeSignalRAsync();
+        }
+
+        isLoading = false;
+    }
+
+    /// <summary>
+    /// Loads the most recent "Called" reservations from the database and
+    /// fills the LIFO list in descending order of LastCalledAt.
+    /// </summary>
+    private async Task LoadInitialCalledReservationsAsync(int eventId)
+    {
+        try
+        {
+            var reservations = await ReservationService.GetLastCalledReservationsAsync(eventId);
+            calledEntries.Clear();
+            // Sort descending by LastCalledAt so the most recently called is first.
+            foreach (var r in reservations)
+            {
+                calledEntries.Add(new CalledEntry(
+                    r.Id,
+                    r.SequenceNumber,
+                    r.CustomerName,
+                    r.PartySize));
+            }
+        }
+        catch
+        {
+            // Non-critical: the board still updates via live SignalR events.
+            // Record the failure so a debug message can be rendered if needed.
+            initialLoadFailed = true;
+        }
+    }
+
+    /// <summary>
+    /// Creates the SignalR connection, joins the "NOW_CALLING" group, and
+    /// registers the event listener for live reservation-called events.
+    /// </summary>
+    private async Task InitializeSignalRAsync()
+    {
+        try
+        {
+            await ReservationRealtimeService.EnsureStartedAsync();
+
+            reservationSubscription = ReservationRealtimeService.SubscribeReservationStatusChanged(async notification =>
+            {
+                // Listen for new reservation calls (LIFO prepend).
+                if (notification.NewStatus != ReservationStatus.Called)
+                    return;
+
+                var entry = new CalledEntry(
+                    notification.ReservationId,
+                    notification.SequenceNumber,
+                    notification.CustomerName,
+                    notification.PartySize);
+
+                // Remove any existing entry for the same reservation (re-call scenario).
+                calledEntries.RemoveAll(e => e.Id == notification.ReservationId);
+
+                // Prepend the new call at the front (LIFO).
+                calledEntries.Insert(0, entry);
+
+                // Trim to the configured maximum.
+                if (calledEntries.Count > MaxEntries)
+                    calledEntries.RemoveRange(MaxEntries, calledEntries.Count - MaxEntries);
+
+                await InvokeAsync(StateHasChanged);
+            });
+        }
+        catch
+        {
+            // Keep the board usable even if the realtime hub is temporarily unavailable.
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        connectionSubscription?.Dispose();
+        reservationSubscription?.Dispose();
+    }
+
+    private string GetConnectionStatusClass() => connectionState switch
+    {
+        ReservationConnectionState.Connected => "nc-status--live",
+        ReservationConnectionState.Connecting => "nc-status--connecting",
+        ReservationConnectionState.Reconnecting => "nc-status--offline",
+        ReservationConnectionState.Disconnected => "nc-status--offline",
+        _ => "nc-status--offline"
+    };
+
+    private string GetConnectionStatusIconClass() => connectionState switch
+    {
+        ReservationConnectionState.Connected => "bi bi-wifi",
+        ReservationConnectionState.Connecting => "bi bi-plug",
+        ReservationConnectionState.Reconnecting => "bi bi-arrow-repeat",
+        ReservationConnectionState.Disconnected => "bi bi-wifi-off",
+        _ => "bi bi-wifi-off"
+    };
+
+    private string GetConnectionStatusText() => connectionState switch
+    {
+        ReservationConnectionState.Connected => L["NowCalling_Live"].Value,
+        ReservationConnectionState.Connecting => L["NowCalling_Connecting"].Value,
+        ReservationConnectionState.Reconnecting => L["NowCalling_Reconnecting"].Value,
+        ReservationConnectionState.Disconnected => L["NowCalling_Offline"].Value,
+        _ => L["NowCalling_Offline"].Value
+    };
+}

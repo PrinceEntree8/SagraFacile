@@ -12,10 +12,12 @@
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" Version="13.2.4" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.2.4" />
+    <PackageReference Include="Aspire.Hosting.Yarp" Version="13.2.4" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SagraFacile.Web\SagraFacile.Web.csproj" />
+    <ProjectReference Include="..\SagraFacile.WebClient\SagraFacile.WebClient.csproj" />
   </ItemGroup>
 
 </Project>

@@ -3,6 +3,7 @@ using NSubstitute.ExceptionExtensions;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Features.Reservations;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Features.Events;
 using SagraFacile.Domain.Features.Reservations;
 
@@ -19,6 +20,8 @@ public class CreateReservationHandlerTests
     {
         _eventRepository.GetByIdAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(ci => new Event { Id = ci.Arg<int>() });
+        _repository.GetCountersAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new List<ReservationCounterDto>());
         _handler = new CreateReservation.Handler(_repository, _notifier, _eventRepository);
     }
 
@@ -36,22 +39,23 @@ public class CreateReservationHandlerTests
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
+        var created = Assert.IsType<CreateReservationResult>(result.Data);
 
         // Assert
-        Assert.Equal(1, result.SequenceNumber);
-        Assert.Equal(1, result.Id);
+        Assert.Equal(1, created.SequenceNumber);
+        Assert.Equal(1, created.Id);
         Assert.Equal(1, saved!.EventId);
         Assert.Equal(1, saved.SequenceNumber);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
         await _notifier.Received(1).EnqueueStatusChangedAsync(
             Arg.Is<ReservationStatusChangedNotification>(x =>
-                x.ReservationId == result.Id &&
-                x.SequenceNumber == result.SequenceNumber &&
+            x.ReservationId == created.Id &&
+            x.SequenceNumber == created.SequenceNumber &&
                 x.CustomerName == command.CustomerName &&
                 x.PartySize == command.PartySize &&
                 x.NewStatus == ReservationStatus.Waiting &&
                 x.OldStatus == null &&
-                x.CallCount == null),
+                x.CallCount == 0),
             Arg.Any<CancellationToken>());
     }
 

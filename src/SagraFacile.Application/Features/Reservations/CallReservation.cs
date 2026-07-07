@@ -2,6 +2,9 @@ using FluentValidation;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Common;
+using SagraFacile.Contracts.Reservations;
+using SagraFacile.Domain.Extensions;
 using SagraFacile.Domain.Features.Reservations;
 
 namespace SagraFacile.Application.Features.Reservations;
@@ -9,8 +12,7 @@ namespace SagraFacile.Application.Features.Reservations;
 public static class CallReservation
 {
     public record Command(int ReservationId, string CalledBy = "Receptionist", string? Notes = null)
-        : ICommand<Result>;
-    public record Result(bool Success, string Message);
+        : ICommand<CommandResult>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -26,39 +28,32 @@ public static class CallReservation
         }
     }
 
-    public class Handler : ICommandHandler<Command, Result>
+    public class Handler(IReservationRepository repository, IReservationNotifier notifier)
+        : ICommandHandler<Command, CommandResult>
     {
-        private readonly IReservationRepository _repository;
-        private readonly IReservationNotifier _notifier;
 
-        public Handler(IReservationRepository repository, IReservationNotifier notifier)
+        public async Task<CommandResult> Handle(Command command, CancellationToken cancellationToken)
         {
-            _repository = repository;
-            _notifier = notifier;
-        }
-
-        public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
-        {
-            var reservation = await _repository.GetByIdWithEventAsync(command.ReservationId, cancellationToken);
+            var reservation = await repository.GetByIdWithEventAsync(command.ReservationId, cancellationToken);
 
             if (reservation == null)
-                return new Result(false, "Reservation not found");
+                return new CommandResult(false, "Reservation not found");
 
             if (reservation.Status == ReservationStatus.Voided)
-                return new Result(false, "Cannot call a voided reservation");
+                return new CommandResult(false, "Cannot call a voided reservation");
 
             if (reservation.Status == ReservationStatus.Seated)
-                return new Result(false, "Reservation is already seated");
+                return new CommandResult(false, "Reservation is already seated");
 
             var partyCompletionEnabled = reservation.Event.AdditionalOptions.Reservations.PartyCompletion.Enabled;
 
             if (partyCompletionEnabled)
             {
                 if (reservation.Status == ReservationStatus.Waiting)
-                    return new Result(false, "Mark party complete first");
+                    return new CommandResult(false, "Mark party complete first");
 
                 if (reservation.Status != ReservationStatus.PartyCompleted && reservation.Status != ReservationStatus.Called)
-                    return new Result(false, "Reservation cannot be called from its current status");
+                    return new CommandResult(false, "Reservation cannot be called from its current status");
             }
 
             var now = DateTime.UtcNow;
@@ -78,33 +73,36 @@ public static class CallReservation
                 CalledBy = command.CalledBy,
                 Notes = command.Notes
             };
-            await _repository.AddCallAsync(call, cancellationToken);
+            await repository.AddCallAsync(call, cancellationToken);
 
             try
             {
-                await _repository.SaveChangesAsync(cancellationToken);
+                await repository.SaveChangesAsync(cancellationToken);
             }
             catch (RepositoryConcurrencyException)
             {
-                return new Result(false, "This reservation was modified by another user. Please refresh and try again.");
+                return new CommandResult(false, "This reservation was modified by another user. Please refresh and try again.");
             }
-
-            await _notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
+            
+            notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
                 reservation.Id,
                 reservation.SequenceNumber,
                 reservation.CustomerName,
                 reservation.PartySize,
-                NewStatus: ReservationStatus.Called,
+                NewStatus: reservation.Status,
                 OldStatus: oldStatus,
                 CallCount: reservation.CallCount
-            ), cancellationToken);
+            ), cancellationToken).Forget();
 
-            var counters = await _repository.GetCountersAsync(reservation.EventId, cancellationToken);
-            await _notifier.EnqueueCountersUpdatedAsync(
+            var counters = (await repository.GetCountersAsync(reservation.EventId, cancellationToken))
+                .Select(x => new ReservationCounterDto(x.Status, x.Count, x.TotalPeople))
+                .ToList();
+            
+            notifier.EnqueueCountersUpdatedAsync(
                 new CountersUpdatedNotification(counters),
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken).Forget();
 
-            return new Result(true, $"Reservation {reservation.SequenceNumber} called successfully (call #{reservation.CallCount})");
+            return new CommandResult(true, $"Reservation {reservation.SequenceNumber} called successfully (call #{reservation.CallCount})");
         }
     }
 }

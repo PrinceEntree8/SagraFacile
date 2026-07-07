@@ -3,6 +3,7 @@ using NSubstitute.ExceptionExtensions;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Features.Reservations;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Features.Events;
 using SagraFacile.Domain.Features.Reservations;
 
@@ -16,6 +17,8 @@ public class CallReservationHandlerTests
 
     public CallReservationHandlerTests()
     {
+        _repository.GetCountersAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new List<ReservationCounterDto>());
         _handler = new CallReservation.Handler(_repository, _notifier);
     }
 

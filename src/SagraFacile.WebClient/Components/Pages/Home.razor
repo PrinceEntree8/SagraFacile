@@ -1,0 +1,140 @@
+@page "/"
+@inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> L
+@inject IEventService EventService
+@inject IReservationService ReservationService
+@inject IJSRuntime JS
+
+<PageTitle>@L["Home_PageTitle"]</PageTitle>
+
+<div class="home-container container py-4">
+    @if (isLoading)
+    {
+        <p class="text-center"><em>@L["PublicMenu_Loading"]</em></p>
+    }
+    else if (activeEvent is null)
+    {
+        <div class="text-center text-muted mt-5">
+            <h2>🍽️ @L["PublicMenu_NoActiveEvent"]</h2>
+        </div>
+    }
+    else
+    {
+        <div class="text-center mb-4">
+            <h1>🍽️ @activeEvent.Name</h1>
+        </div>
+
+        <div class="text-center mb-4">
+            <a class="btn btn-primary btn-lg home-menu-button" @onclick='() => Navigation.NavigateTo("/menu")'>
+                @L["Home_GoToMenu"]
+            </a>
+        </div>
+
+        @if (initialLoadFailed)
+        {
+            <div class="alert alert-warning" role="alert">
+                @L["NowCalling_LoadWarning"]
+            </div>
+        }
+
+        @if (calledEntries.Count == 0)
+        {
+            <div class="text-center text-muted mt-4" role="status" aria-live="polite">
+                <p class="fs-5 mb-0">@L["NowCalling_WaitingForCall"]</p>
+            </div>
+        }
+        else
+        {
+            var lastCalled = calledEntries[0];
+            <section class="mb-4" aria-label="Last called reservation" aria-live="assertive">
+                <h2 class="h4 mb-3">@L["Home_LastCalled"]</h2>
+                <div class="card home-last-called-card">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div class="home-entry-queue">#@lastCalled.SequenceNumber</div>
+                        <div class="home-entry-name">@lastCalled.CustomerName</div>
+                        <div class="home-entry-party"><i class="bi bi-people"></i> @lastCalled.PartySize</div>
+                    </div>
+                </div>
+            </section>
+
+            @if (calledEntries.Count > 1)
+            {
+                <section aria-label="Latest called reservations">
+                    <h2 class="h5 mb-3">@L["Home_LatestNineCalled"]</h2>
+                    <ul class="list-group home-latest-list" role="list">
+                        @foreach (var entry in calledEntries.Skip(1).Take(9))
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center" role="listitem">
+                                <span class="home-entry-queue">#@entry.SequenceNumber</span>
+                                <span class="home-entry-name">@entry.CustomerName</span>
+                                <span class="home-entry-party"><i class="bi bi-people"></i> @entry.PartySize</span>
+                            </li>
+                        }
+                    </ul>
+                </section>
+            }
+        }
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private EventDto? activeEvent;
+    private readonly List<CalledEntry> calledEntries = [];
+    private bool initialLoadFailed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        activeEvent = await EventService.GetActiveEventAsync();
+        if (activeEvent is not null)
+        {
+            await LoadInitialCalledReservationsAsync(activeEvent.Id);
+        }
+        isLoading = false;
+    }
+
+    private async Task LoadInitialCalledReservationsAsync(int eventId)
+    {
+        try
+        {
+            var result = await ReservationService.GetLastCalledReservationsAsync(eventId);
+
+            calledEntries.Clear();
+            calledEntries.AddRange(result);
+        }
+        catch
+        {
+            initialLoadFailed = true;
+        }
+    }
+
+    private DotNetObjectReference<Home>? _dotNetRef;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("visibilityHelpers.register", _dotNetRef);
+        }
+    }
+    
+    [JSInvokable("OnVisibilityChanged")]
+    public async Task OnVisibilityChanged(bool visible)
+    {
+        if (visible && activeEvent is not null)
+        {
+            await LoadInitialCalledReservationsAsync(activeEvent.Id);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    
+    public async ValueTask DisposeAsync()
+    {
+        _dotNetRef?.Dispose();
+        try { await JS.InvokeVoidAsync("visibilityHelpers.unregister"); }
+        catch
+        {
+            // ignored
+        }
+    }
+}

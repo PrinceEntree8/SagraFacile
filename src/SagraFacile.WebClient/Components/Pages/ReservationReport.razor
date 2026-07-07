@@ -1,0 +1,352 @@
+@page "/reservation-report"
+@attribute [Authorize]
+@inject IStringLocalizer<SharedResource> L
+@inject IReservationService ReservationService
+@inject IEventService EventService
+
+<PageTitle>@L["Report_PageTitle"]</PageTitle>
+
+<h1>@L["Report_Heading"]</h1>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h3>@L["Report_FilterOptions"]</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <label class="form-label">@L["Report_Event"]</label>
+                        <InputSelect @bind-Value="_selectedEventId" class="form-select" disabled="@(!_events.Any())">
+                            @if (!_events.Any())
+                            {
+                                <option value="">@L["Report_NoEventsAvailable"]</option>
+                            }
+                            else
+                            {
+                                @foreach (var ev in _events)
+                                {
+                                    <option value="@ev.Id">@ev.Date.ToString("d") - @ev.Name</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button class="btn btn-primary" @onclick="@LoadReport">
+                            @if (_isLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            @L["Report_Generate"]
+                        </button>
+                        <button class="btn btn-outline-secondary ms-2" @onclick="@ClearFilters">
+                            @L["Report_Clear"]
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (_counters.Any())
+{
+    var statistics = BuildStatistics();
+
+    <div class="row mb-4">
+        <div class="col-md">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">@L["Report_TotalReservations"]</h5>
+                    <h2 class="display-4">@statistics.TotalReservations</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="card text-center bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">@L["Report_TotalPeople"]</h5>
+                    <h2 class="display-4">@statistics.TotalPeople</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="card text-center bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">@L["Report_Seated"]</h5>
+                    <h2 class="display-4">@statistics.SeatedCount</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="card text-center bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">@L["Report_Waiting"]</h5>
+                    <h2 class="display-4">@statistics.WaitingCount</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="card text-center bg-secondary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">@L["Report_Voided"]</h5>
+                    <h2 class="display-4">@statistics.VoidedCount</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>@L["Report_WaitTimeStats"]</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h5>@L["Report_AverageWait"]</h5>
+                                <p class="h4">@FormatTimeSpan(statistics.AverageWaitTime)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h5>@L["Report_MedianWait"]</h5>
+                                <p class="h4">@FormatTimeSpan(statistics.MedianWaitTime)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h5>@L["Report_MinWait"]</h5>
+                                <p class="h4">@(statistics.MinWaitTime.HasValue ? FormatTimeSpan(statistics.MinWaitTime.Value) : "N/A")</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h5>@L["Report_MaxWait"]</h5>
+                                <p class="h4">@(statistics.MaxWaitTime.HasValue ? FormatTimeSpan(statistics.MaxWaitTime.Value) : "N/A")</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (_isLoading)
+{
+    <p><em>@L["Report_Loading"]</em></p>
+}
+else if (_reports.Any())
+{
+    <div class="card">
+        <div class="card-header">
+            <h3>@L["Report_DetailedReport"]</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>@L["Report_ColQueue"]</th>
+                            <th>@L["Report_ColCustomer"]</th>
+                            <th>@L["Report_ColPartySize"]</th>
+                            <th>@L["Report_ColStatus"]</th>
+                            <th>@L["Report_ColCreated"]</th>
+                            <th>@L["Report_ColFirstCalled"]</th>
+                            <th>@L["Report_ColCalls"]</th>
+                            <th>@L["Report_ColWaitUntilFirst"]</th>
+                            <th>@L["Report_ColTotalWait"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var report in _reports)
+                    {
+                        <tr>
+                            <td><strong>@report.SequenceNumber</strong></td>
+                            <td>@report.CustomerName</td>
+                            <td><span class="badge bg-info">@report.PartySize</span></td>
+                            <td><span class="badge @GetStatusBadge(report.Status)">@report.Status</span></td>
+                            <td>@report.CreatedAt.ToString("g")</td>
+                                <td>
+                                    @if (report.FirstCalledAt.HasValue)
+                                    {
+                                        @report.FirstCalledAt.Value.ToString("g")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">@L["Report_NotCalled"]</span>
+                                    }
+                                </td>
+                                <td>@report.CallCount</td>
+                                <td>
+                                    @if (report.WaitTimeUntilFirstCall.HasValue)
+                                    {
+                                        @FormatTimeSpan(report.WaitTimeUntilFirstCall.Value)
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (report.TotalWaitTime.HasValue)
+                                    {
+                                        @FormatTimeSpan(report.TotalWaitTime.Value)
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">@L["Report_InProgress"]</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+else if (!_counters.Any())
+{
+    <div class="alert alert-info">
+        <p>@L["Report_SelectEvent"]</p>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">
+        <p>@L["Report_NoReservations"]</p>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<EventDto> _events = [];
+    private int? _selectedEventId;
+    private int? _defaultEventId;
+    private IReadOnlyList<ReservationReportDto> _reports = [];
+    private IReadOnlyList<ReservationCounterDto> _counters = [];
+    private bool _isLoading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var activeEventTask = EventService.GetActiveEventAsync();
+        var eventsTask = EventService.GetEventsAsync();
+        await Task.WhenAll(activeEventTask, eventsTask);
+
+        var activeEvent = await activeEventTask;
+        _events = await eventsTask;
+        _defaultEventId = activeEvent?.Id ?? _events.FirstOrDefault()?.Id;
+        _selectedEventId = _defaultEventId;
+
+        if (_selectedEventId.HasValue)
+        {
+            await LoadReport();
+        }
+    }
+
+    private async Task LoadReport()
+    {
+        if (!_selectedEventId.HasValue)
+        {
+            _reports = [];
+            _counters = [];
+            return;
+        }
+
+        _isLoading = true;
+        try
+        {
+            _reports = await ReservationService.GetReportAsync(_selectedEventId.Value);
+            _counters = await ReservationService.GetCountersAsync(_selectedEventId.Value);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task ClearFilters()
+    {
+        _selectedEventId = _defaultEventId;
+        await LoadReport();
+    }
+
+    private ReportStatistics BuildStatistics()
+    {
+        var completedWaitTimes = _reports
+            .Select(r => r.TotalWaitTime)
+            .OfType<TimeSpan>()
+            .Order()
+            .ToList();
+
+        var waitUntilFirstCallTimes = _reports
+            .Select(r => r.WaitTimeUntilFirstCall)
+            .OfType<TimeSpan>()
+            .Order()
+            .ToList();
+
+        return new ReportStatistics(
+            TotalReservations: _counters.Sum(c => c.Count),
+            TotalPeople: _counters.Sum(c => c.TotalPeople),
+            SeatedCount: GetCounter("Seated"),
+            WaitingCount: GetCounter("Waiting") + GetCounter("Called"),
+            VoidedCount: GetCounter("Voided"),
+            AverageWaitTime: completedWaitTimes.Count == 0
+                ? TimeSpan.Zero
+                : TimeSpan.FromTicks((long)completedWaitTimes.Average(t => t.Ticks)),
+            MedianWaitTime: GetMedian(waitUntilFirstCallTimes),
+            MinWaitTime: completedWaitTimes.FirstOrDefault(),
+            MaxWaitTime: completedWaitTimes.LastOrDefault());
+    }
+
+    private int GetCounter(string status) =>
+        _counters.FirstOrDefault(c => string.Equals(c.Status, status, StringComparison.OrdinalIgnoreCase))?.Count ?? 0;
+
+    private static TimeSpan GetMedian(IReadOnlyList<TimeSpan> values)
+    {
+        if (values.Count == 0)
+        {
+            return TimeSpan.Zero;
+        }
+
+        var middle = values.Count / 2;
+
+        if (values.Count % 2 == 1)
+        {
+            return values[middle];
+        }
+
+        return TimeSpan.FromTicks((values[middle - 1].Ticks + values[middle].Ticks) / 2);
+    }
+
+    private string GetStatusBadge(string status) => status switch
+    {
+        "Waiting" => "bg-warning",
+        "Called" => "bg-info",
+        "Seated" => "bg-success",
+        "Voided" => "bg-secondary",
+        _ => "bg-secondary"
+    };
+
+    private static string FormatTimeSpan(TimeSpan timeSpan)
+    {
+        return timeSpan.TotalHours >= 1 ?
+            $"{(int)timeSpan.TotalHours}h {timeSpan.Minutes}m" :
+            $"{(int)timeSpan.TotalMinutes}m";
+    }
+
+    private sealed record ReportStatistics(
+        int TotalReservations,
+        int TotalPeople,
+        int SeatedCount,
+        int WaitingCount,
+        int VoidedCount,
+        TimeSpan AverageWaitTime,
+        TimeSpan MedianWaitTime,
+        TimeSpan? MinWaitTime,
+        TimeSpan? MaxWaitTime);
+}

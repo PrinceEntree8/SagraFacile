@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using SagraFacile.Application.Features.Reservations;
+using SagraFacile.Contracts.Reservations;
 
 namespace SagraFacile.Web.Hubs;
 

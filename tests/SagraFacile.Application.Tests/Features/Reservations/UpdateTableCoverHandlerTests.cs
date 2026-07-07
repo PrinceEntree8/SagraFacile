@@ -23,8 +23,8 @@ public class UpdateTableCoverHandlerTests
 
         var result = await _handler.Handle(new UpdateTableCover.Command(1, null, 6), CancellationToken.None);
 
-        Assert.Equal(6, result.CoverCount);
-        Assert.Equal("T01", result.TableNumber);
+        Assert.Equal(6, result.Data.CoverCount);
+        Assert.Equal("T01", result.Data.TableNumber);
         Assert.NotNull(table.UpdatedAt);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -37,8 +37,8 @@ public class UpdateTableCoverHandlerTests
 
         var result = await _handler.Handle(new UpdateTableCover.Command(null, "T02", 8), CancellationToken.None);
 
-        Assert.Equal(8, result.CoverCount);
-        Assert.Equal("T02", result.TableNumber);
+        Assert.Equal(8, result.Data.CoverCount);
+        Assert.Equal("T02", result.Data.TableNumber);
     }
 
     [Fact]

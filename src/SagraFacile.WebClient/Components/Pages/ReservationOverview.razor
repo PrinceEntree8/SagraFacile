@@ -1,0 +1,256 @@
+@page "/reservation-overview"
+@attribute [Authorize(Roles = "Admin,Supervisore")]
+@using SagraFacile.Domain.Features.Reservations
+@using SagraFacile.WebClient.Components.Buttons
+@using SagraFacile.WebClient.Components.Modals
+@using SagraFacile.WebClient.Extensions
+@inject IStringLocalizer<SharedResource> L
+@inject IEventService EventService
+@inject IReservationService ReservationService
+@inject IReservationRealtimeService ReservationRealtimeService
+@implements IAsyncDisposable
+
+<PageTitle>@L["ReservationOverview_PageTitle"]</PageTitle>
+
+<div class="d-flex align-items-center gap-3 mb-3">
+    <h1 class="mb-0">@L["ReservationOverview_Title"]</h1>
+    <div class="form-check form-switch ms-auto mb-0">
+        <input class="form-check-input" type="checkbox" id="showVoidedToggle"
+               @bind="showVoided" @bind:after="OnShowVoidedChangedAsync" />
+        <label class="form-check-label" for="showVoidedToggle">@L["ReservationOverview_ShowVoided"]</label>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <p><em>@L["ReservationOverview_Loading"]</em></p>
+}
+else if (activeEvent is null)
+{
+    <p><em>@L["ReservationOverview_NoActiveEvent"]</em></p>
+}
+else if (reservations.Count == 0)
+{
+    <p><em>@L["Receptionist_NoReservations"]</em></p>
+}
+else
+{
+    <div class="row row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-8 g-2">
+        @foreach (var reservation in reservations)
+        {
+            <div class="col">
+                <div class="overview-cell p-2 align-items-center border-1 d-flex flex-row justify-content-around rounded-2 @reservation.Status.GetStatusClass()"
+                     @onclick="() => SelectReservation(reservation)"
+                     data-bs-toggle="modal"
+                     data-bs-target="#reservationDetailModal"
+                     role="button">
+                    <span class="seq @(reservation.SequenceNumber >= 100 ? "fs-6" : "fs-4")">@reservation.SequenceNumber</span>
+                    <span class="d-none d-xl-inline name">@reservation.CustomerName</span>
+                    <span class="party badge bg-light text-dark fs-6">
+                        <i class="bi bi-people"></i> @reservation.PartySize
+                    </span>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<ViewReservationModal Reservation="selectedReservation"
+                      PartyCompletionEnabled="partyCompletionEnabled"
+                      OnCall="@(new EventCallback(this, async () => { if (selectedReservation is not null) await CallReservationAsync(selectedReservation.Id); }))"
+                      OnMarkPartyComplete="@(new EventCallback(this, async () => { if (selectedReservation is not null) await MarkPartyCompleteAsync(selectedReservation.Id); }))"
+                      OnSeat="@(new EventCallback(this, async () => { if (selectedReservation is not null) await SeatReservationAsync(selectedReservation.Id); }))"
+                      OnRestore="@(new EventCallback(this, async () => { if (selectedReservation is not null) await RestoreReservationAsync(selectedReservation.Id); }))"
+                      IsActionDisabled="isActionInProgress" />
+
+@code {
+    // TODO: raise some exception in the backend
+
+    private IDisposable? reservationStatusSubscription;
+    private EventDto? activeEvent;
+    private readonly List<ReservationDto> reservations = [];
+    private ReservationDto? selectedReservation;
+    private bool isLoading = true;
+    private bool partyCompletionEnabled;
+    private bool isActionInProgress;
+    private bool showVoided;
+
+    protected override async Task OnInitializedAsync()
+    {
+        activeEvent = await EventService.GetActiveEventAsync();
+
+        if (activeEvent is not null)
+        {
+            var options = await EventService.GetEventOptionsAsync(activeEvent.Id);
+            if (options is not null)
+                partyCompletionEnabled = options.IsPartyCompletionEnabled;
+
+            await LoadReservationsAsync();
+            await InitializeSignalRAsync();
+        }
+
+        isLoading = false;
+    }
+
+    private async Task LoadReservationsAsync()
+    {
+        if (activeEvent is null) return;
+        var filter = showVoided ? nameof(ReservationStatusFilter.All) : nameof(ReservationStatusFilter.Active);
+        var result = await ReservationService.GetReservationsAsync(activeEvent.Id, filter, 1, 1000);
+        reservations.Clear();
+        reservations.AddRange(result.Reservations.OrderBy(r => r.SequenceNumber));
+    }
+
+    private async Task OnShowVoidedChangedAsync()
+    {
+        await LoadReservationsAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task InitializeSignalRAsync()
+    {
+        reservationStatusSubscription = ReservationRealtimeService.SubscribeReservationStatusChanged(async r =>
+        {
+            Console.WriteLine($"{nameof(IReservationHubClient.ReservationStatusChanged)}: {r}");
+            switch (r.NewStatus)
+            {
+                case ReservationStatus.Waiting:
+                    if (reservations.All(a => a.Id != r.ReservationId))
+                        InsertReservationOrdered(CreateReservationDto(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString()));
+                    else PatchReservationStatus(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString());
+                    break;
+                case ReservationStatus.Called:
+                case ReservationStatus.Seated:
+                case ReservationStatus.PartyCompleted:
+                    PatchReservationStatus(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString());
+                    break;
+                case ReservationStatus.Voided:
+                    if (showVoided)
+                        PatchReservationStatus(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString());
+                    else
+                        reservations.RemoveAll(a => a.Id == r.ReservationId);
+                    break;
+
+                case ReservationStatus.None:
+                    break;
+                case ReservationStatus.Left:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        try
+        {
+            await ReservationRealtimeService.EnsureStartedAsync();
+        }
+        catch
+        {
+            // No-op: page still works with initial snapshot if connection fails.
+        }
+    }
+
+    private void SelectReservation(ReservationDto reservation)
+    {
+        selectedReservation = reservation;
+        StateHasChanged();
+    }
+
+    private async Task CallReservationAsync(int id)
+    {
+        isActionInProgress = true;
+        try { await ReservationService.CallAsync(id, new CallReservationRequest("Receptionist")); }
+        finally { isActionInProgress = false; }
+    }
+
+    private async Task MarkPartyCompleteAsync(int id)
+    {
+        isActionInProgress = true;
+        try { await ReservationService.MarkPartyCompleteAsync(id); }
+        finally { isActionInProgress = false; }
+    }
+
+    private async Task SeatReservationAsync(int id)
+    {
+        isActionInProgress = true;
+        try { await ReservationService.SeatAsync(id); }
+        finally { isActionInProgress = false; }
+    }
+
+    private async Task RestoreReservationAsync(int id)
+    {
+        isActionInProgress = true;
+        try { await ReservationService.RestoreAsync(id); }
+        finally { isActionInProgress = false; }
+    }
+
+    private static ReservationDto CreateReservationDto(int id, int sequenceNumber, string customerName, int partySize, string status)
+    {
+        var now = DateTime.UtcNow;
+        DateTime? calledAt = status == "Called" ? now : null;
+
+        return new ReservationDto(
+            id,
+            sequenceNumber,
+            customerName,
+            partySize,
+            status,
+            null,
+            now,
+            calledAt,
+            calledAt,
+            calledAt is null ? 0 : 1,
+            TimeSpan.Zero,
+            calledAt is null ? null : TimeSpan.Zero);
+    }
+
+    private void InsertReservationOrdered(ReservationDto dto)
+    {
+        // Insert while maintaining ascending SequenceNumber order.
+        var insertIndex = reservations.FindIndex(r => r.SequenceNumber > dto.SequenceNumber);
+        if (insertIndex < 0)
+            reservations.Add(dto);
+        else
+            reservations.Insert(insertIndex, dto);
+    }
+
+    private void PatchReservationStatus(int id, int? sequenceNumber, string? customerName, int? partySize, string status)
+    {
+        var index = reservations.FindIndex(r => r.Id == id);
+        if (index < 0)
+        {
+            if (sequenceNumber.HasValue && customerName is not null && partySize.HasValue)
+            {
+                InsertReservationOrdered(CreateReservationDto(id, sequenceNumber.Value, customerName, partySize.Value, status));
+            }
+
+            return;
+        }
+
+        var current = reservations[index];
+        reservations[index] = current with { Status = status };
+
+        if (selectedReservation?.Id == id)
+        {
+            selectedReservation = reservations[index];
+        }
+    }
+
+    public static string EvaluateColSpan(int sequenceNumber)
+    {
+        return sequenceNumber switch
+        {
+            >= 100 => "col-4 col-xl-2",
+            _ => "col-4 col-xl-2"
+        };
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        reservationStatusSubscription?.Dispose();
+        await Task.CompletedTask;
+    }
+
+}

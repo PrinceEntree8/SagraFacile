@@ -2,14 +2,22 @@ using FluentValidation;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Common;
+using SagraFacile.Contracts.Reservations;
+using SagraFacile.Domain.Extensions;
 using SagraFacile.Domain.Features.Reservations;
 
 namespace SagraFacile.Application.Features.Reservations;
 
 public static class CreateReservation
 {
-    public record Command(int EventId, string CustomerName, int PartySize, string? Notes = null, bool PartyComplete = false) : ICommand<Result>;
-    public record Result(int Id, int SequenceNumber);
+    public record Command(
+        int EventId,
+        string CustomerName,
+        int PartySize,
+        string? Notes = null,
+        bool PartyComplete = false
+    ) : ICommand<CommandResult<CreateReservationResult>>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -30,10 +38,10 @@ public static class CreateReservation
     }
 
     public class Handler(IReservationRepository repository, IReservationNotifier notifier, IEventRepository eventRepository)
-        : ICommandHandler<Command, Result>
+        : ICommandHandler<Command, CommandResult<CreateReservationResult>>
     {
 
-        public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
+        public async Task<CommandResult<CreateReservationResult>> Handle(Command command, CancellationToken cancellationToken)
         {
             var reservationEvent = await eventRepository.GetByIdAsync(command.EventId, cancellationToken);
             var partyCompletionEnabled = reservationEvent?.AdditionalOptions.Reservations.PartyCompletion.Enabled ?? false;
@@ -62,23 +70,28 @@ public static class CreateReservation
                 {
                     await repository.AddAsync(reservation, cancellationToken);
                     await repository.SaveChangesAsync(cancellationToken);
-
-                    await notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
+                    
+                                
+                    notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
                         reservation.Id,
                         reservation.SequenceNumber,
                         reservation.CustomerName,
                         reservation.PartySize,
-                        NewStatus: ReservationStatus.Waiting,
+                        NewStatus: reservation.Status,
                         OldStatus: null,
-                        CallCount: null
-                    ), cancellationToken);
+                        CallCount: reservation.CallCount
+                    ), cancellationToken).Forget();
 
-                    var counters = await repository.GetCountersAsync(command.EventId, cancellationToken);
-                    await notifier.EnqueueCountersUpdatedAsync(
+                    var counters = (await repository.GetCountersAsync(reservation.EventId, cancellationToken))
+                        .Select(x => new ReservationCounterDto(x.Status, x.Count, x.TotalPeople))
+                        .ToList();
+            
+                    notifier.EnqueueCountersUpdatedAsync(
                         new CountersUpdatedNotification(counters),
-                        cancellationToken).ConfigureAwait(false);
+                        cancellationToken).Forget();
 
-                    return new Result(reservation.Id, reservation.SequenceNumber);
+                    return new CommandResult<CreateReservationResult>(true,
+                        new CreateReservationResult(reservation.Id, reservation.SequenceNumber));
                 }
                 catch (RepositoryUniqueConstraintException)
                 {
@@ -86,7 +99,8 @@ public static class CreateReservation
                 }
             }
 
-            throw new InvalidOperationException("Failed to create reservation after maximum retries.");
+            return new CommandResult<CreateReservationResult>(false, default,
+                Message: "Failed to create reservation after maximum retries.");
         }
     }
 }

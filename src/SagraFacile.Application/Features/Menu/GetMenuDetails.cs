@@ -1,5 +1,6 @@
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Menu;
 
 namespace SagraFacile.Application.Features.Menu;
 
@@ -7,7 +8,6 @@ public static class GetMenuDetails
 {
     public record Query(int EventId) : IQuery<Result>;
     public record Result(MenuDetailsDto? Details);
-    public record MenuDetailsDto(int EventId, string? WarningMessage, string? Header, string? Footer);
 
     public class Handler(IMenuDetailsRepository repo, IMenuCacheService cache) : IQueryHandler<Query, Result>
     {
@@ -17,7 +17,7 @@ public static class GetMenuDetails
             var entity = await repo.GetByEventIdAsync(query.EventId, ct);
             var result = entity is null
                 ? new Result(null)
-                : new Result(new MenuDetailsDto(entity.EventId, entity.WarningMessage, entity.Header, entity.Footer));
+                : new Result(new MenuDetailsDto(entity.Header, entity.Footer, entity.WarningMessage));
             cache.SetMenuDetails(query.EventId, result);
             return result;
         }

@@ -3,6 +3,7 @@ using NSubstitute.ExceptionExtensions;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Features.Reservations;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Features.Events;
 using SagraFacile.Domain.Features.Reservations;
 
@@ -16,6 +17,8 @@ public class MarkPartyCompleteHandlerTests
 
     public MarkPartyCompleteHandlerTests()
     {
+        _repository.GetCountersAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new List<ReservationCounterDto>());
         _handler = new MarkPartyComplete.Handler(_repository, _notifier);
     }
 
@@ -69,7 +72,7 @@ public class MarkPartyCompleteHandlerTests
                 x.PartySize == reservation.PartySize &&
                 x.NewStatus == ReservationStatus.PartyCompleted &&
                 x.OldStatus == ReservationStatus.Waiting &&
-                x.CallCount == null),
+                x.CallCount == 0),
             Arg.Any<CancellationToken>());
     }
 

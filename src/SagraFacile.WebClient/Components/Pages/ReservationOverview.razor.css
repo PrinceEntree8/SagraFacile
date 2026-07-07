@@ -1,0 +1,13 @@
+.overview-cell {
+    text-align: center;
+    cursor: pointer;
+    min-height: 52px;
+    transition: 0.15s;
+    background-color: rgba(var(--status-color) / 0.2);
+    border: 1px solid rgb(var(--status-color));
+    color: #000;
+}
+
+.overview-cell:hover {
+    background-color: rgba(var(--status-color) / 0.5);
+}

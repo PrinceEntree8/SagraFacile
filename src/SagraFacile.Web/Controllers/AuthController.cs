@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using SagraFacile.Contracts.Auth;
 using SagraFacile.Infrastructure.Identity;
 
 namespace SagraFacile.Web.Controllers;
@@ -48,7 +49,7 @@ public class AuthController : ControllerBase
             user.UserName ?? string.Empty,
             user.DisplayName,
             roles.ToList(),
-            DateTime.UtcNow.AddHours(8)
+            DateTimeOffset.UtcNow.AddHours(8)
         ));
     }
 
@@ -81,6 +82,3 @@ public class AuthController : ControllerBase
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
-
-public record LoginRequest(string Username, string Password);
-public record LoginResponse(string Token, string Username, string DisplayName, List<string> Roles, DateTime ExpiresAt);

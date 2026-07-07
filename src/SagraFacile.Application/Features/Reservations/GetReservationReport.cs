@@ -59,25 +59,35 @@ public static class GetReservationReport
                 }
             }
 
-            var reservations = await _repository.GetByDateRangeAsync(query.EventId, startUtc, endUtc, ReservationStatusFilter.AllCompleted, cancellationToken);
+            var reservations = await _repository.GetByDateRangeAsync(
+                query.EventId, 
+                startUtc, 
+                endUtc, 
+                ReservationStatusFilter.AllCompleted, 
+                cancellationToken);
 
             var reports = reservations.Select(r =>
             {
+                var createdAt = r.CreatedAt.AsUtc();
+                var firstCalledAt = r.FirstCalledAt.AsUtc();
+                var seatedAt = r.SeatedAt.AsUtc();
+                var voidedAt = r.VoidedAt.AsUtc();
+
                 var waitUntilFirstCall = r.FirstCalledAt.HasValue
-                    ? r.FirstCalledAt.Value - r.CreatedAt
+                    ? firstCalledAt!.Value - createdAt
                     : (TimeSpan?)null;
 
                 TimeSpan? totalWait;
-                if (r.SeatedAt.HasValue)
-                    totalWait = r.SeatedAt.Value - r.CreatedAt;
-                else if (r.VoidedAt.HasValue)
-                    totalWait = r.VoidedAt.Value - r.CreatedAt;
+                if (seatedAt.HasValue)
+                    totalWait = seatedAt.Value - createdAt;
+                else if (voidedAt.HasValue)
+                    totalWait = voidedAt.Value - createdAt;
                 else
                     totalWait = null;
 
                 return new ReportDto(
                     r.Id, r.SequenceNumber, r.CustomerName, r.PartySize, r.Status.ToString(),
-                    r.CreatedAt, r.FirstCalledAt, r.SeatedAt, r.VoidedAt,
+                    createdAt, firstCalledAt, seatedAt, voidedAt,
                     r.CallCount, waitUntilFirstCall, totalWait);
             }).ToList();
 
@@ -135,10 +145,7 @@ public static class GetReservationReport
 
         private static (DateTime StartUtc, DateTime EndUtc) GetUtcDayRange(DateTime day)
         {
-            var dateOnly = day.Date;
-            var startUtc = day.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(dateOnly, DateTimeKind.Utc)
-                : dateOnly.ToUniversalTime();
+            var startUtc = DateTime.SpecifyKind(day.Date, DateTimeKind.Utc);
             var endUtc = startUtc.AddDays(1).AddTicks(-1);
             return (startUtc, endUtc);
         }

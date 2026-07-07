@@ -1,14 +1,14 @@
 using FluentValidation;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
+using SagraFacile.Contracts.Common;
 using SagraFacile.Domain.Features.Reservations;
 
 namespace SagraFacile.Application.Features.Reservations;
 
 public static class UpdateTableCover
 {
-    public record Command(int? TableId, string? TableNumber, int CoverCount) : ICommand<Result>;
-    public record Result(int Id, string TableNumber, int CoverCount);
+    public record Command(int? TableId, string? TableNumber, int CoverCount) : ICommand<CommandResult<(int Id, string TableNumber, int CoverCount)>>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -26,13 +26,13 @@ public static class UpdateTableCover
         }
     }
 
-    public class Handler : ICommandHandler<Command, Result>
+    public class Handler : ICommandHandler<Command, CommandResult<(int Id, string TableNumber, int CoverCount)>>
     {
         private readonly ITableRepository _repository;
 
         public Handler(ITableRepository repository) => _repository = repository;
 
-        public async Task<Result> Handle(Command command, CancellationToken cancellationToken)
+        public async Task<CommandResult<(int Id, string TableNumber, int CoverCount)>> Handle(Command command, CancellationToken cancellationToken)
         {
             Table? table = null;
 
@@ -60,7 +60,7 @@ public static class UpdateTableCover
 
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return new Result(table.Id, table.TableNumber, table.CoverCount);
+            return new CommandResult<(int Id, string TableNumber, int CoverCount)>(true, (table.Id, table.TableNumber, table.CoverCount));
         }
     }
 }
