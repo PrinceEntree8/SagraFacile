@@ -8,6 +8,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   WEB_PROJECT: src/SagraFacile.Web/SagraFacile.Web.csproj
+  WEBAPP_PROJECT: src/SagraFacile.WebClient/SagraFacile.WebClient.csproj
 
 jobs:
   docker:
@@ -79,6 +80,12 @@ jobs:
             /p:UseAppHost=true \
             -o publish/${{ matrix.rid }}
 
+      - name: Publish WebApp project
+        run: |
+          dotnet publish ${{ env.WEBAPP_PROJECT }} \
+            -c Release \
+            -o publish-webapp
+
       - name: Collect config files
         run: |
           cp .env.example                publish/${{ matrix.rid }}/
@@ -92,6 +99,10 @@ jobs:
           ARCHIVE="sagrafacile-${VERSION}-${{ matrix.rid }}.tar.gz"
           tar -czf "$ARCHIVE" -C publish/${{ matrix.rid }} .
           echo "ARCHIVE=$ARCHIVE" >> $GITHUB_ENV
+          
+          WEBAPP_ARCHIVE="sagrafacile-webapp-${VERSION}.tar.gz"
+          tar -czf "$WEBAPP_ARCHIVE" -C publish-webapp/wwwroot .
+          echo "WEBAPP_ARCHIVE=$WEBAPP_ARCHIVE" >> $GITHUB_ENV
 
       - name: Create archive (zip - win-x64)
         if: matrix.archive_ext == 'zip'
@@ -100,8 +111,14 @@ jobs:
           ARCHIVE="sagrafacile-${VERSION}-${{ matrix.rid }}.zip"
           cd publish/${{ matrix.rid }} && zip -r "../../$ARCHIVE" .
           echo "ARCHIVE=$ARCHIVE" >> $GITHUB_ENV
+          
+          WEBAPP_ARCHIVE="sagrafacile-webapp-${VERSION}.zip"
+          cd publish-webapp/wwwroot && zip -r "../../$WEBAPP_ARCHIVE" .
+          echo "WEBAPP_ARCHIVE=$WEBAPP_ARCHIVE" >> $GITHUB_ENV
 
       - name: Upload archive to release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.ARCHIVE }}
+          files: |
+            ${{ env.ARCHIVE }}
+            ${{ env.WEBAPP_ARCHIVE }}

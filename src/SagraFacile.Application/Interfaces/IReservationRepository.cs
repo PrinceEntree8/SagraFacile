@@ -18,5 +18,6 @@ public interface IReservationRepository
     Task AddAsync(Reservation reservation, CancellationToken cancellationToken = default);
     Task AddCallAsync(ReservationCall call, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
-    Task<List<Reservation>> GetLastCalledAsync(int eventId, CancellationToken cancellationToken = default);
+    Task<List<Reservation>> GetLastCalledAsync(int eventId, int maxEntries = 10,
+        CancellationToken cancellationToken = default);
 }

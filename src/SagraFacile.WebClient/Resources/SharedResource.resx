@@ -161,10 +161,20 @@
     <data name="EventOptions_EnablePartyCompletion" xml:space="preserve"><value>Enable Party Completion</value></data>
     <data name="EventOptions_MinPartySize" xml:space="preserve"><value>Minimum Party Size</value></data>
     <data name="EventOptions_MinPartySizeDesc" xml:space="preserve"><value>Minimum number of guests required before the reservation can be called.</value></data>
+    <data name="EventOptions_ViewOptions" xml:space="preserve"><value>View Options</value></data>
+    <data name="EventOptions_ShowNotesField" xml:space="preserve"><value>Show notes field</value></data>
+    <data name="EventOptions_ShowNotesFieldDesc" xml:space="preserve"><value>Displays the notes textarea in the receptionist reservation form.</value></data>
+    <data name="EventOptions_CounterPeopleFirst" xml:space="preserve"><value>People first counters</value></data>
+    <data name="EventOptions_CounterPeopleFirstDesc" xml:space="preserve"><value>Show people as the main number and reservations as the secondary number in stat cards.</value></data>
+    <data name="EventOptions_ShowCallCount" xml:space="preserve"><value>Show call count</value></data>
+    <data name="EventOptions_ShowCallCountDesc" xml:space="preserve"><value>Displays how many times each reservation has been called across operational views.</value></data>
+    <data name="EventOptions_MaxWaitTimeMinutes" xml:space="preserve"><value>Maximum wait time (minutes)</value></data>
+    <data name="EventOptions_MaxWaitTimeMinutesDesc" xml:space="preserve"><value>Reservations waiting longer than this threshold are highlighted in red.</value></data>
     <data name="EventOptions_Save" xml:space="preserve"><value>Save Options</value></data>
     <data name="EventOptions_Saved" xml:space="preserve"><value>Options saved successfully!</value></data>
     <data name="EventOptions_Error" xml:space="preserve"><value>Error: {0}</value></data>
     <data name="EventOptions_MinPartySizeInvalid" xml:space="preserve"><value>Minimum party size must be at least 1.</value></data>
+    <data name="EventOptions_MaxWaitTimeMinutesInvalid" xml:space="preserve"><value>Maximum wait time must be at least 1 minute.</value></data>
     <data name="EventOptions_BackToEvents" xml:space="preserve"><value>← Back to Events</value></data>
 
     <!-- Receptionist -->

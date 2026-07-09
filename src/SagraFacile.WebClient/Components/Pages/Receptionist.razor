@@ -56,11 +56,14 @@
                         }
                     </div>
 
-                    @*<div class="mb-3">
-                        <label class="form-label">@L["Receptionist_Notes"]</label>
-                        <InputTextArea @bind-Value="newReservation.Notes" class="form-control" rows="3"/>
-                        <small class="form-text text-muted">@L["Receptionist_NotesHint"]</small>
-                    </div>*@
+                    @if (showNotesField)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">@L["Receptionist_Notes"]</label>
+                            <InputTextArea @bind-Value="newReservation.Notes" class="form-control" rows="3" />
+                            <small class="form-text text-muted">@L["Receptionist_NotesHint"]</small>
+                        </div>
+                    }
 
                     <button type="submit" class="btn btn-primary" disabled="@(isCreating || actionInProgress != null)">
                         @if (isCreating)
@@ -118,6 +121,12 @@
                                 <span class="chip-name">@reservation.CustomerName</span>
                                 <span class="badge bg-info chip-party" title="@L["Receptionist_ColParty"]"><i class="bi bi-people"></i> @reservation.PartySize</span>
                                 <span class="badge @GetStatusBadge(reservation.Status) border chip-status">@L["Reservation_Status_" + reservation.Status]</span>
+                                @if (showCallCount)
+                                {
+                                    <span class="badge bg-secondary chip-callcount" title="@L["Receptionist_ColCalls"]">
+                                        <i class="bi bi-megaphone"></i> @reservation.CallCount
+                                    </span>
+                                }
                                 <span class="chip-wait text-muted ms-1" title="@L["Receptionist_ColWaiting"]">
                                     @if (reservation.TimeSinceLastCall.HasValue)
                                     {
@@ -161,8 +170,7 @@
                                 <div class="card text-center">
                                     <div class="card-body">
                                         <h6 class="card-subtitle mb-2 text-muted">@L["Receptionist_ToBeSeated"]</h6>
-                                        <h4 class="card-title">@string.Format(L["Receptionist_People"], toBeSeatedPeople)</h4>
-                                        <p class="text-muted">@string.Format(L["Receptionist_Reservations"], toBeSeatedCount)</p>
+                                        @RenderCounterCardValues(toBeSeatedPeople, toBeSeatedCount)
                                     </div>
                                 </div>
                             </div>
@@ -170,8 +178,7 @@
                                 <div class="card text-center">
                                     <div class="card-body">
                                         <h6 class="card-subtitle mb-2 text-muted">@L["Receptionist_Seated"]</h6>
-                                        <h4 class="card-title">@string.Format(L["Receptionist_People"], seatedPeople)</h4>
-                                        <p class="text-muted">@string.Format(L["Receptionist_Reservations"], seatedCount)</p>
+                                        @RenderCounterCardValues(seatedPeople, seatedCount)
                                     </div>
                                 </div>
                             </div>
@@ -179,8 +186,7 @@
                                 <div class="card text-center bg-light">
                                     <div class="card-body">
                                         <h6 class="card-subtitle mb-2 text-muted">@L["Receptionist_Total"]</h6>
-                                        <h4 class="card-title">@string.Format(L["Receptionist_People"], totalPeople)</h4>
-                                        <p class="text-muted">@string.Format(L["Receptionist_Reservations"], totalCount)</p>
+                                        @RenderCounterCardValues(totalPeople, totalCount)
                                     </div>
                                 </div>
                             </div>
@@ -202,6 +208,10 @@
     private int activeEventId = 1; // TODO: replace with session-backed active event store
     private bool partyCompletionEnabled = false;
     private int minPartySize = 1;
+    private bool showNotesField = false;
+    private bool counterPeopleFirst = true;
+    private bool showCallCount = false;
+    private int maxWaitTimeMinutes = 45;
     private IDisposable? reservationStatusSubscription;
     private IDisposable? availableSeatsSubscription;
     private IDisposable? countersSubscription;
@@ -243,6 +253,10 @@
             {
                 partyCompletionEnabled = options.IsPartyCompletionEnabled;
                 minPartySize = options.MinPartySize;
+                showNotesField = options.ShowNotesField;
+                counterPeopleFirst = options.CounterPeopleFirst;
+                showCallCount = options.ShowCallCount;
+                maxWaitTimeMinutes = options.MaxWaitTimeMinutes;
                 newReservation.PartyComplete = newReservation.PartySize < minPartySize;
             }
         }
@@ -442,10 +456,31 @@
 
     private string GetRowClass(ReservationDto reservation)
     {
-        if (reservation.WaitingTime.TotalMinutes > 45)
+        if (reservation.WaitingTime.TotalMinutes > maxWaitTimeMinutes)
             return "bg-danger bg-opacity-10";
         return "";
     }
+
+    private RenderFragment RenderCounterCardValues(int people, int reservationsCount) => builder =>
+    {
+        var primaryText = counterPeopleFirst
+            ? string.Format(L["Receptionist_People"], people)
+            : string.Format(L["Receptionist_Reservations"], reservationsCount);
+
+        var secondaryText = counterPeopleFirst
+            ? string.Format(L["Receptionist_Reservations"], reservationsCount)
+            : string.Format(L["Receptionist_People"], people);
+
+        builder.OpenElement(0, "h4");
+        builder.AddAttribute(1, "class", "card-title");
+        builder.AddContent(2, primaryText);
+        builder.CloseElement();
+
+        builder.OpenElement(3, "p");
+        builder.AddAttribute(4, "class", "text-muted");
+        builder.AddContent(5, secondaryText);
+        builder.CloseElement();
+    };
 
     public async ValueTask DisposeAsync()
     {

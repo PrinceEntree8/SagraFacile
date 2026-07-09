@@ -41,13 +41,19 @@ public class ReservationController(IMediator mediator) : ControllerBase
         });
     }
 
-        [HttpGet("last-called")]
-        [AllowAnonymous]
+    [HttpGet("last-called")]
+    [AllowAnonymous]
     public async Task<IActionResult> Get(
         [FromQuery] int eventId,
+        [FromQuery] int maxEntries = 10,
         CancellationToken ct = default)
     {
-        var result = await mediator.QueryAsync(new GetLastCalled.Query(eventId), ct);
+        if (User.Identity is {IsAuthenticated: false})
+        {
+            maxEntries = maxEntries > 10 ? 10 : maxEntries;
+        }
+        
+        var result = await mediator.QueryAsync(new GetLastCalled.Query(eventId, maxEntries), ct);
         return Ok(result);
     }
 

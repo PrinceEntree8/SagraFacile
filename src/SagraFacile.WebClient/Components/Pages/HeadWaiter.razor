@@ -71,7 +71,11 @@
                             <div class="col-md-2"><i class="bi bi-people"></i></div>
                             <div class="col-md-4">@L["HeadWaiter_ColName"]</div>
                             <div class="col-md-2">@L["HeadWaiter_ColWaitTime"]</div>
-                            <div class="col-md-2">@L["HeadWaiter_Actions"]</div>
+                            @if (showCallCount)
+                            {
+                                <div class="col-md-1">@L["HeadWaiter_ColCalls"]</div>
+                            }
+                            <div class="col-md-@(showCallCount ? 1 : 2)">@L["HeadWaiter_Actions"]</div>
                         </div>
 
                         @foreach (var match in bestFitResults)
@@ -99,7 +103,13 @@
                                             <span class="text-muted">@L["HeadWaiter_Never"]</span>
                                         }
                                     </div>
-                                    <div class="col-md-2">
+                                    @if (showCallCount)
+                                    {
+                                        <div class="col-md-1">
+                                            @match.CallCount
+                                        </div>
+                                    }
+                                    <div class="col-md-@(showCallCount ? 1 : 2)">
                                         <button class="btn btn-sm btn-primary" @onclick="@(() => SeatReservationAsync(match.Id))" disabled="@(actionInProgress == match.Id)">
                                             @if (actionInProgress == match.Id)
                                             {
@@ -132,6 +142,10 @@
                                             <span class="text-muted">@L["HeadWaiter_Never"]</span>
                                         }
                                     </div>
+                                    @if (showCallCount)
+                                    {
+                                        <div class="mb-2"><span class="text-muted small">@L["HeadWaiter_ColCalls"]: </span>@match.CallCount</div>
+                                    }
                                     <button class="btn btn-sm btn-primary w-100"
                                             @onclick="@(() => SeatReservationCommand(match.Id, collapseId))"
                                             disabled="@(actionInProgress == match.Id)">
@@ -249,6 +263,7 @@
     private bool isManualSeating = false;
     private string seatError = string.Empty;
     private string signalRError = string.Empty;
+    private bool showCallCount = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -263,6 +278,8 @@
         if (activeEvent != null)
         {
             activeEventId = activeEvent.Id;
+            var options = await EventService.GetEventOptionsAsync(activeEventId);
+            showCallCount = options?.ShowCallCount ?? false;
         }
     }
 

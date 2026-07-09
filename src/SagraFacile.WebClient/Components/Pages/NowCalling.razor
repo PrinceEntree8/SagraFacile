@@ -1,5 +1,6 @@
 @page "/now-calling"
 @layout DisplayLayout
+@attribute [Authorize]
 @using SagraFacile.Domain.Features.Reservations
 @inject IEventService EventService
 @inject IReservationService ReservationService
@@ -71,6 +72,10 @@
                     <div class="nc-current-name">@latest.CustomerName</div>
                     <div class="nc-current-party">
                         <span class="nc-party-badge"><i class="bi bi-people"></i> @latest.PartySize</span>
+                        @if (showCallCount)
+                        {
+                            <span class="nc-party-badge"><i class="bi bi-megaphone"></i> @latest.CallCount</span>
+                        }
                     </div>
                 </section>
 
@@ -86,6 +91,10 @@
                                     <span class="nc-history-queue">@entry.SequenceNumber</span>
                                     <span class="nc-history-name">@entry.CustomerName</span>
                                     <span class="nc-history-party"><i class="bi bi-people"></i> @entry.PartySize</span>
+                                    @if (showCallCount)
+                                    {
+                                        <span class="nc-history-party"><i class="bi bi-megaphone"></i> @entry.CallCount</span>
+                                    }
                                 </li>
                             }
                         </ul>
@@ -102,11 +111,12 @@
 
     /// <summary>LIFO list of called reservations (newest first).</summary>
     private readonly List<CalledEntry> calledEntries = [];
-    private const int MaxEntries = 20;
+    private const int MaxEntries = 16;
 
     private ReservationConnectionState connectionState = ReservationConnectionState.Disconnected;
     private bool isLoading = true;
     private EventDto? activeEvent;
+    private bool showCallCount;
 
     private bool initialLoadFailed;
     private IDisposable? connectionSubscription;
@@ -119,6 +129,9 @@
         activeEvent = await EventService.GetActiveEventAsync();
         if (activeEvent is not null)
         {
+            var options = await EventService.GetEventOptionsAsync(activeEvent.Id);
+            showCallCount = options?.ShowCallCount ?? false;
+
             connectionSubscription = ReservationRealtimeService.SubscribeConnectionStateChanged(async state =>
             {
                 connectionState = state;
@@ -142,7 +155,7 @@
     {
         try
         {
-            var reservations = await ReservationService.GetLastCalledReservationsAsync(eventId);
+            var reservations = await ReservationService.GetLastCalledReservationsAsync(eventId, MaxEntries);
             calledEntries.Clear();
             // Sort descending by LastCalledAt so the most recently called is first.
             foreach (var r in reservations)
@@ -151,7 +164,8 @@
                     r.Id,
                     r.SequenceNumber,
                     r.CustomerName,
-                    r.PartySize));
+                    r.PartySize,
+                    r.CallCount));
             }
         }
         catch
@@ -182,7 +196,8 @@
                     notification.ReservationId,
                     notification.SequenceNumber,
                     notification.CustomerName,
-                    notification.PartySize);
+                    notification.PartySize,
+                    notification.CallCount ?? 0);
 
                 // Remove any existing entry for the same reservation (re-call scenario).
                 calledEntries.RemoveAll(e => e.Id == notification.ReservationId);

@@ -156,10 +156,20 @@
   <data name="EventOptions_EnablePartyCompletion" xml:space="preserve"><value>Abilita Completamento Gruppo</value></data>
   <data name="EventOptions_MinPartySize" xml:space="preserve"><value>Dimensione Minima del Gruppo</value></data>
   <data name="EventOptions_MinPartySizeDesc" xml:space="preserve"><value>Numero minimo di ospiti richiesti prima che la prenotazione possa essere chiamata.</value></data>
+  <data name="EventOptions_ViewOptions" xml:space="preserve"><value>Opzioni Vista</value></data>
+  <data name="EventOptions_ShowNotesField" xml:space="preserve"><value>Mostra campo note</value></data>
+  <data name="EventOptions_ShowNotesFieldDesc" xml:space="preserve"><value>Mostra l'area note nel form nuova prenotazione della reception.</value></data>
+  <data name="EventOptions_CounterPeopleFirst" xml:space="preserve"><value>Contatori persone prima</value></data>
+  <data name="EventOptions_CounterPeopleFirstDesc" xml:space="preserve"><value>Mostra le persone come numero principale e le prenotazioni come numero secondario nelle statistiche.</value></data>
+  <data name="EventOptions_ShowCallCount" xml:space="preserve"><value>Mostra numero chiamate</value></data>
+  <data name="EventOptions_ShowCallCountDesc" xml:space="preserve"><value>Mostra quante volte ogni prenotazione è stata chiamata nelle viste operative.</value></data>
+  <data name="EventOptions_MaxWaitTimeMinutes" xml:space="preserve"><value>Tempo massimo di attesa (minuti)</value></data>
+  <data name="EventOptions_MaxWaitTimeMinutesDesc" xml:space="preserve"><value>Le prenotazioni che superano questa soglia vengono evidenziate in rosso.</value></data>
   <data name="EventOptions_Save" xml:space="preserve"><value>Salva Opzioni</value></data>
   <data name="EventOptions_Saved" xml:space="preserve"><value>Opzioni salvate con successo!</value></data>
   <data name="EventOptions_Error" xml:space="preserve"><value>Errore: {0}</value></data>
   <data name="EventOptions_MinPartySizeInvalid" xml:space="preserve"><value>La dimensione minima del gruppo deve essere almeno 1.</value></data>
+  <data name="EventOptions_MaxWaitTimeMinutesInvalid" xml:space="preserve"><value>Il tempo massimo di attesa deve essere di almeno 1 minuto.</value></data>
   <data name="EventOptions_BackToEvents" xml:space="preserve"><value>← Torna agli Eventi</value></data>
  
   <!-- Receptionist -->

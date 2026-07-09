@@ -6,7 +6,7 @@ namespace SagraFacile.WebClient.Services;
 public interface IReservationService
 {
     Task<(IReadOnlyList<ReservationDto> Reservations, int TotalCount)> GetReservationsAsync(int eventId, string? status, int page = 1, int pageSize = 50, CancellationToken ct = default);
-    Task<IReadOnlyList<CalledEntry>> GetLastCalledReservationsAsync(int eventId, CancellationToken ct = default);
+    Task<IReadOnlyList<CalledEntry>> GetLastCalledReservationsAsync(int eventId, int maxEntries = 10, CancellationToken ct = default);
     Task<CommandResult<CreateReservationResult>> CreateAsync(CreateReservationRequest request, CancellationToken ct = default);
     Task<CommandResult> CallAsync(int id, CallReservationRequest request, CancellationToken ct = default);
     Task<CommandResult> SeatAsync(int id, CancellationToken ct = default);

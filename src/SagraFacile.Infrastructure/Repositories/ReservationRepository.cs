@@ -125,12 +125,13 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
         }
     }
 
-    public Task<List<Reservation>> GetLastCalledAsync(int eventId, CancellationToken cancellationToken = default)
+    public Task<List<Reservation>> GetLastCalledAsync(int eventId, int maxEntries = 10,
+        CancellationToken cancellationToken = default)
     {
         return _db.Reservations
             .Where(r => r.EventId == eventId && r.Status == ReservationStatus.Called)
             .OrderByDescending(r => r.LastCalledAt)
-            .Take(10)
+            .Take(maxEntries)
             .ToListAsync(cancellationToken);
     }
 

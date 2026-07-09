@@ -15,9 +15,9 @@ public class ReservationService(HttpClient httpClient) : IReservationService
         var response = await httpClient.GetFromJsonAsync<GetReservationsResponse>(query, ct);
         return (response?.Reservations ?? [], response?.TotalCount ?? 0);
     }
-    public async Task<IReadOnlyList<CalledEntry>> GetLastCalledReservationsAsync(int eventId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<CalledEntry>> GetLastCalledReservationsAsync(int eventId, int maxEntries = 10, CancellationToken ct = default)
     {
-        var query = $"api/reservations/last-called?eventId={eventId}";
+        var query = $"api/reservations/last-called?eventId={eventId}&maxEntries={maxEntries}";
 
         var response = await httpClient.GetFromJsonAsync<List<CalledEntry>>(query, ct);
         return response ?? [];

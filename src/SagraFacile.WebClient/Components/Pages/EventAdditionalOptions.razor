@@ -62,7 +62,46 @@ else
                 </div>
             </div>
 
-            <!-- Future option groups can be added here as additional cards -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">@L["EventOptions_ViewOptions"]</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="showNotesField"
+                               @bind="model.ShowNotesField" />
+                        <label class="form-check-label" for="showNotesField">
+                            @L["EventOptions_ShowNotesField"]
+                        </label>
+                        <div class="form-text">@L["EventOptions_ShowNotesFieldDesc"]</div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="counterPeopleFirst"
+                               @bind="model.CounterPeopleFirst" />
+                        <label class="form-check-label" for="counterPeopleFirst">
+                            @L["EventOptions_CounterPeopleFirst"]
+                        </label>
+                        <div class="form-text">@L["EventOptions_CounterPeopleFirstDesc"]</div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="showCallCount"
+                               @bind="model.ShowCallCount" />
+                        <label class="form-check-label" for="showCallCount">
+                            @L["EventOptions_ShowCallCount"]
+                        </label>
+                        <div class="form-text">@L["EventOptions_ShowCallCountDesc"]</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="maxWaitTimeMinutes">@L["EventOptions_MaxWaitTimeMinutes"]</label>
+                        <input type="number" class="form-control" id="maxWaitTimeMinutes" min="1"
+                               @bind="model.MaxWaitTimeMinutes" style="max-width: 120px;" />
+                        <div class="form-text">@L["EventOptions_MaxWaitTimeMinutesDesc"]</div>
+                    </div>
+                </div>
+            </div>
 
             <button class="btn btn-primary" @onclick="SaveAsync" disabled="@isSaving">
                 @if (isSaving) { <span class="spinner-border spinner-border-sm me-2"></span> }
@@ -96,6 +135,10 @@ else
         {
             model.PartyCompletionEnabled = result.IsPartyCompletionEnabled;
             model.MinPartySize = result.MinPartySize;
+            model.ShowNotesField = result.ShowNotesField;
+            model.CounterPeopleFirst = result.CounterPeopleFirst;
+            model.ShowCallCount = result.ShowCallCount;
+            model.MaxWaitTimeMinutes = result.MaxWaitTimeMinutes;
 
             var events = await EventService.GetEventsAsync();
             eventName = events.FirstOrDefault(e => e.Id == EventId)?.Name ?? string.Empty;
@@ -114,11 +157,24 @@ else
             return;
         }
 
+        if (model.MaxWaitTimeMinutes < 1)
+        {
+            statusMessage = L["EventOptions_MaxWaitTimeMinutesInvalid"];
+            saveSuccess = false;
+            return;
+        }
+
         isSaving = true;
         try
         {
             await EventService.UpdateEventOptionsAsync(EventId,
-                new UpdateEventAdditionalOptionsRequest(model.PartyCompletionEnabled, model.MinPartySize));
+                new UpdateEventAdditionalOptionsRequest(
+                    model.PartyCompletionEnabled,
+                    model.MinPartySize,
+                    model.ShowNotesField,
+                    model.CounterPeopleFirst,
+                    model.ShowCallCount,
+                    model.MaxWaitTimeMinutes));
 
             statusMessage = L["EventOptions_Saved"];
             saveSuccess = true;
@@ -135,5 +191,9 @@ else
     {
         public bool PartyCompletionEnabled { get; set; } = false;
         public int MinPartySize { get; set; } = 8;
+        public bool ShowNotesField { get; set; } = false;
+        public bool CounterPeopleFirst { get; set; } = true;
+        public bool ShowCallCount { get; set; } = false;
+        public int MaxWaitTimeMinutes { get; set; } = 45;
     }
 }

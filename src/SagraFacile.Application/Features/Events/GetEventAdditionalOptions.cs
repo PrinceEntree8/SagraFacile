@@ -10,11 +10,13 @@ public static class GetEventAdditionalOptions
 
     public record Result(int EventId, AdditionalOptionsDto AdditionalOptions);
 
-    public record AdditionalOptionsDto(ReservationOptionsDto Reservations);
+    public record AdditionalOptionsDto(ReservationOptionsDto Reservations, ViewOptionsDto View);
 
     public record ReservationOptionsDto(PartyCompletionOptionsDto PartyCompletion);
 
     public record PartyCompletionOptionsDto(bool Enabled, int MinPartySize);
+
+    public record ViewOptionsDto(bool ShowNotesField, bool CounterPeopleFirst, bool ShowCallCount, int MaxWaitTimeMinutes);
 
     public class Handler : IQueryHandler<Query, Result?>
     {
@@ -39,7 +41,12 @@ public static class GetEventAdditionalOptions
                     new ReservationOptionsDto(
                         new PartyCompletionOptionsDto(
                             opts.Reservations.PartyCompletion.Enabled,
-                            opts.Reservations.PartyCompletion.MinPartySize))));
+                            opts.Reservations.PartyCompletion.MinPartySize)),
+                    new ViewOptionsDto(
+                        opts.View.ShowNotesField,
+                        opts.View.CounterPeopleFirst,
+                        opts.View.ShowCallCount,
+                        opts.View.MaxWaitTimeMinutes)));
         }
     }
 }

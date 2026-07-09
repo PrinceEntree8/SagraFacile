@@ -45,6 +45,6 @@ public record ReservationMatchDto(
     DateTime? LastCalledAt,
     string MatchQuality);
     
-public record CalledEntry(int Id, int SequenceNumber, string CustomerName, int PartySize);
+public record CalledEntry(int Id, int SequenceNumber, string CustomerName, int PartySize, int CallCount);
 
 public record CreateReservationResult(int Id, int SequenceNumber);

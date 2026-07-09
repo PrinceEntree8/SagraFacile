@@ -9,7 +9,11 @@ public static class UpdateEventAdditionalOptions
     public record Command(
         int EventId,
         bool PartyCompletionEnabled,
-        int PartyCompletionMinPartySize) : ICommand<Result>;
+        int PartyCompletionMinPartySize,
+        bool ShowNotesField,
+        bool CounterPeopleFirst,
+        bool ShowCallCount,
+        int MaxWaitTimeMinutes) : ICommand<Result>;
 
     public record Result(bool Success, string? Error = null);
 
@@ -24,6 +28,9 @@ public static class UpdateEventAdditionalOptions
             if (command.PartyCompletionMinPartySize < 1)
                 return new Result(false, "MinPartySizeInvalid");
 
+            if (command.MaxWaitTimeMinutes < 1)
+                return new Result(false, "MaxWaitTimeMinutesInvalid");
+
             var ev = await _repository.GetByIdAsync(command.EventId, cancellationToken);
             if (ev is null)
                 return new Result(false, "EventNotFound");
@@ -37,6 +44,13 @@ public static class UpdateEventAdditionalOptions
                         Enabled = command.PartyCompletionEnabled,
                         MinPartySize = command.PartyCompletionMinPartySize
                     }
+                },
+                View = new ViewOptions
+                {
+                    ShowNotesField = command.ShowNotesField,
+                    CounterPeopleFirst = command.CounterPeopleFirst,
+                    ShowCallCount = command.ShowCallCount,
+                    MaxWaitTimeMinutes = command.MaxWaitTimeMinutes
                 }
             };
 

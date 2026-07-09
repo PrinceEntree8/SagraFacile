@@ -61,13 +61,24 @@ public class EventController(IMediator mediator) : ControllerBase
 
         return Ok(new EventAdditionalOptionsDto(
             result.AdditionalOptions.Reservations.PartyCompletion.Enabled,
-            result.AdditionalOptions.Reservations.PartyCompletion.MinPartySize));
+            result.AdditionalOptions.Reservations.PartyCompletion.MinPartySize,
+            result.AdditionalOptions.View.ShowNotesField,
+            result.AdditionalOptions.View.CounterPeopleFirst,
+            result.AdditionalOptions.View.ShowCallCount,
+            result.AdditionalOptions.View.MaxWaitTimeMinutes));
     }
 
     [Authorize(Policy = "AdminOnly")]
     [HttpPut("{id:int}/options")]
     public async Task<IActionResult> UpdateOptions(int id, [FromBody] UpdateEventAdditionalOptionsRequest request, CancellationToken ct)
-        => Ok(await mediator.SendAsync(new UpdateEventAdditionalOptions.Command(id, request.IsPartyCompletionEnabled, request.MinPartySize), ct));
+        => Ok(await mediator.SendAsync(new UpdateEventAdditionalOptions.Command(
+            id,
+            request.IsPartyCompletionEnabled,
+            request.MinPartySize,
+            request.ShowNotesField,
+            request.CounterPeopleFirst,
+            request.ShowCallCount,
+            request.MaxWaitTimeMinutes), ct));
 
     private static EventDto MapEvent(GetEvents.EventDto e)
         => new(e.Id, e.Name, e.Description, e.Date, e.Currency, e.CurrencySymbol, e.IsActive, e.CreatedAt);
