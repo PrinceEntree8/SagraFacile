@@ -34,7 +34,7 @@ public static class CreateEvent
             {
                 Name = command.Name,
                 Description = command.Description,
-                Date = DateTime.SpecifyKind(command.Date.Date, DateTimeKind.Utc),
+                Date = DateTime.SpecifyKind(command.Date, DateTimeKind.Utc).Date,
                 Currency = command.Currency,
                 CurrencySymbol = command.CurrencySymbol,
                 IsActive = false,

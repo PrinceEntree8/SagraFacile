@@ -53,16 +53,12 @@ public static class GetReservationReport
             if (query.EventId.HasValue)
             {
                 var selectedEvent = await _eventRepository.GetByIdAsync(query.EventId.Value, cancellationToken);
-                if (selectedEvent is not null)
-                {
-                    (startUtc, endUtc) = GetUtcDayRange(selectedEvent.Date);
-                }
             }
 
             var reservations = await _repository.GetByDateRangeAsync(
                 query.EventId, 
-                startUtc, 
-                endUtc, 
+                null, 
+                null, 
                 ReservationStatusFilter.AllCompleted, 
                 cancellationToken);
 
