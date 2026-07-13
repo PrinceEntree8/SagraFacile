@@ -3,6 +3,7 @@ window.visibilityHelpers = {
   register(dotNetRef) {
     this._dotNetRef = dotNetRef;
     const handler = () => {
+      if (!['/', '/menu'].includes(window.location.pathname)) return;
       const visible = document.visibilityState === 'visible';
       try { this._dotNetRef.invokeMethodAsync('OnVisibilityChanged', visible); } catch {}
     };
