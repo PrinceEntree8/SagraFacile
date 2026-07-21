@@ -45,7 +45,7 @@ public class GetReservationReportHandlerTests
         await _repository.Received(1).GetByDateRangeAsync(
             7,
             Arg.Is<DateTime?>(d => d == new DateTime(2026, 8, 20, 0, 0, 0, DateTimeKind.Utc)),
-            Arg.Is<DateTime?>(d => d == new DateTime(2026, 8, 20, 23, 59, 59, 999, DateTimeKind.Utc).AddTicks(9999)), 
+            Arg.Is<DateTime?>(d => d == new DateTime(2026, 8, 21, 0, 0, 0, DateTimeKind.Utc).AddTicks(-1)), 
             Arg.Any<ReservationStatusFilter>(), Arg.Any<CancellationToken>());
     }
 
