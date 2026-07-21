@@ -359,9 +359,9 @@
                 newReservation.PartyComplete
             );
             var result = await ReservationService.CreateAsync(request);
-            if (result.Success && result.Data is not null && result.Data.Id > 0)
+            if (result.Success && result.Data is not null && result.Data.SequenceNumber > 0)
             {
-                var id = result.Data.Id;
+                var id = result.Data.SequenceNumber;
                 creationMessage = string.Format(L["Receptionist_ReservationCreated"].ToString(), id);
                 newReservation = new();
                 await LoadReservations(currentFilter);

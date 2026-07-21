@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
 using SagraFacile.Domain.Features.Reservations;
@@ -14,7 +15,7 @@ public static class GetReservationReport
         int SequenceNumber,
         string CustomerName,
         int PartySize,
-        string Status,
+        ReservationStatus Status,
         DateTime CreatedAt,
         DateTime? FirstCalledAt,
         DateTime? SeatedAt,
@@ -86,15 +87,15 @@ public static class GetReservationReport
                     totalWait = null;
 
                 return new ReportDto(
-                    r.Id, r.SequenceNumber, r.CustomerName, r.PartySize, r.Status.ToString(),
+                    r.Id, r.SequenceNumber, r.CustomerName, r.PartySize, r.Status,
                     createdAt, firstCalledAt, seatedAt, voidedAt,
                     r.CallCount, waitUntilFirstCall, totalWait);
             }).ToList();
 
             var waitTimes = reports
-                .Where(r => r is { Status: nameof(ReservationStatus.Seated), TotalWaitTime: not null })
+                .Where(r => r is { Status: ReservationStatus.Seated, TotalWaitTime: not null })
                 .Select(r => r.TotalWaitTime!.Value)
-                .ToList();
+                .ToImmutableHashSet();
 
             TimeSpan averageWaitTime;
             TimeSpan medianWaitTime;
@@ -119,9 +120,9 @@ public static class GetReservationReport
             var stats = new StatisticsDto(
                 TotalReservations: reservations.Count,
                 TotalPeople: reservations.Sum(r => r.PartySize),
-                SeatedCount: reservations.Count(r => r.Status == ReservationStatus.Seated),
+                SeatedCount: reservations.Count(r => ReservationStatusFilter.AllCompleted.ToStatusArray().Contains(r.Status)),
                 VoidedCount: reservations.Count(r => r.Status == ReservationStatus.Voided),
-                WaitingCount: reservations.Count(r => r.Status is ReservationStatus.Waiting or ReservationStatus.Called),
+                WaitingCount: reservations.Count(r => ReservationStatusFilter.AllWaiting.ToStatusArray().Contains(r.Status)),
                 AverageWaitTime: averageWaitTime,
                 MedianWaitTime: medianWaitTime,
                 MaxWaitTime: maxWaitTime,
@@ -130,17 +131,14 @@ public static class GetReservationReport
             return new Result(reports, stats);
         }
 
-        private static TimeSpan GetMedian(List<TimeSpan> values)
+        private static TimeSpan GetMedian(ISet<TimeSpan> values)
         {
             var sorted = values.OrderBy(t => t.Ticks).ToList();
             var count = sorted.Count;
-            if (count % 2 == 0)
-            {
-                var mid1 = sorted[count / 2 - 1];
-                var mid2 = sorted[count / 2];
-                return TimeSpan.FromTicks((mid1.Ticks + mid2.Ticks) / 2);
-            }
-            return sorted[count / 2];
+            if (count % 2 != 0) return sorted[count / 2];
+            var mid1 = sorted[count / 2 - 1];
+            var mid2 = sorted[count / 2];
+            return TimeSpan.FromTicks((mid1.Ticks + mid2.Ticks) / 2);
         }
 
         private static (DateTime StartUtc, DateTime EndUtc) GetUtcDayRange(DateTime day)

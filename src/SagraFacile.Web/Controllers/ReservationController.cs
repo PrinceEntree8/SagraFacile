@@ -81,7 +81,7 @@ public class ReservationController(IMediator mediator) : ControllerBase
             r.SequenceNumber,
             r.CustomerName,
             r.PartySize,
-            r.Status,
+            r.Status.ToString(),
             r.CreatedAt,
             r.FirstCalledAt,
             r.SeatedAt,
