@@ -1,4 +1,8 @@
 @page "/reservation-report"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using SagraFacile.Contracts.Events
+@using SagraFacile.Contracts.Reservations
 @attribute [Authorize]
 @inject IStringLocalizer<SharedResource> L
 @inject IReservationService ReservationService

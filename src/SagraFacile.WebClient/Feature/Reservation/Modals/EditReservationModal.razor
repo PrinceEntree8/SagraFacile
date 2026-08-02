@@ -1,0 +1,83 @@
+@using Microsoft.Extensions.Localization
+@using SagraFacile.Contracts.Reservations
+@using SagraFacile.Domain.Features.Reservations;
+@using SagraFacile.WebClient.Feature.Reservation
+@inject IStringLocalizer<SharedResource> L
+@inject IReservationService ReservationService
+@inject IJSRuntime JS
+
+<div class="modal fade" id="@Id" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@L["ReservationEdit_ModalTitle"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                @if (_editReservation is not null)
+                {
+                    <EditReservationForm Reservation="Reservation" OnSave="SaveReservationAsync"/>
+                }
+            </div>
+                
+            <div class="modal-footer">
+                <button type="submit" onclick="" form="EditReservationForm" class="btn btn-primary" data-bs-dismiss="modal">
+                    @L["Common_Save"]
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    @L["Common_Close"]
+                </button>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+
+@code {
+
+    [Parameter] public string Id { get; init; } = "reservationEditModal";
+
+    [Parameter]
+    public required ReservationDto? Reservation
+    {
+        get;
+        set
+        {
+            field = value;
+            _editReservation = value is not null
+                ? new EditReservationModel()
+                {
+                    Id = value.Id,
+                    CustomerName = value.CustomerName,
+                    Notes = value.Notes ?? string.Empty,
+                    PartySize = value.PartySize,
+                    Status = value.Status
+                }
+                : new EditReservationModel();
+        }
+    }
+
+    private EditReservationModel? _editReservation;
+
+    private async Task SaveReservationAsync(EditReservationModel reservation)
+    {
+
+        if (Reservation is null)
+        {
+            return;
+        }
+        
+        await ReservationService.EditAsync(
+            Reservation.Id,
+            new EditReservationRequest(
+                CustomerName: reservation.CustomerName,
+                PartySize: reservation.PartySize,
+                Notes: reservation.Notes,
+                Status: Enum.Parse<ReservationStatus>(reservation.Status)
+            ),
+            CancellationToken.None);
+    }
+
+}
