@@ -28,9 +28,9 @@
 
   <ItemGroup>
     <_ContentIncludedByDefault Remove="wwwroot\sample-data\weather.json" />
-    <_ContentIncludedByDefault Remove="Components\Feature\Reservation\EditReservationForm.razor" />
-    <_ContentIncludedByDefault Remove="Components\Modals\EditReservationModal.razor" />
-    <_ContentIncludedByDefault Remove="Components\Modals\ViewReservationModal.razor" />
+    <_ContentIncludedByDefault Remove="Feature\Reservation\EditReservationForm.razor" />
+    <_ContentIncludedByDefault Remove="Feature\Reservation\Modals\EditReservationModal.razor" />
+    <_ContentIncludedByDefault Remove="Feature\Reservation\Modals\ViewReservationModal.razor" />
   </ItemGroup>
 
   <ItemGroup>

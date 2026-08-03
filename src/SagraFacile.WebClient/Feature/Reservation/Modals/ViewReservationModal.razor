@@ -68,9 +68,6 @@
                                        OnRestore="OnRestore"
                                        IsDisabled="IsActionDisabled" />
                     }
-                    <AuthorizeView Roles="reservation:edit,admin">
-                        Can Edit!
-                    </AuthorizeView>
                     @if (Reservation is not null)
                     {
                         <button type="button" class="btn btn-outline-secondary ms-auto me-2"
