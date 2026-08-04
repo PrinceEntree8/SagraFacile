@@ -18,7 +18,7 @@ public static class GetMenuCategories
         public async Task<Result> Handle(Query query, CancellationToken ct)
         {
             var cats = await _repo.GetAllAsync(ct);
-            return new Result(cats.Select(c => new MenuCategoryDto(c.Id, c.Name, c.DisplayOrder, [])).ToList());
+            return new Result(cats.Select(c => new MenuCategoryDto(c.Id, c.Name, c.Code, c.DisplayOrder, [])).ToList());
         }
     }
 }

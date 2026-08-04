@@ -16,7 +16,7 @@ public static class GetEventMenu
             if (!query.IncludeUnavailable && cache.TryGetMenuItems(query.EventId, out var cached)) return cached!;
             var items = await repo.GetByEventIdAsync(query.EventId, query.IncludeUnavailable, ct);
             var dtos = items.Select(i => new MenuItemDto(
-                i.Id, i.Name, i.Description, i.PriceInCents,
+                i.Id, i.Name, i.Code, i.Description, i.PriceInCents,
                 i.CategoryId,
                 i.Category?.Name ?? string.Empty,
                 i.DisplayOrder, i.IsAvailable,

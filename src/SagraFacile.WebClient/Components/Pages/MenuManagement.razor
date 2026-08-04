@@ -375,6 +375,7 @@
         form = new ItemForm
         {
             Name = item.Name,
+            Code = item.Code,
             Description = item.Description,
             PriceInCents = item.PriceCents,
             CategoryId = item.CategoryId,
@@ -414,10 +415,11 @@
         try
         {
             var allergenIds = form.AllergenIds.ToList();
+            var itemCode = string.IsNullOrWhiteSpace(form.Code) ? Slugify(form.Name) : form.Code;
             if (editingId.HasValue)
             {
                 var r = await MenuService.UpdateItemAsync(EventId, editingId.Value, new UpdateMenuItemRequest(
-                    form.Name, form.Description, form.PriceInCents,
+                    form.Name, itemCode, form.Description, form.PriceInCents,
                     form.CategoryId, allergenIds, form.IsAvailable)
                     );
                 message = r.Success ? string.Format(L["MenuMgmt_ItemUpdated"], form.Name) : r.Message;
@@ -426,7 +428,7 @@
             else
             {
                 var r = await MenuService.CreateItemAsync(EventId, new CreateMenuItemRequest(
-                    form.CategoryId, form.Name, form.Description, form.PriceInCents,
+                    form.CategoryId, form.Name, itemCode, form.Description, form.PriceInCents,
                     allergenIds),
                     CancellationToken.None);
                 message = string.Format(L["MenuMgmt_ItemAdded"], r.Name);
@@ -475,7 +477,7 @@
     private void EditCategory(MenuCategoryDto c)
     {
         editingCatId = c.Id;
-        catForm = new CatForm { Name = c.Name, DisplayOrder = c.DisplayOrder };
+        catForm = new CatForm { Name = c.Name, Code = c.Code, DisplayOrder = c.DisplayOrder };
     }
 
     private void CancelCatEdit()
@@ -496,10 +498,11 @@
         isSavingCat = true;
         try
         {
+            var catCode = string.IsNullOrWhiteSpace(catForm.Code) ? Slugify(catForm.Name) : catForm.Code;
             if (editingCatId.HasValue)
             {
                 var r = await MenuService.UpdateCategoryAsync(EventId, editingCatId.Value, new UpdateMenuCategoryRequest(
-                    catForm.Name, catForm.DisplayOrder),
+                    catForm.Name, catCode, catForm.DisplayOrder),
                     CancellationToken.None);
                 message = r.Success ? string.Format(L["MenuMgmt_CatUpdated"], catForm.Name) : r.Message;
                 messageSuccess = r.Success;
@@ -507,7 +510,7 @@
             else
             {
                 var r = await MenuService.CreateCategoryAsync(EventId, new CreateMenuCategoryRequest(
-                    catForm.Name, catForm.DisplayOrder),
+                    catForm.Name, catCode, catForm.DisplayOrder),
                     CancellationToken.None);
                 message = string.Format(L["MenuMgmt_CatAdded"], r.Name);
                 messageSuccess = true;
@@ -575,9 +578,13 @@
 
     private static string GetCategoryName(MenuCategoryDto c) => c.Name;
 
+    private static string Slugify(string name) =>
+        string.IsNullOrWhiteSpace(name) ? "item" : System.Text.RegularExpressions.Regex.Replace(name.ToLowerInvariant(), @"[^a-z0-9_-]+", "-").Trim('-');
+
     private class ItemForm
     {
         public string Name { get; set; } = string.Empty;
+        public string Code { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public int PriceInCents { get; set; } = 0;
         public int CategoryId { get; set; } = 0;
@@ -588,6 +595,7 @@
     private class CatForm
     {
         public string Name { get; set; } = string.Empty;
+        public string Code { get; set; } = string.Empty;
         public int DisplayOrder { get; set; } = 0;
     }
 

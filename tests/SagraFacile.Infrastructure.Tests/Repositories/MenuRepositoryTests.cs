@@ -8,7 +8,7 @@ public class MenuRepositoryTests
 {
     private static async Task<MenuCategory> CreateCategoryAsync(MenuCategoryRepository catRepo)
     {
-        var cat = new MenuCategory { Name = "Test", DisplayOrder = 1 };
+        var cat = new MenuCategory { Name = "Test", Code = "test", DisplayOrder = 1 };
         await catRepo.AddAsync(cat, CancellationToken.None);
         await catRepo.SaveChangesAsync(CancellationToken.None);
         return cat;
@@ -22,7 +22,7 @@ public class MenuRepositoryTests
         var cat = await CreateCategoryAsync(catRepo);
 
         await using var repo = new MenuRepository(factory);
-        var item = new MenuItem { EventId = 1, Name = "Pizza", PriceInCents = 800, CategoryId = cat.Id };
+        var item = new MenuItem { EventId = 1, Name = "Pizza", Code = "pizza", PriceInCents = 800, CategoryId = cat.Id };
 
         await repo.AddAsync(item, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
@@ -30,6 +30,7 @@ public class MenuRepositoryTests
 
         Assert.NotNull(found);
         Assert.Equal("Pizza", found!.Name);
+        Assert.Equal("pizza", found.Code);
         Assert.Equal(800, found.PriceInCents);
     }
 
@@ -41,8 +42,8 @@ public class MenuRepositoryTests
         var cat = await CreateCategoryAsync(catRepo);
 
         await using var repo = new MenuRepository(factory);
-        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Item1", PriceInCents = 500, CategoryId = cat.Id }, CancellationToken.None);
-        await repo.AddAsync(new MenuItem { EventId = 2, Name = "Item2", PriceInCents = 500, CategoryId = cat.Id }, CancellationToken.None);
+        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Item1", Code = "item1", PriceInCents = 500, CategoryId = cat.Id }, CancellationToken.None);
+        await repo.AddAsync(new MenuItem { EventId = 2, Name = "Item2", Code = "item2", PriceInCents = 500, CategoryId = cat.Id }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         var items = await repo.GetByEventIdAsync(1, true, CancellationToken.None);
@@ -59,8 +60,8 @@ public class MenuRepositoryTests
         var cat = await CreateCategoryAsync(catRepo);
 
         await using var repo = new MenuRepository(factory);
-        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Available", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = true }, CancellationToken.None);
-        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Unavailable", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = false }, CancellationToken.None);
+        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Available", Code = "avail", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = true }, CancellationToken.None);
+        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Unavailable", Code = "unavail", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = false }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         var items = await repo.GetByEventIdAsync(1, false, CancellationToken.None);
@@ -77,8 +78,8 @@ public class MenuRepositoryTests
         var cat = await CreateCategoryAsync(catRepo);
 
         await using var repo = new MenuRepository(factory);
-        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Available", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = true }, CancellationToken.None);
-        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Unavailable", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = false }, CancellationToken.None);
+        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Available", Code = "avail", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = true }, CancellationToken.None);
+        await repo.AddAsync(new MenuItem { EventId = 1, Name = "Unavailable", Code = "unavail", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = false }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         var items = await repo.GetByEventIdAsync(1, true, CancellationToken.None);
@@ -94,7 +95,7 @@ public class MenuRepositoryTests
         var cat = await CreateCategoryAsync(catRepo);
 
         await using var repo = new MenuRepository(factory);
-        var item = new MenuItem { EventId = 1, Name = "ToDelete", PriceInCents = 300, CategoryId = cat.Id };
+        var item = new MenuItem { EventId = 1, Name = "ToDelete", Code = "to-delete", PriceInCents = 300, CategoryId = cat.Id };
         await repo.AddAsync(item, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
         var id = item.Id;

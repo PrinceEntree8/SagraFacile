@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddTransient<IEventRepository, EventRepository>();
         services.AddTransient<IReservationRepository, ReservationRepository>();
         services.AddTransient<IOrderRepository, OrderRepository>();
+        services.AddTransient<IOrderingRuleRepository, OrderingRuleRepository>();
         services.AddTransient<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddTransient<ITableRepository, TableRepository>();
         services.AddTransient<IMenuRepository, MenuRepository>();

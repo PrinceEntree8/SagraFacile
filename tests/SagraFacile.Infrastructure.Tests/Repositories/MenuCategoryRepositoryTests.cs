@@ -11,7 +11,7 @@ public class MenuCategoryRepositoryTests
     {
         using var factory = new TestDbContextFactory();
         await using var repo = new MenuCategoryRepository(factory);
-        var cat = new MenuCategory { Name = "Starters", DisplayOrder = 1 };
+        var cat = new MenuCategory { Name = "Starters", Code = "starters", DisplayOrder = 1 };
 
         await repo.AddAsync(cat, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
@@ -20,6 +20,7 @@ public class MenuCategoryRepositoryTests
 
         Assert.NotNull(found);
         Assert.Equal("Starters", found!.Name);
+        Assert.Equal("starters", found.Code);
         Assert.Equal(1, found.DisplayOrder);
     }
 
@@ -40,9 +41,9 @@ public class MenuCategoryRepositoryTests
         using var factory = new TestDbContextFactory();
         await using var repo = new MenuCategoryRepository(factory);
 
-        await repo.AddAsync(new MenuCategory { Name = "Drinks", DisplayOrder = 5 }, CancellationToken.None);
-        await repo.AddAsync(new MenuCategory { Name = "Dessert", DisplayOrder = 4 }, CancellationToken.None);
-        await repo.AddAsync(new MenuCategory { Name = "Starters", DisplayOrder = 1 }, CancellationToken.None);
+        await repo.AddAsync(new MenuCategory { Name = "Drinks", Code = "drinks", DisplayOrder = 5 }, CancellationToken.None);
+        await repo.AddAsync(new MenuCategory { Name = "Dessert", Code = "dessert", DisplayOrder = 4 }, CancellationToken.None);
+        await repo.AddAsync(new MenuCategory { Name = "Starters", Code = "starters", DisplayOrder = 1 }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         var categories = await repo.GetAllAsync(CancellationToken.None);
@@ -59,8 +60,8 @@ public class MenuCategoryRepositoryTests
         using var factory = new TestDbContextFactory();
         await using var repo = new MenuCategoryRepository(factory);
 
-        await repo.AddAsync(new MenuCategory { Name = "Zucchini", DisplayOrder = 1 }, CancellationToken.None);
-        await repo.AddAsync(new MenuCategory { Name = "Antipasto", DisplayOrder = 1 }, CancellationToken.None);
+        await repo.AddAsync(new MenuCategory { Name = "Zucchini", Code = "zucchini", DisplayOrder = 1 }, CancellationToken.None);
+        await repo.AddAsync(new MenuCategory { Name = "Antipasto", Code = "antipasto", DisplayOrder = 1 }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         var categories = await repo.GetAllAsync(CancellationToken.None);
@@ -75,7 +76,7 @@ public class MenuCategoryRepositoryTests
     {
         using var factory = new TestDbContextFactory();
         await using var repo = new MenuCategoryRepository(factory);
-        var cat = new MenuCategory { Name = "ToDelete", DisplayOrder = 1 };
+        var cat = new MenuCategory { Name = "ToDelete", Code = "to-delete", DisplayOrder = 1 };
 
         await repo.AddAsync(cat, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
@@ -105,9 +106,9 @@ public class MenuCategoryRepositoryTests
         using var factory = new TestDbContextFactory();
         await using var repo = new MenuCategoryRepository(factory);
 
-        await repo.AddAsync(new MenuCategory { Name = "Cat1", DisplayOrder = 1 }, CancellationToken.None);
-        await repo.AddAsync(new MenuCategory { Name = "Cat2", DisplayOrder = 2 }, CancellationToken.None);
-        await repo.AddAsync(new MenuCategory { Name = "Cat3", DisplayOrder = 3 }, CancellationToken.None);
+        await repo.AddAsync(new MenuCategory { Name = "Cat1", Code = "cat1", DisplayOrder = 1 }, CancellationToken.None);
+        await repo.AddAsync(new MenuCategory { Name = "Cat2", Code = "cat2", DisplayOrder = 2 }, CancellationToken.None);
+        await repo.AddAsync(new MenuCategory { Name = "Cat3", Code = "cat3", DisplayOrder = 3 }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
         var all = await repo.GetAllAsync(CancellationToken.None);

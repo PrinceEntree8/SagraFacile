@@ -19,7 +19,7 @@ public class CreateMenuCategoryHandlerTests
     [Fact]
     public async Task Handle_ValidCommand_AddsCategoryAndSaves()
     {
-        var command = new CreateMenuCategory.Command("Starters", 1);
+        var command = new CreateMenuCategory.Command("Starters", "starters", 1);
 
         _repo.When(r => r.AddAsync(Arg.Any<MenuCategory>(), Arg.Any<CancellationToken>()))
             .Do(ci => ci.Arg<MenuCategory>().Id = 10);
@@ -27,9 +27,10 @@ public class CreateMenuCategoryHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.Equal("Starters", result.Name);
+        Assert.Equal("starters", result.Code);
         Assert.Equal(10, result.Id);
         await _repo.Received(1).AddAsync(
-            Arg.Is<MenuCategory>(c => c.Name == "Starters" && c.DisplayOrder == 1),
+            Arg.Is<MenuCategory>(c => c.Name == "Starters" && c.Code == "starters" && c.DisplayOrder == 1),
             Arg.Any<CancellationToken>());
         await _repo.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -37,7 +38,7 @@ public class CreateMenuCategoryHandlerTests
     [Fact]
     public async Task Handle_DefaultDisplayOrder_IsZero()
     {
-        var command = new CreateMenuCategory.Command("Drinks");
+        var command = new CreateMenuCategory.Command("Drinks", "drinks");
 
         MenuCategory? saved = null;
         _repo.When(r => r.AddAsync(Arg.Any<MenuCategory>(), Arg.Any<CancellationToken>()))
@@ -53,7 +54,7 @@ public class CreateMenuCategoryHandlerTests
     public void Validator_EmptyName_Fails()
     {
         var validator = new CreateMenuCategory.Validator();
-        var result = validator.Validate(new CreateMenuCategory.Command(""));
+        var result = validator.Validate(new CreateMenuCategory.Command("", "starters"));
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == nameof(CreateMenuCategory.Command.Name));
     }
@@ -63,7 +64,7 @@ public class CreateMenuCategoryHandlerTests
     {
         var validator = new CreateMenuCategory.Validator();
         var longName = new string('x', 101);
-        var result = validator.Validate(new CreateMenuCategory.Command(longName));
+        var result = validator.Validate(new CreateMenuCategory.Command(longName, "starters"));
         Assert.False(result.IsValid);
     }
 
@@ -71,7 +72,7 @@ public class CreateMenuCategoryHandlerTests
     public void Validator_ValidCommand_Passes()
     {
         var validator = new CreateMenuCategory.Validator();
-        var result = validator.Validate(new CreateMenuCategory.Command("Dessert", 5));
+        var result = validator.Validate(new CreateMenuCategory.Command("Dessert", "dessert", 5));
         Assert.True(result.IsValid);
     }
 }

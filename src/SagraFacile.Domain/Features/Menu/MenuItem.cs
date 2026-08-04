@@ -5,6 +5,7 @@ public record MenuItem
     public int Id { get; set; }
     public int EventId { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public int PriceInCents { get; set; }
     public int CategoryId { get; set; }
