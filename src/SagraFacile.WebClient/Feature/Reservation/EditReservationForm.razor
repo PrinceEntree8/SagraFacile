@@ -1,0 +1,91 @@
+@using Microsoft.Extensions.Localization
+@using SagraFacile.Contracts.Reservations
+@using SagraFacile.WebClient.Extensions
+@inject IStringLocalizer<SharedResource> L
+
+<EditForm Model="@_editReservation" OnValidSubmit="@SaveReservation" id="EditReservationForm">
+    <ValidationSummary />
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        @if (ShowReservationId)
+        {
+            <strong># @(Reservation?.SequenceNumber ?? 0)</strong>
+        }
+        <span class="badge chip-status @StatusClass">
+            @L["Reservation_Status_" + _editReservation.Status]
+        </span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="reservationName">@L["Receptionist_CustomerName"]</label>
+        <InputText id="reservationName"
+                   class="form-control"
+                   @bind-Value="_editReservation.CustomerName"
+                   autocomplete="off"/>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label"
+               for="reservationPartySize">@L["Receptionist_PartySize"]</label>
+        <InputNumber id="reservationPartySize"
+                     class="form-control"
+                     @bind-Value="_editReservation.PartySize"/>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="reservationStatus">@L["Receptionist_ColStatus"]</label>
+        <InputSelect id="reservationStatus"
+                     class="form-select"
+                     @bind-Value="_editReservation.Status">
+            <option value="Waiting">@L["Reservation_Status_Waiting"]</option>
+            <option value="PartyCompleted">@L["Reservation_Status_PartyCompleted"]</option>
+            <option value="Called">@L["Reservation_Status_Called"]</option>
+            <option value="Seated">@L["Reservation_Status_Seated"]</option>
+            <option value="Voided">@L["Reservation_Status_Voided"]</option>
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="reservationNotes">@L["Receptionist_Notes"]</label>
+        <InputTextArea id="reservationNotes"
+                       class="form-control"
+                       rows="3"
+                       @bind-Value="_editReservation.Notes"/>
+    </div>
+</EditForm>
+
+@code {
+
+    [Parameter] public bool ShowReservationId { get; set; } = true;
+    
+    [Parameter]
+    public required ReservationDto? Reservation
+    {
+        get;
+        set
+        {
+            field = value;
+            _editReservation = value is not null
+                ? new EditReservationModel()
+                {
+                    Id = value.Id,
+                    CustomerName = value.CustomerName,
+                    Notes = value.Notes ?? string.Empty,
+                    PartySize = value.PartySize,
+                    Status = value.Status
+                }
+                : new EditReservationModel();
+        }
+    }
+
+    private EditReservationModel _editReservation = new();
+
+    private async Task SaveReservation()
+    {
+        await OnSave.InvokeAsync(_editReservation);
+    }
+    
+    [Parameter] public EventCallback<EditReservationModel> OnSave { get; set; }
+    
+    private string StatusClass => Reservation?.Status.GetStatusClass() ?? string.Empty;
+
+}

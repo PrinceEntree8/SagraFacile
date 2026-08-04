@@ -1,8 +1,11 @@
 @page "/reservation-overview"
 @attribute [Authorize(Roles = "Admin,Supervisore")]
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using SagraFacile.Contracts.Events
+@using SagraFacile.Contracts.Reservations
 @using SagraFacile.Domain.Features.Reservations
-@using SagraFacile.WebClient.Components.Buttons
-@using SagraFacile.WebClient.Components.Modals
+@using SagraFacile.WebClient.Feature.Reservation.Modals
 @using SagraFacile.WebClient.Extensions
 @inject IStringLocalizer<SharedResource> L
 @inject IEventService EventService
@@ -29,14 +32,14 @@ else if (activeEvent is null)
 {
     <p><em>@L["ReservationOverview_NoActiveEvent"]</em></p>
 }
-else if (reservations.Count == 0)
+else if (sortedReservations.Count == 0)
 {
     <p><em>@L["Receptionist_NoReservations"]</em></p>
 }
 else
 {
     <div class="row row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-8 g-2">
-        @foreach (var reservation in reservations)
+        @foreach (var (_, reservation) in sortedReservations)
         {
             <div class="col">
                 <div class="overview-cell p-2 align-items-center border-1 d-flex flex-row justify-content-around rounded-2 @reservation.Status.GetStatusClass()"
@@ -55,20 +58,19 @@ else
     </div>
 }
 
-<ViewReservationModal Reservation="selectedReservation"
-                      PartyCompletionEnabled="partyCompletionEnabled"
-                      OnCall="@(new EventCallback(this, async () => { if (selectedReservation is not null) await CallReservationAsync(selectedReservation.Id); }))"
-                      OnMarkPartyComplete="@(new EventCallback(this, async () => { if (selectedReservation is not null) await MarkPartyCompleteAsync(selectedReservation.Id); }))"
-                      OnSeat="@(new EventCallback(this, async () => { if (selectedReservation is not null) await SeatReservationAsync(selectedReservation.Id); }))"
-                      OnRestore="@(new EventCallback(this, async () => { if (selectedReservation is not null) await RestoreReservationAsync(selectedReservation.Id); }))"
-                      IsActionDisabled="isActionInProgress" />
+<ViewReservationModal
+    Reservation="selectedReservation"
+    PartyCompletionEnabled="partyCompletionEnabled"
+    OnCall="@(new EventCallback(this, async () => { if (selectedReservation is not null) await CallReservationAsync(selectedReservation.Id); }))"
+    OnMarkPartyComplete="@(new EventCallback(this, async () => { if (selectedReservation is not null) await MarkPartyCompleteAsync(selectedReservation.Id); }))"
+    OnSeat="@(new EventCallback(this, async () => { if (selectedReservation is not null) await SeatReservationAsync(selectedReservation.Id); }))"
+    OnRestore="@(new EventCallback(this, async () => { if (selectedReservation is not null) await RestoreReservationAsync(selectedReservation.Id); }))"
+    IsActionDisabled="isActionInProgress" />
 
 @code {
-    // TODO: raise some exception in the backend
-
     private IDisposable? reservationStatusSubscription;
     private EventDto? activeEvent;
-    private readonly List<ReservationDto> reservations = [];
+    private SortedDictionary<int, ReservationDto> sortedReservations = new();
     private ReservationDto? selectedReservation;
     private bool isLoading = true;
     private bool partyCompletionEnabled;
@@ -97,8 +99,7 @@ else
         if (activeEvent is null) return;
         var filter = showVoided ? nameof(ReservationStatusFilter.All) : nameof(ReservationStatusFilter.Active);
         var result = await ReservationService.GetReservationsAsync(activeEvent.Id, filter, 1, 1000);
-        reservations.Clear();
-        reservations.AddRange(result.Reservations.OrderBy(r => r.SequenceNumber));
+        sortedReservations = new(result.Reservations.ToDictionary(r => r.Id, r => r));
     }
 
     private async Task OnShowVoidedChangedAsync()
@@ -111,28 +112,23 @@ else
     {
         reservationStatusSubscription = ReservationRealtimeService.SubscribeReservationStatusChanged(async r =>
         {
-            Console.WriteLine($"{nameof(IReservationHubClient.ReservationStatusChanged)}: {r}");
             switch (r.NewStatus)
             {
                 case ReservationStatus.Waiting:
-                    if (reservations.All(a => a.Id != r.ReservationId))
-                        InsertReservationOrdered(CreateReservationDto(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString()));
-                    else PatchReservationStatus(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString());
+                    if (!sortedReservations.TryAdd(r.ReservationId, CreateReservationDto(r)))
+                        PatchReservationStatus(r);
                     break;
                 case ReservationStatus.Called:
                 case ReservationStatus.Seated:
                 case ReservationStatus.PartyCompleted:
-                    PatchReservationStatus(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString());
+                    PatchReservationStatus(r);
                     break;
                 case ReservationStatus.Voided:
-                    if (showVoided)
-                        PatchReservationStatus(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString());
-                    else
-                        reservations.RemoveAll(a => a.Id == r.ReservationId);
+                    PatchReservationStatus(r);
+                    if (!showVoided) sortedReservations.Remove(r.ReservationId);
                     break;
 
                 case ReservationStatus.None:
-                    break;
                 case ReservationStatus.Left:
                     break;
                 default:
@@ -186,6 +182,9 @@ else
         finally { isActionInProgress = false; }
     }
 
+    private static ReservationDto CreateReservationDto(ReservationStatusChangedNotification r)
+        => CreateReservationDto(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString());
+
     private static ReservationDto CreateReservationDto(int id, int sequenceNumber, string customerName, int partySize, string status)
     {
         var now = DateTime.UtcNow;
@@ -206,45 +205,32 @@ else
             calledAt is null ? null : TimeSpan.Zero);
     }
 
-    private void InsertReservationOrdered(ReservationDto dto)
-    {
-        // Insert while maintaining ascending SequenceNumber order.
-        var insertIndex = reservations.FindIndex(r => r.SequenceNumber > dto.SequenceNumber);
-        if (insertIndex < 0)
-            reservations.Add(dto);
-        else
-            reservations.Insert(insertIndex, dto);
-    }
+    private void PatchReservationStatus(ReservationStatusChangedNotification r)
+        => PatchReservationStatus(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString());
 
     private void PatchReservationStatus(int id, int? sequenceNumber, string? customerName, int? partySize, string status)
     {
-        var index = reservations.FindIndex(r => r.Id == id);
-        if (index < 0)
+        if (!sortedReservations.TryGetValue(id, out var current))
         {
             if (sequenceNumber.HasValue && customerName is not null && partySize.HasValue)
             {
-                InsertReservationOrdered(CreateReservationDto(id, sequenceNumber.Value, customerName, partySize.Value, status));
+                sortedReservations.TryAdd(id, CreateReservationDto(id, sequenceNumber.Value, customerName, partySize.Value, status));
             }
 
             return;
         }
 
-        var current = reservations[index];
-        reservations[index] = current with { Status = status };
+        sortedReservations[id] = current with
+        {
+            Status = status,
+            CustomerName = customerName ?? current.CustomerName,
+            PartySize = partySize ?? current.PartySize
+        };
 
         if (selectedReservation?.Id == id)
         {
-            selectedReservation = reservations[index];
+            selectedReservation = sortedReservations[id];
         }
-    }
-
-    public static string EvaluateColSpan(int sequenceNumber)
-    {
-        return sequenceNumber switch
-        {
-            >= 100 => "col-4 col-xl-2",
-            _ => "col-4 col-xl-2"
-        };
     }
 
     public async ValueTask DisposeAsync()
@@ -254,3 +240,20 @@ else
     }
 
 }
+
+<style>
+    .overview-cell {
+        text-align: center;
+        cursor: pointer;
+        min-height: 52px;
+        transition: 0.15s;
+        background-color: rgba(var(--status-color) / 0.2);
+        border: 1px solid rgb(var(--status-color));
+        color: #000;
+    }
+
+    .overview-cell:hover {
+        background-color: rgba(var(--status-color) / 0.5);
+    }
+
+</style>

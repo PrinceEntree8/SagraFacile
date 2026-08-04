@@ -173,3 +173,8 @@ code {
     --bs-btn-hover-border-color: var(--background-color);
     --bs-btn-hover-color: var(--background-color);
 }
+
+.chip-status {
+    background-color: var(--background-color);
+    border-color: var(--status-color);
+}

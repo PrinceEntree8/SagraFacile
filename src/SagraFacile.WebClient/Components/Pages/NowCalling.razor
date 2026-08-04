@@ -190,7 +190,13 @@
             {
                 // Listen for new reservation calls (LIFO prepend).
                 if (notification.NewStatus != ReservationStatus.Called)
+                {
+                    if (calledEntries.RemoveAll(e => e.Id == notification.ReservationId) == 0)
+                        return;
+                    
+                    await InvokeAsync(StateHasChanged);
                     return;
+                }
 
                 var entry = new CalledEntry(
                     notification.ReservationId,

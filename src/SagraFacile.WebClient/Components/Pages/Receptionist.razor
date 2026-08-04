@@ -1,7 +1,7 @@
 @page "/receptionist"
 @attribute [Authorize]
 @using SagraFacile.WebClient.Components.Buttons
-@using SagraFacile.WebClient.Components.Modals
+@using SagraFacile.WebClient.Feature.Reservation.Modals
 @using SagraFacile.WebClient.Extensions
 @inject IReservationService ReservationService
 @inject IEventService EventService
@@ -359,10 +359,10 @@
                 newReservation.PartyComplete
             );
             var result = await ReservationService.CreateAsync(request);
-            if (result.Success && result.Data is not null && result.Data.Id > 0)
+            if (result is { Success: true, Data.SequenceNumber: > 0 })
             {
-                var id = result.Data.Id;
-                creationMessage = string.Format(L["Receptionist_ReservationCreated"].ToString(), id);
+                var sequenceNumber = result.Data.SequenceNumber;
+                creationMessage = string.Format(L["Receptionist_ReservationCreated"].ToString(), sequenceNumber);
                 newReservation = new();
                 await LoadReservations(currentFilter);
             }

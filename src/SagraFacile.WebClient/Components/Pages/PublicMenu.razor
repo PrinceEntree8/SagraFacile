@@ -72,13 +72,17 @@
         else
         {
             @foreach (var catGroup in items
-                .GroupBy(i => new { i.Id, i.Name })
-                .OrderBy(g => categories.FirstOrDefault(c => c.Id == g.Key.Id)?.DisplayOrder ?? 999))
+                .GroupBy(i => i.CategoryId)
+                .OrderBy(g => categories.FirstOrDefault(c => c.Id == g.Key)?.DisplayOrder ?? 999))
             {
+                var categoryName = categories.FirstOrDefault(c => c.Id == catGroup.Key)?.Name 
+                    ?? catGroup.FirstOrDefault(i => !string.IsNullOrWhiteSpace(i.CategoryName))?.CategoryName 
+                    ?? string.Empty;
+
                 <section class="mb-5">
-                    <h2 class="border-bottom pb-2">@catGroup.Key.Name</h2>
+                    <h2 class="border-bottom pb-2">@categoryName</h2>
                     <div class="row row-cols-1 row-cols-md-2 g-3 mt-1">
-                        @foreach (var item in catGroup.OrderBy(i => i.Name))
+                        @foreach (var item in catGroup.OrderBy(i => i.DisplayOrder).ThenBy(i => i.Name))
                         {
                             <div class="col">
                                 <div class="card h-100">

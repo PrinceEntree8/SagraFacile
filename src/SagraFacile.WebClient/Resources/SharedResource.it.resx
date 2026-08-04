@@ -430,7 +430,7 @@
     <value>Modifica prenotazione</value>
   </data>
   <data name="Common_Save" xml:space="preserve">
-    <value>Save</value>
+    <value>Salva</value>
     <comment>Common_Save</comment>
   </data>
   <data name="Receptionist_ActionEdit" xml:space="preserve">

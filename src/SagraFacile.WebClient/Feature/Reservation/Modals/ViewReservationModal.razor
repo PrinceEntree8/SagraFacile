@@ -1,3 +1,5 @@
+@using Microsoft.Extensions.Localization
+@using SagraFacile.Contracts.Reservations
 @using SagraFacile.WebClient.Extensions
 @using SagraFacile.WebClient.Components.Buttons
 @inject IStringLocalizer<SharedResource> L
@@ -8,9 +10,10 @@
 
             <div class="modal-header">
                 <h5 class="modal-title">@L["ReservationView_ModalTitle"] <strong>#@Reservation?.SequenceNumber</strong></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close @(Reservation is not null ? "" : "ms-auto")" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
+        
             <div class="modal-body">
                 @if (Reservation is not null)
                 {
@@ -27,7 +30,8 @@
                         <span class="badge bg-secondary"><i class="bi bi-people"></i> @Reservation.PartySize</span>
                     </div>
 
-                    @if(Reservation.Status is not ("Seated" or "Left")) {
+                    @if (Reservation.Status is not ("Seated" or "Left"))
+                    {
                         <div class="mb-2">
                             @L["Receptionist_ColWaiting"]:
                             <span class="chip-wait text-muted ms-1">
@@ -35,7 +39,7 @@
                             </span>
                         </div>
                     }
-                    
+
                     @if (!string.IsNullOrWhiteSpace(Reservation.Notes))
                     {
                         <div class="text-muted">@Reservation.Notes</div>
@@ -54,14 +58,26 @@
                                    OnRestore="OnRestore"
                                    IsDisabled="IsActionDisabled" />
                 }
+                @if (Reservation is not null)
+                {
+                    <button type="button" class="btn btn-outline-secondary ms-auto me-2"
+                            data-bs-toggle="modal"
+                            data-bs-target="#reservationEditModal">
+                        <i class="bi bi-pencil"></i> @L["Receptionist_ActionEdit"]
+                    </button>
+                }
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@L["Common_Close"]</button>
             </div>
         </div>
     </div>
 </div>
 
+<EditReservationModal Reservation="Reservation" />
+
 @code {
-    [Parameter] public required ReservationDto? Reservation { get; set; }
+    [Parameter]
+    public required ReservationDto? Reservation { get; set; }
+
     [Parameter] public bool PartyCompletionEnabled { get; set; }
     [Parameter] public EventCallback OnMarkPartyComplete { get; set; }
     [Parameter] public EventCallback OnCall { get; set; }
@@ -69,7 +85,8 @@
     [Parameter] public EventCallback OnRestore { get; set; }
     [Parameter] public bool IsActionDisabled { get; set; }
 
-    private string WaitingTimeFormatted {
+    private string WaitingTimeFormatted
+    {
         get
         {
             if (Reservation?.TimeSinceLastCall.HasValue ?? false)
@@ -77,12 +94,12 @@
                 return Reservation.TimeSinceLastCall.Value.FormatTimeSpan();
             }
 
-            return Reservation?.WaitingTime.FormatTimeSpan() ?? "Non disponibile";
+            return Reservation?.WaitingTime.FormatTimeSpan() ?? L["Common_NotAvailable"];
         }
     }
 
     private string StatusClass => Reservation?.Status.GetStatusClass() ?? string.Empty;
-
+    
 }
 
 <style>
