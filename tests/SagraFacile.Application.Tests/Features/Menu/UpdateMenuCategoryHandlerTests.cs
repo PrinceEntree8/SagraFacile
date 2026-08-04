@@ -18,14 +18,15 @@ public class UpdateMenuCategoryHandlerTests
     [Fact]
     public async Task Handle_ExistingCategory_UpdatesAndReturnsSuccess()
     {
-        var category = new MenuCategory { Id = 1, Name = "Old Name", DisplayOrder = 1 };
+        var category = new MenuCategory { Id = 1, Name = "Old Name", Code = "old-name", DisplayOrder = 1 };
         _repo.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(category);
 
-        var command = new UpdateMenuCategory.Command(1, "New Name", 3);
+        var command = new UpdateMenuCategory.Command(1, "New Name", "new-name", 3);
         var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.Success);
         Assert.Equal("New Name", category.Name);
+        Assert.Equal("new-name", category.Code);
         Assert.Equal(3, category.DisplayOrder);
         await _repo.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -35,7 +36,7 @@ public class UpdateMenuCategoryHandlerTests
     {
         _repo.GetByIdAsync(99, Arg.Any<CancellationToken>()).Returns((MenuCategory?)null);
 
-        var result = await _handler.Handle(new UpdateMenuCategory.Command(99, "Name", 1), CancellationToken.None);
+        var result = await _handler.Handle(new UpdateMenuCategory.Command(99, "Name", "name", 1), CancellationToken.None);
 
         Assert.False(result.Success);
         Assert.Equal("Category not found", result.Message);
@@ -46,7 +47,7 @@ public class UpdateMenuCategoryHandlerTests
     public void Validator_InvalidId_Fails()
     {
         var validator = new UpdateMenuCategory.Validator();
-        var result = validator.Validate(new UpdateMenuCategory.Command(0, "Valid Name", 1));
+        var result = validator.Validate(new UpdateMenuCategory.Command(0, "Valid Name", "valid-name", 1));
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == nameof(UpdateMenuCategory.Command.Id));
     }
@@ -55,7 +56,7 @@ public class UpdateMenuCategoryHandlerTests
     public void Validator_EmptyName_Fails()
     {
         var validator = new UpdateMenuCategory.Validator();
-        var result = validator.Validate(new UpdateMenuCategory.Command(1, "", 1));
+        var result = validator.Validate(new UpdateMenuCategory.Command(1, "", "valid-name", 1));
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == nameof(UpdateMenuCategory.Command.Name));
     }
@@ -64,7 +65,7 @@ public class UpdateMenuCategoryHandlerTests
     public void Validator_ValidCommand_Passes()
     {
         var validator = new UpdateMenuCategory.Validator();
-        var result = validator.Validate(new UpdateMenuCategory.Command(1, "Valid Name", 2));
+        var result = validator.Validate(new UpdateMenuCategory.Command(1, "Valid Name", "valid-name", 2));
         Assert.True(result.IsValid);
     }
 }

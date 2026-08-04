@@ -10,6 +10,8 @@ public class MenuItemConfiguration : IEntityTypeConfiguration<MenuItem>
     {
         entity.HasKey(m => m.Id);
         entity.Property(m => m.Name).IsRequired().HasMaxLength(200);
+        entity.Property(m => m.Code).IsRequired().HasMaxLength(50);
+        entity.HasIndex(m => new { m.EventId, m.Code }).IsUnique();
         entity.Property(m => m.Description).HasMaxLength(1000);
         entity.Property(m => m.PriceInCents).IsRequired();
         entity.Property(m => m.CategoryId).IsRequired();

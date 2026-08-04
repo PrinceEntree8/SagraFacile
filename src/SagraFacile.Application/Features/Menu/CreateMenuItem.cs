@@ -7,8 +7,8 @@ namespace SagraFacile.Application.Features.Menu;
 
 public static class CreateMenuItem
 {
-    public record Command(int EventId, string Name, string Description, int PriceInCents, int CategoryId, List<int> AllergenIds, bool IsAvailable = true) : ICommand<Result>;
-    public record Result(int Id, string Name);
+    public record Command(int EventId, string Name, string Code, string Description, int PriceInCents, int CategoryId, List<int> AllergenIds, bool IsAvailable = true) : ICommand<Result>;
+    public record Result(int Id, string Name, string Code);
 
     public class Validator : AbstractValidator<Command>
     {
@@ -16,6 +16,7 @@ public static class CreateMenuItem
         {
             RuleFor(x => x.EventId).GreaterThan(0);
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+            RuleFor(x => x.Code).NotEmpty().MaximumLength(50).Matches("^[a-z0-9_-]+$").WithMessage("Code must be lowercase alphanumeric with '-' or '_'.");
             RuleFor(x => x.Description).MaximumLength(1000);
             RuleFor(x => x.PriceInCents).GreaterThanOrEqualTo(0);
             RuleFor(x => x.CategoryId).GreaterThan(0);
@@ -30,6 +31,7 @@ public static class CreateMenuItem
             {
                 EventId = command.EventId,
                 Name = command.Name,
+                Code = command.Code.Trim().ToLowerInvariant(),
                 Description = command.Description,
                 PriceInCents = command.PriceInCents,
                 CategoryId = command.CategoryId,
@@ -42,7 +44,7 @@ public static class CreateMenuItem
             await repo.AddAsync(item, ct);
             await repo.SaveChangesAsync(ct);
             cache.InvalidateMenu(command.EventId);
-            return new Result(item.Id, item.Name);
+            return new Result(item.Id, item.Name, item.Code);
         }
     }
 }

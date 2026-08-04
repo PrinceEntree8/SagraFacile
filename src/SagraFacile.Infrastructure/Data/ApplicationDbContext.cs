@@ -18,6 +18,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderLine> OrderLines => Set<OrderLine>();
     public DbSet<OrderStatusTransition> OrderStatusTransitions => Set<OrderStatusTransition>();
+    public DbSet<OrderingRule> OrderingRules => Set<OrderingRule>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<Table> Tables => Set<Table>();
     public DbSet<ReservationCall> ReservationCalls => Set<ReservationCall>();

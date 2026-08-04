@@ -44,15 +44,15 @@ public class MenuController(IMediator mediator) : ControllerBase
     [HttpPost("categories")]
     public async Task<IActionResult> CreateCategory([FromBody] CreateMenuCategoryRequest request, CancellationToken ct)
     {
-        var r = await mediator.SendAsync(new CreateMenuCategory.Command(request.Name, request.DisplayOrder), ct);
-        return Ok(new CreateMenuCategoryResponse(r.Id, r.Name));
+        var r = await mediator.SendAsync(new CreateMenuCategory.Command(request.Name, request.Code, request.DisplayOrder), ct);
+        return Ok(new CreateMenuCategoryResponse(r.Id, r.Name, r.Code));
     }
 
     [Authorize(Policy = "AdminOrSupervisore")]
     [HttpPut("categories/{catId:int}")]
     public async Task<IActionResult> UpdateCategory(int catId, [FromBody] UpdateMenuCategoryRequest request, CancellationToken ct)
     {
-        var r = await mediator.SendAsync(new UpdateMenuCategory.Command(catId, request.Name, request.DisplayOrder), ct);
+        var r = await mediator.SendAsync(new UpdateMenuCategory.Command(catId, request.Name, request.Code, request.DisplayOrder), ct);
         return Ok(new UpdateMenuCategoryResponse(r.Success, r.Message));
     }
 
@@ -68,15 +68,15 @@ public class MenuController(IMediator mediator) : ControllerBase
     [HttpPost("items")]
     public async Task<IActionResult> CreateItem(int eventId, [FromBody] CreateMenuItemRequest request, CancellationToken ct)
     {
-        var r = await mediator.SendAsync(new CreateMenuItem.Command(eventId, request.Name, request.Description, request.PriceCents, request.CategoryId, request.AllergenIds), ct);
-        return Ok(new CreateMenuItemResponse(r.Id, r.Name));
+        var r = await mediator.SendAsync(new CreateMenuItem.Command(eventId, request.Name, request.Code, request.Description, request.PriceCents, request.CategoryId, request.AllergenIds), ct);
+        return Ok(new CreateMenuItemResponse(r.Id, r.Name, r.Code));
     }
 
     [Authorize(Policy = "AdminOrSupervisore")]
     [HttpPut("items/{itemId:int}")]
     public async Task<IActionResult> UpdateItem(int itemId, [FromBody] UpdateMenuItemRequest request, CancellationToken ct)
     {
-        var r = await mediator.SendAsync(new UpdateMenuItem.Command(itemId, request.Name, request.Description, request.PriceCents, request.CategoryId, request.AllergenIds, request.IsAvailable), ct);
+        var r = await mediator.SendAsync(new UpdateMenuItem.Command(itemId, request.Name, request.Code, request.Description, request.PriceCents, request.CategoryId, request.AllergenIds, request.IsAvailable), ct);
         return Ok(new UpdateMenuItemResponse(r.Success, r.Message));
     }
 

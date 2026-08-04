@@ -6,7 +6,7 @@ namespace SagraFacile.Application.Features.Menu;
 
 public static class UpdateMenuCategory
 {
-    public record Command(int Id, string Name, int DisplayOrder) : ICommand<Result>;
+    public record Command(int Id, string Name, string Code, int DisplayOrder) : ICommand<Result>;
     public record Result(bool Success, string Message);
 
     public class Validator : AbstractValidator<Command>
@@ -15,6 +15,7 @@ public static class UpdateMenuCategory
         {
             RuleFor(x => x.Id).GreaterThan(0);
             RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+            RuleFor(x => x.Code).NotEmpty().MaximumLength(50).Matches("^[a-z0-9_-]+$").WithMessage("Code must be lowercase alphanumeric with '-' or '_'.");
         }
     }
 
@@ -29,6 +30,7 @@ public static class UpdateMenuCategory
             var cat = await _repo.GetByIdAsync(command.Id, ct);
             if (cat is null) return new Result(false, "Category not found");
             cat.Name = command.Name;
+            cat.Code = command.Code.Trim().ToLowerInvariant();
             cat.DisplayOrder = command.DisplayOrder;
             await _repo.SaveChangesAsync(ct);
             return new Result(true, $"Category '{cat.Name}' updated");

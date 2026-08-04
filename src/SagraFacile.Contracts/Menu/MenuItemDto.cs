@@ -3,6 +3,7 @@ namespace SagraFacile.Contracts.Menu;
 public record MenuItemDto(
     int Id,
     string Name,
+    string Code,
     string Description,
     int PriceCents,
     int CategoryId,
@@ -11,6 +12,6 @@ public record MenuItemDto(
     bool IsAvailable,
     List<AllergenDto> Allergens);
 
-public record CreateMenuItemResponse(int Id, string Name);
+public record CreateMenuItemResponse(int Id, string Name, string Code);
 public record UpdateMenuItemResponse(bool Success, string Message);
 public record DeleteMenuItemResponse(bool Success, string Message);

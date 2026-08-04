@@ -10,6 +10,8 @@ public class MenuCategoryConfiguration : IEntityTypeConfiguration<MenuCategory>
     {
         entity.HasKey(c => c.Id);
         entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
+        entity.Property(c => c.Code).IsRequired().HasMaxLength(50);
+        entity.HasIndex(c => c.Code).IsUnique();
         entity.Property(c => c.DisplayOrder).HasDefaultValue(0);
     }
 }
