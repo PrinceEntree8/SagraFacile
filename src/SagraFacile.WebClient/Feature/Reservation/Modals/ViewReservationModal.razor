@@ -2,10 +2,7 @@
 @using SagraFacile.Contracts.Reservations
 @using SagraFacile.WebClient.Extensions
 @using SagraFacile.WebClient.Components.Buttons
-@using SagraFacile.Domain.Features.Reservations
-@using SagraFacile.WebClient.Feature.Reservation
 @inject IStringLocalizer<SharedResource> L
-@inject IReservationService ReservationService
 <div class="modal fade" id="reservationDetailModal" tabindex="-1" aria-hidden="true">
 
     <div class="modal-dialog">
@@ -16,69 +13,61 @@
                 <button type="button" class="btn-close @(Reservation is not null ? "" : "ms-auto")" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            @if (isEditing && Reservation is not null)
-            {
-                <div class="modal-body">
-                    <EditReservationForm Reservation="Reservation" OnSave="SaveReservationChanges" ShowReservationId="false" />
-                </div>
-            }
-            else
-            {
-                <div class="modal-body">
-                    @if (Reservation is not null)
+        
+            <div class="modal-body">
+                @if (Reservation is not null)
+                {
+                    <div class="mb-2">
+                        @L["Receptionist_ColStatus"]:
+                        <span class="badge chip-status @StatusClass">@L["Reservation_Status_" + Reservation.Status]</span>
+                    </div>
+                    <div class="mb-2">
+                        @L["Receptionist_ColName"]:
+                        @Reservation.CustomerName
+                    </div>
+                    <div class="mb-2">
+                        @L["Receptionist_ColParty"]:
+                        <span class="badge bg-secondary"><i class="bi bi-people"></i> @Reservation.PartySize</span>
+                    </div>
+
+                    @if (Reservation.Status is not ("Seated" or "Left"))
                     {
                         <div class="mb-2">
-                            @L["Receptionist_ColStatus"]:
-                            <span class="badge chip-status @StatusClass">@L["Reservation_Status_" + Reservation.Status]</span>
+                            @L["Receptionist_ColWaiting"]:
+                            <span class="chip-wait text-muted ms-1">
+                                @WaitingTimeFormatted
+                            </span>
                         </div>
-                        <div class="mb-2">
-                            @L["Receptionist_ColName"]:
-                            @Reservation.CustomerName
-                        </div>
-                        <div class="mb-2">
-                            @L["Receptionist_ColParty"]:
-                            <span class="badge bg-secondary"><i class="bi bi-people"></i> @Reservation.PartySize</span>
-                        </div>
-
-                        @if (Reservation.Status is not ("Seated" or "Left"))
-                        {
-                            <div class="mb-2">
-                                @L["Receptionist_ColWaiting"]:
-                                <span class="chip-wait text-muted ms-1">
-                                    @WaitingTimeFormatted
-                                </span>
-                            </div>
-                        }
-
-                        @if (!string.IsNullOrWhiteSpace(Reservation.Notes))
-                        {
-                            <div class="text-muted">@Reservation.Notes</div>
-                        }
                     }
-                </div>
 
-                <div class="modal-footer">
-                    @if (Reservation is not null)
+                    @if (!string.IsNullOrWhiteSpace(Reservation.Notes))
                     {
-                        <ServiceButton Reservation="Reservation"
-                                       PartyCompletionEnabled="PartyCompletionEnabled"
-                                       OnMarkPartyComplete="OnMarkPartyComplete"
-                                       OnCall="OnCall"
-                                       OnSeat="OnSeat"
-                                       OnRestore="OnRestore"
-                                       IsDisabled="IsActionDisabled" />
+                        <div class="text-muted">@Reservation.Notes</div>
                     }
-                    @if (Reservation is not null)
-                    {
-                        <button type="button" class="btn btn-outline-secondary ms-auto me-2"
-                                data-bs-toggle="modal"
-                                data-bs-target="#reservationEditModal">
-                            <i class="bi bi-pencil"></i> @L["Receptionist_ActionEdit"]
-                        </button>
-                    }
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@L["Common_Close"]</button>
-                </div>
-            }
+                }
+            </div>
+
+            <div class="modal-footer">
+                @if (Reservation is not null)
+                {
+                    <ServiceButton Reservation="Reservation"
+                                   PartyCompletionEnabled="PartyCompletionEnabled"
+                                   OnMarkPartyComplete="OnMarkPartyComplete"
+                                   OnCall="OnCall"
+                                   OnSeat="OnSeat"
+                                   OnRestore="OnRestore"
+                                   IsDisabled="IsActionDisabled" />
+                }
+                @if (Reservation is not null)
+                {
+                    <button type="button" class="btn btn-outline-secondary ms-auto me-2"
+                            data-bs-toggle="modal"
+                            data-bs-target="#reservationEditModal">
+                        <i class="bi bi-pencil"></i> @L["Receptionist_ActionEdit"]
+                    </button>
+                }
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@L["Common_Close"]</button>
+            </div>
         </div>
     </div>
 </div>
@@ -86,18 +75,8 @@
 <EditReservationModal Reservation="Reservation" />
 
 @code {
-    private bool isEditing;
-
     [Parameter]
-    public required ReservationDto? Reservation
-    {
-        get;
-        set
-        {
-            field = value;
-            isEditing = false;
-        }
-    }
+    public required ReservationDto? Reservation { get; set; }
 
     [Parameter] public bool PartyCompletionEnabled { get; set; }
     [Parameter] public EventCallback OnMarkPartyComplete { get; set; }
@@ -105,26 +84,6 @@
     [Parameter] public EventCallback OnSeat { get; set; }
     [Parameter] public EventCallback OnRestore { get; set; }
     [Parameter] public bool IsActionDisabled { get; set; }
-
-    private void ToggleEdit() => isEditing = !isEditing;
-
-    private async Task SaveReservationChanges(EditReservationModel model)
-    {
-        if (Reservation is null)
-        {
-            throw new ArgumentNullException(nameof(Reservation), L["Error_ModelNotValid"]);
-        }
-        
-        await ReservationService.EditAsync(
-            Reservation.Id,
-            new EditReservationRequest(
-                CustomerName: model.CustomerName,
-                PartySize: model.PartySize,
-                Notes: model.Notes,
-                Status: Enum.Parse<ReservationStatus>(model.Status)),
-            CancellationToken.None);
-        isEditing = false;
-    }
 
     private string WaitingTimeFormatted
     {

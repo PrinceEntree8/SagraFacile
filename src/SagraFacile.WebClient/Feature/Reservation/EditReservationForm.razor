@@ -1,5 +1,6 @@
 @using Microsoft.Extensions.Localization
 @using SagraFacile.Contracts.Reservations
+@using SagraFacile.WebClient.Extensions
 @inject IStringLocalizer<SharedResource> L
 
 <EditForm Model="@_editReservation" OnValidSubmit="@SaveReservation" id="EditReservationForm">
@@ -9,7 +10,7 @@
         {
             <strong># @(Reservation?.SequenceNumber ?? 0)</strong>
         }
-        <span class="badge @Reservation?.Status">
+        <span class="badge chip-status @StatusClass">
             @L["Reservation_Status_" + _editReservation.Status]
         </span>
     </div>
@@ -84,5 +85,7 @@
     }
     
     [Parameter] public EventCallback<EditReservationModel> OnSave { get; set; }
+    
+    private string StatusClass => Reservation?.Status.GetStatusClass() ?? string.Empty;
 
 }

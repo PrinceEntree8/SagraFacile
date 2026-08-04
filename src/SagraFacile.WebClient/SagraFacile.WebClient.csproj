@@ -26,16 +26,4 @@
     <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
 
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="wwwroot\sample-data\weather.json" />
-    <_ContentIncludedByDefault Remove="Feature\Reservation\EditReservationForm.razor" />
-    <_ContentIncludedByDefault Remove="Feature\Reservation\Modals\EditReservationModal.razor" />
-    <_ContentIncludedByDefault Remove="Feature\Reservation\Modals\ViewReservationModal.razor" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="Feature\Reservation\Modals\EditReservationModal.razor" />
-    <AdditionalFiles Include="Feature\Reservation\Modals\ViewReservationModal.razor" />
-  </ItemGroup>
-
 </Project>

@@ -95,14 +95,14 @@ public static class GetReservationReport
             var waitTimes = reports
                 .Where(r => r is { Status: ReservationStatus.Seated, TotalWaitTime: not null })
                 .Select(r => r.TotalWaitTime!.Value)
-                .ToImmutableHashSet();
+                .ToImmutableList();
 
             TimeSpan averageWaitTime;
             TimeSpan medianWaitTime;
             TimeSpan? maxWaitTime;
             TimeSpan? minWaitTime;
 
-            if (waitTimes.Any())
+            if (!waitTimes.IsEmpty)
             {
                 averageWaitTime = TimeSpan.FromTicks((long)waitTimes.Average(t => t.Ticks));
                 medianWaitTime = GetMedian(waitTimes);
@@ -131,7 +131,7 @@ public static class GetReservationReport
             return new Result(reports, stats);
         }
 
-        private static TimeSpan GetMedian(ISet<TimeSpan> values)
+        private static TimeSpan GetMedian(IReadOnlyList<TimeSpan> values)
         {
             var sorted = values.OrderBy(t => t.Ticks).ToList();
             var count = sorted.Count;
