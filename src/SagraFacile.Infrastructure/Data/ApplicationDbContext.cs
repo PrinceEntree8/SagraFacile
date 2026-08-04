@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SagraFacile.Domain.Features.Events;
 using SagraFacile.Domain.Features.Menu;
+using SagraFacile.Domain.Features.Orders;
 using SagraFacile.Domain.Features.Reservations;
 using SagraFacile.Infrastructure.Identity;
 
@@ -14,6 +15,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
     }
 
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderLine> OrderLines => Set<OrderLine>();
+    public DbSet<OrderStatusTransition> OrderStatusTransitions => Set<OrderStatusTransition>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<Table> Tables => Set<Table>();
     public DbSet<ReservationCall> ReservationCalls => Set<ReservationCall>();
