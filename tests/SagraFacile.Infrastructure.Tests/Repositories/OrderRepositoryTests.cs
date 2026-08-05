@@ -54,7 +54,7 @@ public class OrderRepositoryTests
         var order = Order.Create(GetTestEvent(), 1, OrderContext.Takeaway, null, null, covers: 0, coverChargeInCents: 0);
         order.AddLine(100, "Pizza Margherita", 600, 2);
         order.AddLine(101, "Coca Cola", 250, 2);
-        order.TransitionTo(OrderStatus.Confirmed, userId: "cashier");
+        order.TransitionTo(OrderStatus.Confirmed, OrderTransitionPolicy.CreateDefault(), new OrderActorDescriptor("cashier", OrderActor.Cashier));
 
         await repo.AddAsync(order);
         await repo.SaveChangesAsync();
@@ -129,7 +129,7 @@ public class OrderRepositoryTests
 
         var draft = Order.Create(GetTestEvent(EventId1), 1, OrderContext.Takeaway, null, null, 0, 0);
         var confirmed = Order.Create(GetTestEvent(EventId1), 2, OrderContext.Takeaway, null, null, 0, 0);
-        confirmed.TransitionTo(OrderStatus.Confirmed);
+        confirmed.TransitionTo(OrderStatus.Confirmed, OrderTransitionPolicy.CreateDefault(), new OrderActorDescriptor("cashier", OrderActor.Cashier));
 
         await repo.AddAsync(draft);
         await repo.AddAsync(confirmed);
@@ -215,5 +215,31 @@ public class OrderRepositoryTests
         await Assert.ThrowsAsync<DbUpdateException>(() => repo.SaveChangesAsync());
 
         await dispatcher.DidNotReceiveWithAnyArgs().DispatchAsync(default!, default);
+    }
+
+    [Fact]
+    public async Task AddFollowUp_PersistsParentRelationshipAndActorRole()
+    {
+        using var factory = new TestDbContextFactory();
+        var dispatcher = Substitute.For<IDomainEventDispatcher>();
+        await using var repo = new OrderRepository(factory, dispatcher);
+
+        var parent = Order.Create(GetTestEvent(), 1, OrderContext.Table, 5, "Table 5", covers: 4, coverChargeInCents: 150);
+        parent.TransitionTo(OrderStatus.Confirmed, OrderTransitionPolicy.CreateDefault(), new OrderActorDescriptor("cashier1", OrderActor.Cashier));
+
+        await repo.AddAsync(parent);
+        await repo.SaveChangesAsync();
+
+        var followUp = Order.CreateFollowUp(parent, GetTestEvent(), 2, createdByUserId: "cashier1");
+        await repo.AddAsync(followUp);
+        await repo.SaveChangesAsync();
+
+        var reloadedParent = await repo.GetByIdWithHistoryAsync(parent.Id);
+        var reloadedFollowUp = await repo.GetByIdAsync(followUp.Id);
+
+        Assert.NotNull(reloadedParent);
+        Assert.NotNull(reloadedFollowUp);
+        Assert.Equal(parent.Id, reloadedFollowUp.ParentOrderId);
+        Assert.Equal(OrderActor.Cashier, reloadedParent.Transitions.First().ActorRole);
     }
 }

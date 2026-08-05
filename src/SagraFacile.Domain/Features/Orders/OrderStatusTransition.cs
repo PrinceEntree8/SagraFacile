@@ -8,6 +8,7 @@ public class OrderStatusTransition
     public OrderStatus ToStatus { get; init; }
     public DateTime OccurredAt { get; init; } = DateTime.UtcNow;
     public string? UserId { get; init; }
+    public OrderActor ActorRole { get; init; }
     public string? Reason { get; init; }
 
     public Order Order { get; init; } = null!;

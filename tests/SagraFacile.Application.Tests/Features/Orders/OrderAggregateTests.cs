@@ -38,7 +38,7 @@ public class OrderAggregateTests
         Assert.Equal(4, order.Covers);
         Assert.Equal(150, order.CoverChargeInCents);
         Assert.Equal("user1", order.CreatedByUserId);
-        Assert.True(order.IsEditable);
+        Assert.True(order.IsEditable());
         Assert.Equal(600, order.TotalInCents); // 4 * 150 = 600
 
         var createdEvent = Assert.Single(order.DomainEvents.OfType<OrderCreated>());

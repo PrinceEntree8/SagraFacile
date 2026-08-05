@@ -98,10 +98,11 @@ public class OrderInvariantsTests
 
     [Theory]
     [InlineData(OrderStatus.Confirmed)]
-    [InlineData(OrderStatus.Preparing)]
-    [InlineData(OrderStatus.Ready)]
-    [InlineData(OrderStatus.Completed)]
-    [InlineData(OrderStatus.Cancelled)]
+    [InlineData(OrderStatus.Rejected)]
+    [InlineData(OrderStatus.Fulfilled)]
+    [InlineData(OrderStatus.Delivered)]
+    [InlineData(OrderStatus.CancelledByCustomer)]
+    [InlineData(OrderStatus.CancelledByOperator)]
     public void LineMutations_NonEditableStatus_ThrowsDomainRuleViolationException(OrderStatus status)
     {
         var @event = CreateEvent();
@@ -110,8 +111,10 @@ public class OrderInvariantsTests
         line.Id = 1;
         order.Status = status;
 
-        Assert.Throws<DomainRuleViolationException>(() => order.AddLine(2, "Item 2", 100, 1));
-        Assert.Throws<DomainRuleViolationException>(() => order.UpdateLineQuantity(1, 2));
-        Assert.Throws<DomainRuleViolationException>(() => order.RemoveLine(1));
+        var policy = OrderTransitionPolicy.CreateDefault();
+
+        Assert.Throws<DomainRuleViolationException>(() => order.AddLine(policy, 2, "Item 2", 100, 1));
+        Assert.Throws<DomainRuleViolationException>(() => order.UpdateLineQuantity(policy, 1, 2));
+        Assert.Throws<DomainRuleViolationException>(() => order.RemoveLine(policy, 1));
     }
 }

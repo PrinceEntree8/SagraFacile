@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using SagraFacile.Application.Features.OrderingRules;
+using SagraFacile.Application.Features.Orders;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
 
@@ -19,6 +20,7 @@ public static class DependencyInjection
         services.AddSingleton<IRuleExpressionValidator, RuleExpressionValidator>();
         services.AddScoped<IRuleEvaluationContextBuilder, RuleEvaluationContextBuilder>();
         services.AddScoped<IOrderingRulesService, OrderingRulesService>();
+        services.AddSingleton<IOrderStateMachine, OrderStateMachine>();
         return services;
     }
 }

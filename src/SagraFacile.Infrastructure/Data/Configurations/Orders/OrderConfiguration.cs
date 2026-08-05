@@ -12,11 +12,10 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
         entity.Ignore(e => e.DomainEvents);
-        entity.Ignore(e => e.IsEditable);
         entity.Ignore(e => e.LinesTotalInCents);
         entity.Ignore(e => e.TotalInCents);
 
-        entity.Property(e => e.Status).IsRequired().HasConversion<string>().HasMaxLength(20);
+        entity.Property(e => e.Status).IsRequired().HasConversion<string>().HasMaxLength(30);
         entity.Property(e => e.Context).IsRequired().HasConversion<string>().HasMaxLength(20);
         entity.Property(e => e.ContextLabel).HasMaxLength(200);
         entity.Property(e => e.CustomerName).HasMaxLength(200);
@@ -30,10 +29,16 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         entity.HasIndex(e => new { e.EventId, e.Status }).HasDatabaseName("IX_Orders_EventId_Status");
         entity.HasIndex(e => new { e.Context, e.ContextReferenceId }).HasDatabaseName("IX_Orders_Context_ContextReferenceId");
         entity.HasIndex(e => e.CreatedAt).HasDatabaseName("IX_Orders_CreatedAt");
+        entity.HasIndex(e => e.ParentOrderId).HasDatabaseName("IX_Orders_ParentOrderId");
 
         entity.HasOne(e => e.Event)
               .WithMany()
               .HasForeignKey(e => e.EventId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+        entity.HasOne(e => e.Parent)
+              .WithMany(e => e.FollowUps)
+              .HasForeignKey(e => e.ParentOrderId)
               .OnDelete(DeleteBehavior.Restrict);
 
         entity.HasMany(e => e.Lines)

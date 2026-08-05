@@ -11,8 +11,9 @@ public class OrderStatusTransitionConfiguration : IEntityTypeConfiguration<Order
         entity.HasKey(e => e.Id);
         entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
-        entity.Property(e => e.FromStatus).IsRequired().HasConversion<string>().HasMaxLength(20);
-        entity.Property(e => e.ToStatus).IsRequired().HasConversion<string>().HasMaxLength(20);
+        entity.Property(e => e.FromStatus).IsRequired().HasConversion<string>().HasMaxLength(30);
+        entity.Property(e => e.ToStatus).IsRequired().HasConversion<string>().HasMaxLength(30);
+        entity.Property(e => e.ActorRole).IsRequired().HasConversion<string>().HasMaxLength(20);
         entity.Property(e => e.UserId).HasMaxLength(450);
         entity.Property(e => e.Reason).HasMaxLength(500);
 

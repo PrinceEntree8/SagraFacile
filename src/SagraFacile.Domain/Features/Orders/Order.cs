@@ -17,17 +17,22 @@ public class Order : HasDomainEvents
     public string? CustomerName { get; set; }
     public string? Notes { get; init; }
     public string? CreatedByUserId { get; init; }
+    public int? ParentOrderId { get; init; }
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
     public DateTime? ConfirmedAt { get; set; }
+    public DateTime? FulfilledAt { get; set; }
     public DateTime? CompletedAt { get; set; }
     public DateTime? CancelledAt { get; set; }
     public long Version { get; set; }
 
     public Event Event { get; init; } = null!;
+    public Order? Parent { get; init; }
+    public ICollection<Order> FollowUps { get; init; } = new List<Order>();
     public ICollection<OrderLine> Lines { get; init; } = new List<OrderLine>();
     public ICollection<OrderStatusTransition> Transitions { get; init; } = new List<OrderStatusTransition>();
 
-    public bool IsEditable => OrderStatusRules.IsEditable(Status);
+    public bool IsEditable(OrderTransitionPolicy? policy = null)
+        => (policy ?? OrderTransitionPolicy.CreateDefault()).IsEditable(Status);
     public int LinesTotalInCents => Lines.Sum(l => l.UnitPriceInCents * l.Quantity);
     public int TotalInCents => LinesTotalInCents + Covers * CoverChargeInCents;
 
@@ -39,7 +44,8 @@ public class Order : HasDomainEvents
         string? contextLabel,
         int covers,
         int coverChargeInCents,
-        string? createdByUserId = null)
+        string? createdByUserId = null,
+        int? parentOrderId = null)
     {
         ArgumentNullException.ThrowIfNull(@event);
 
@@ -65,6 +71,7 @@ public class Order : HasDomainEvents
             Covers = covers,
             CoverChargeInCents = coverChargeInCents,
             CreatedByUserId = createdByUserId,
+            ParentOrderId = parentOrderId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -72,9 +79,25 @@ public class Order : HasDomainEvents
         return order;
     }
 
-    public OrderLine AddLine(int menuItemId, string menuItemName, int unitPriceInCents, int quantity, string? notes = null)
+    public static Order CreateFollowUp(Order parent, Event @event, int orderNumber, string? createdByUserId = null)
     {
-        EnsureEditable();
+        ArgumentNullException.ThrowIfNull(parent);
+        if (parent.Status.IsTerminal())
+            throw new DomainRuleViolationException("Cannot create a follow-up for a closed order.");
+
+        var order = Create(@event, orderNumber, parent.Context, parent.ContextReferenceId,
+                           parent.ContextLabel, covers: 0, coverChargeInCents: 0,
+                           createdByUserId, parentOrderId: parent.Id);
+        order.Raise(new OrderFollowUpCreated(order.Id, parent.Id, @event.Id));
+        return order;
+    }
+
+    public OrderLine AddLine(int menuItemId, string menuItemName, int unitPriceInCents, int quantity, string? notes = null)
+        => AddLine(OrderTransitionPolicy.CreateDefault(), menuItemId, menuItemName, unitPriceInCents, quantity, notes);
+
+    public OrderLine AddLine(OrderTransitionPolicy policy, int menuItemId, string menuItemName, int unitPriceInCents, int quantity, string? notes = null)
+    {
+        EnsureEditable(policy);
         if (quantity < 1)
             throw new DomainRuleViolationException("Quantity must be at least 1.");
         if (unitPriceInCents < 0)
@@ -100,8 +123,11 @@ public class Order : HasDomainEvents
     }
 
     public void UpdateLineQuantity(int lineId, int quantity)
+        => UpdateLineQuantity(OrderTransitionPolicy.CreateDefault(), lineId, quantity);
+
+    public void UpdateLineQuantity(OrderTransitionPolicy policy, int lineId, int quantity)
     {
-        EnsureEditable();
+        EnsureEditable(policy);
         if (quantity < 1)
             throw new DomainRuleViolationException("Quantity must be at least 1.");
 
@@ -113,8 +139,11 @@ public class Order : HasDomainEvents
     }
 
     public void RemoveLine(int lineId)
+        => RemoveLine(OrderTransitionPolicy.CreateDefault(), lineId);
+
+    public void RemoveLine(OrderTransitionPolicy policy, int lineId)
     {
-        EnsureEditable();
+        EnsureEditable(policy);
         var line = Lines.FirstOrDefault(l => l.Id == lineId)
                    ?? throw new DomainRuleViolationException($"Order line {lineId} not found.");
 
@@ -122,10 +151,20 @@ public class Order : HasDomainEvents
         RaiseLinesChanged();
     }
 
-    public void TransitionTo(OrderStatus target, string? userId = null, string? reason = null)
+    public void TransitionTo(
+        OrderStatus target,
+        OrderTransitionPolicy policy,
+        OrderActorDescriptor actor,
+        string? reason = null)
     {
-        if (!OrderStatusRules.CanTransition(Status, target))
+        ArgumentNullException.ThrowIfNull(policy);
+
+        if (!policy.CanTransition(Status, target))
             throw new DomainRuleViolationException($"Cannot transition order from {Status} to {target}.");
+        if (!policy.IsAllowedFor(Status, target, actor.Role))
+            throw new OrderTransitionNotAllowedException(Status, target, actor.Role);
+        if (policy.RequiresReason(target) && string.IsNullOrWhiteSpace(reason))
+            throw new DomainRuleViolationException($"A reason is required to move the order to {target}.");
 
         var from = Status;
         var now = DateTime.UtcNow;
@@ -134,8 +173,11 @@ public class Order : HasDomainEvents
         switch (target)
         {
             case OrderStatus.Confirmed: ConfirmedAt = now; break;
-            case OrderStatus.Completed: CompletedAt = now; break;
-            case OrderStatus.Cancelled: CancelledAt = now; break;
+            case OrderStatus.Fulfilled: FulfilledAt = now; break;
+            case OrderStatus.Delivered: CompletedAt = now; break;
+            case OrderStatus.Rejected:
+            case OrderStatus.CancelledByCustomer:
+            case OrderStatus.CancelledByOperator: CancelledAt = now; break;
         }
 
         Transitions.Add(new OrderStatusTransition
@@ -145,23 +187,28 @@ public class Order : HasDomainEvents
             FromStatus = from,
             ToStatus = target,
             OccurredAt = now,
-            UserId = userId,
+            UserId = actor.UserId,
+            ActorRole = actor.Role,
             Reason = reason
         });
 
-        Raise(new OrderStatusChanged(Id, EventId, from, target, userId));
+        Raise(new OrderStatusChanged(Id, EventId, from, target, actor.UserId, actor.Role));
 
         switch (target)
         {
+            case OrderStatus.Preorder:  Raise(new OrderPreordered(Id, EventId)); break;
             case OrderStatus.Confirmed: Raise(new OrderConfirmed(Id, EventId, TotalInCents)); break;
-            case OrderStatus.Completed: Raise(new OrderCompleted(Id, EventId)); break;
-            case OrderStatus.Cancelled: Raise(new OrderCancelled(Id, EventId, reason)); break;
+            case OrderStatus.Fulfilled: Raise(new OrderFulfilled(Id, EventId)); break;
+            case OrderStatus.Delivered: Raise(new OrderDelivered(Id, EventId)); break;
+            case OrderStatus.Rejected:  Raise(new OrderRejected(Id, EventId, reason)); break;
+            case OrderStatus.CancelledByCustomer:
+            case OrderStatus.CancelledByOperator: Raise(new OrderCancelled(Id, EventId, reason)); break;
         }
     }
 
-    private void EnsureEditable()
+    private void EnsureEditable(OrderTransitionPolicy policy)
     {
-        if (!IsEditable)
+        if (!IsEditable(policy))
             throw new DomainRuleViolationException($"Order lines cannot be modified while the order is {Status}.");
     }
 

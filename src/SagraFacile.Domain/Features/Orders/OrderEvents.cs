@@ -8,14 +8,29 @@ public record OrderCreated(int OrderId, int EventId, int OrderNumber, OrderConte
 public record OrderLinesChanged(int OrderId, int EventId, int LineCount, int TotalInCents)
     : IDomainEvent { public DateTime OccurredAtUtc { get; } = DateTime.UtcNow; }
 
-public record OrderStatusChanged(int OrderId, int EventId, OrderStatus From, OrderStatus To, string? UserId)
+public record OrderStatusChanged(int OrderId, int EventId, OrderStatus From, OrderStatus To, string? UserId, OrderActor ActorRole = OrderActor.System)
+    : IDomainEvent { public DateTime OccurredAtUtc { get; } = DateTime.UtcNow; }
+
+public record OrderPreordered(int OrderId, int EventId)
     : IDomainEvent { public DateTime OccurredAtUtc { get; } = DateTime.UtcNow; }
 
 public record OrderConfirmed(int OrderId, int EventId, int TotalInCents)
+    : IDomainEvent { public DateTime OccurredAtUtc { get; } = DateTime.UtcNow; }
+
+public record OrderFulfilled(int OrderId, int EventId)
+    : IDomainEvent { public DateTime OccurredAtUtc { get; } = DateTime.UtcNow; }
+
+public record OrderDelivered(int OrderId, int EventId)
+    : IDomainEvent { public DateTime OccurredAtUtc { get; } = DateTime.UtcNow; }
+
+public record OrderRejected(int OrderId, int EventId, string? Reason)
     : IDomainEvent { public DateTime OccurredAtUtc { get; } = DateTime.UtcNow; }
 
 public record OrderCancelled(int OrderId, int EventId, string? Reason)
     : IDomainEvent { public DateTime OccurredAtUtc { get; } = DateTime.UtcNow; }
 
 public record OrderCompleted(int OrderId, int EventId)
+    : IDomainEvent { public DateTime OccurredAtUtc { get; } = DateTime.UtcNow; }
+
+public record OrderFollowUpCreated(int OrderId, int ParentOrderId, int EventId)
     : IDomainEvent { public DateTime OccurredAtUtc { get; } = DateTime.UtcNow; }

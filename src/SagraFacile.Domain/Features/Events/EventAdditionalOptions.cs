@@ -11,10 +11,30 @@ public class EventAdditionalOptions
 
 public class OrderOptions
 {
-    public IReadOnlyCollection<OrderContext> EnabledContexts { get; init; } =
+    public IReadOnlyCollection<OrderContext> EnabledContexts { get; set; } =
         [OrderContext.Table, OrderContext.Reservation, OrderContext.Takeaway];
-    public bool CoverChargeEnabled { get; init; } = false;
-    public int DefaultCoverChargeInCents { get; init; } = 0;
+    public bool CoverChargeEnabled { get; set; } = false;
+    public int DefaultCoverChargeInCents { get; set; } = 0;
+    public OrderLifecycleOptions Lifecycle { get; set; } = new();
+}
+
+public class OrderLifecycleOptions
+{
+    public OrderActor DefaultConfirmerRole { get; set; } = OrderActor.Cashier;
+    public bool AllowEditAfterConfirmation { get; set; }
+    public bool AutoConfirmPreorders { get; set; }
+    public bool AllowFollowUpOrders { get; set; } = true;
+    public bool RequireReasonOnRejection { get; set; } = true;
+    public bool RequireReasonOnCancellation { get; set; }
+    public List<OrderTransitionOverride> TransitionOverrides { get; set; } = [];
+}
+
+public class OrderTransitionOverride
+{
+    public OrderStatus From { get; set; }
+    public OrderStatus To { get; set; }
+    public bool Enabled { get; set; } = true;
+    public List<OrderActor>? Actors { get; set; }
 }
 
 public class ReservationOptions

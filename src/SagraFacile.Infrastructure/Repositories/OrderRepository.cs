@@ -21,12 +21,22 @@ public class OrderRepository : IOrderRepository, IAsyncDisposable
     public Task<Order?> GetByIdAsync(int id, CancellationToken ct = default)
         => _db.Orders.FirstOrDefaultAsync(o => o.Id == id, ct);
 
+    public Task<Order?> GetByIdWithEventAsync(int id, CancellationToken ct = default)
+        => _db.Orders.Include(o => o.Event)
+                     .FirstOrDefaultAsync(o => o.Id == id, ct);
+
     public Task<Order?> GetByIdWithLinesAsync(int id, CancellationToken ct = default)
         => _db.Orders.Include(o => o.Lines.OrderBy(l => l.Position))
                      .FirstOrDefaultAsync(o => o.Id == id, ct);
 
+    public Task<Order?> GetByIdWithLinesAndEventAsync(int id, CancellationToken ct = default)
+        => _db.Orders.Include(o => o.Event)
+                     .Include(o => o.Lines.OrderBy(l => l.Position))
+                     .FirstOrDefaultAsync(o => o.Id == id, ct);
+
     public Task<Order?> GetByIdWithHistoryAsync(int id, CancellationToken ct = default)
-        => _db.Orders.Include(o => o.Lines.OrderBy(l => l.Position))
+        => _db.Orders.Include(o => o.Event)
+                     .Include(o => o.Lines.OrderBy(l => l.Position))
                      .Include(o => o.Transitions.OrderBy(t => t.OccurredAt))
                      .FirstOrDefaultAsync(o => o.Id == id, ct);
 
