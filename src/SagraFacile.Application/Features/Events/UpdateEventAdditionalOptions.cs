@@ -1,6 +1,7 @@
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
 using SagraFacile.Domain.Features.Events;
+using SagraFacile.Domain.Features.Orders;
 
 namespace SagraFacile.Application.Features.Events;
 
@@ -13,7 +14,13 @@ public static class UpdateEventAdditionalOptions
         bool ShowNotesField,
         bool CounterPeopleFirst,
         bool ShowCallCount,
-        int MaxWaitTimeMinutes) : ICommand<Result>;
+        int MaxWaitTimeMinutes,
+        IReadOnlyCollection<OrderContext> EnabledContexts,
+        bool CoverChargeEnabled,
+        int DefaultCoverChargeInCents,
+        OrderActor DefaultConfirmerRole,
+        bool AllowEditAfterConfirmation,
+        bool AllowFollowUpOrders) : ICommand<Result>;
 
     public record Result(bool Success, string? Error = null);
 
@@ -31,10 +38,17 @@ public static class UpdateEventAdditionalOptions
             if (command.MaxWaitTimeMinutes < 1)
                 return new Result(false, "MaxWaitTimeMinutesInvalid");
 
+            if (command.EnabledContexts is null || command.EnabledContexts.Count == 0)
+                return new Result(false, "EnabledContextsRequired");
+
+            if (command.DefaultCoverChargeInCents < 0)
+                return new Result(false, "CoverChargeInvalid");
+
             var ev = await _repository.GetByIdAsync(command.EventId, cancellationToken);
             if (ev is null)
                 return new Result(false, "EventNotFound");
 
+            var existing = ev.AdditionalOptions;
             ev.AdditionalOptions = new EventAdditionalOptions
             {
                 Reservations = new ReservationOptions
@@ -51,6 +65,22 @@ public static class UpdateEventAdditionalOptions
                     CounterPeopleFirst = command.CounterPeopleFirst,
                     ShowCallCount = command.ShowCallCount,
                     MaxWaitTimeMinutes = command.MaxWaitTimeMinutes
+                },
+                Orders = new OrderOptions
+                {
+                    EnabledContexts = command.EnabledContexts,
+                    CoverChargeEnabled = command.CoverChargeEnabled,
+                    DefaultCoverChargeInCents = command.DefaultCoverChargeInCents,
+                    Lifecycle = new OrderLifecycleOptions
+                    {
+                        DefaultConfirmerRole = command.DefaultConfirmerRole,
+                        AllowEditAfterConfirmation = command.AllowEditAfterConfirmation,
+                        AllowFollowUpOrders = command.AllowFollowUpOrders,
+                        AutoConfirmPreorders = existing.Orders.Lifecycle.AutoConfirmPreorders,
+                        RequireReasonOnRejection = existing.Orders.Lifecycle.RequireReasonOnRejection,
+                        RequireReasonOnCancellation = existing.Orders.Lifecycle.RequireReasonOnCancellation,
+                        TransitionOverrides = existing.Orders.Lifecycle.TransitionOverrides
+                    }
                 }
             };
 

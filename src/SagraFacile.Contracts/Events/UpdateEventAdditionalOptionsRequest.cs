@@ -1,3 +1,5 @@
+using SagraFacile.Domain.Features.Orders;
+
 namespace SagraFacile.Contracts.Events;
 
 public record UpdateEventAdditionalOptionsRequest(
@@ -6,4 +8,10 @@ public record UpdateEventAdditionalOptionsRequest(
     bool ShowNotesField,
     bool CounterPeopleFirst,
     bool ShowCallCount,
-    int MaxWaitTimeMinutes);
+    int MaxWaitTimeMinutes,
+    IReadOnlyCollection<OrderContext> EnabledContexts,
+    bool CoverChargeEnabled,
+    int DefaultCoverChargeInCents,
+    OrderActor DefaultConfirmerRole,
+    bool AllowEditAfterConfirmation,
+    bool AllowFollowUpOrders);

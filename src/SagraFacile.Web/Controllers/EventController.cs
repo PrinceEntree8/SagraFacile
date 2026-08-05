@@ -65,7 +65,13 @@ public class EventController(IMediator mediator) : ControllerBase
             result.AdditionalOptions.View.ShowNotesField,
             result.AdditionalOptions.View.CounterPeopleFirst,
             result.AdditionalOptions.View.ShowCallCount,
-            result.AdditionalOptions.View.MaxWaitTimeMinutes));
+            result.AdditionalOptions.View.MaxWaitTimeMinutes,
+            result.AdditionalOptions.Orders.EnabledContexts,
+            result.AdditionalOptions.Orders.CoverChargeEnabled,
+            result.AdditionalOptions.Orders.DefaultCoverChargeInCents,
+            result.AdditionalOptions.Orders.DefaultConfirmerRole,
+            result.AdditionalOptions.Orders.AllowEditAfterConfirmation,
+            result.AdditionalOptions.Orders.AllowFollowUpOrders));
     }
 
     [Authorize(Policy = "AdminOnly")]
@@ -78,7 +84,13 @@ public class EventController(IMediator mediator) : ControllerBase
             request.ShowNotesField,
             request.CounterPeopleFirst,
             request.ShowCallCount,
-            request.MaxWaitTimeMinutes), ct));
+            request.MaxWaitTimeMinutes,
+            request.EnabledContexts,
+            request.CoverChargeEnabled,
+            request.DefaultCoverChargeInCents,
+            request.DefaultConfirmerRole,
+            request.AllowEditAfterConfirmation,
+            request.AllowFollowUpOrders), ct));
 
     private static EventDto MapEvent(GetEvents.EventDto e)
         => new(e.Id, e.Name, e.Description, e.Date, e.Currency, e.CurrencySymbol, e.IsActive, e.CreatedAt);

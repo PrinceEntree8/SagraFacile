@@ -33,7 +33,7 @@ public class OrderingRuleController(IMediator mediator) : ControllerBase
             request.Priority,
             request.IsActive), ct);
 
-        return Ok(result);
+        return Ok(new OrderingRuleActionResponse(result.Success, result.Message));
     }
 
     [HttpPut("{id:int}")]

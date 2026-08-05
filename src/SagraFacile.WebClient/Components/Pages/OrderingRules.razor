@@ -1,0 +1,348 @@
+@page "/events/{EventId:int}/ordering-rules"
+@attribute [Authorize(Roles = "Admin,Supervisore")]
+@inject IOrderingRuleService OrderingRuleService
+@inject IEventService EventService
+@inject IStringLocalizer<SharedResource> L
+@using SagraFacile.Domain.Features.Orders
+@using SagraFacile.Contracts.Ordering
+
+<PageTitle>@L["Rules_PageTitle"]</PageTitle>
+
+<h1>📏 @L["Rules_Heading"] — @eventName</h1>
+<a href="/events" class="btn btn-outline-secondary btn-sm mb-3">← @L["Rules_BackToEvents"]</a>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible">
+        @errorMessage
+        <button type="button" class="btn-close" @onclick="() => errorMessage = string.Empty"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success alert-dismissible">
+        @successMessage
+        <button type="button" class="btn-close" @onclick="() => successMessage = string.Empty"></button>
+    </div>
+}
+
+<div class="row">
+    <!-- Form Card -->
+    <div class="col-lg-5">
+        <div class="card mb-4">
+            <div class="card-header @(editingRuleId.HasValue ? "bg-warning text-dark" : "bg-primary text-white")">
+                <h5 class="mb-0">@(editingRuleId.HasValue ? L["Rules_EditRule"] : L["Rules_NewRule"])</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">@L["Rules_Scope"] *</label>
+                    <select class="form-select" @bind="form.Scope">
+                        <option value="@OrderingRuleScope.Order">Order</option>
+                        <option value="@OrderingRuleScope.Category">Category</option>
+                        <option value="@OrderingRuleScope.Item">Item</option>
+                    </select>
+                </div>
+
+                @if (form.Scope != OrderingRuleScope.Order)
+                {
+                    <div class="mb-3">
+                        <label class="form-label">@L["Rules_TargetCode"] *</label>
+                        <input class="form-control" @bind="form.TargetCode" placeholder="e.g. pizza or main-course" />
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label class="form-label">@L["Rules_Expression"] *</label>
+                    <textarea class="form-control font-monospace" rows="3" @bind="form.Expression" placeholder="e.g. count(item) >= 1"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["Rules_ErrorMessage"]</label>
+                    <input class="form-control" @bind="form.ErrorMessage" placeholder="Message shown when rule fails and blocks order" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["Rules_WarningMessage"]</label>
+                    <input class="form-control" @bind="form.WarningMessage" placeholder="Message shown as warning" />
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">@L["Rules_Priority"]</label>
+                        <input type="number" class="form-control" @bind="form.Priority" min="0" />
+                    </div>
+                    @if (!editingRuleId.HasValue)
+                    {
+                        <div class="col-md-6 mb-3 d-flex align-items-center">
+                            <div class="form-check mt-4">
+                                <input type="checkbox" class="form-check-input" id="isActiveCheck" @bind="form.IsActive" />
+                                <label class="form-check-label" for="isActiveCheck">@L["Rules_IsActive"]</label>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button class="btn @(editingRuleId.HasValue ? "btn-warning" : "btn-primary")" @onclick="SaveRuleAsync" disabled="@isSaving">
+                        @if (isSaving) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                        @(editingRuleId.HasValue ? L["MenuMgmt_SaveChanges"] : L["Rules_Create"])
+                    </button>
+                    @if (editingRuleId.HasValue)
+                    {
+                        <button class="btn btn-outline-secondary" @onclick="CancelEdit">@L["Rules_Cancel"]</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules Table -->
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0">@L["Rules_Heading"]</h3>
+            </div>
+            <div class="card-body">
+                @if (isLoading)
+                {
+                    <p><em>@L["Common_Loading"]</em></p>
+                }
+                else if (rules.Count == 0)
+                {
+                    <p class="text-muted">@L["Rules_NoRules"]</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>@L["Rules_Scope"]</th>
+                                    <th>@L["Rules_TargetCode"]</th>
+                                    <th>@L["Rules_Expression"]</th>
+                                    <th>@L["Rules_Priority"]</th>
+                                    <th>@L["Rules_IsActive"]</th>
+                                    <th>@L["MenuMgmt_ColActions"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var r in rules)
+                                {
+                                    <tr>
+                                        <td><span class="badge bg-secondary">@r.Scope</span></td>
+                                        <td><code>@(string.IsNullOrEmpty(r.TargetCode) ? "-" : r.TargetCode)</code></td>
+                                        <td><code class="text-primary">@r.Expression</code></td>
+                                        <td>@r.Priority</td>
+                                        <td>
+                                            @if (r.IsActive)
+                                            {
+                                                <span class="badge bg-success">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" @onclick="() => EditRule(r)">@L["Rules_Edit"]</button>
+                                                <button class="btn @(r.IsActive ? "btn-outline-warning" : "btn-outline-success")" @onclick="() => ToggleActiveAsync(r)">
+                                                    @(r.IsActive ? "Deactivate" : "Activate")
+                                                </button>
+                                                <button class="btn btn-outline-danger" @onclick="() => DeleteRuleAsync(r.Id)">@L["Rules_Delete"]</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int EventId { get; set; }
+
+    private string eventName = string.Empty;
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    private List<OrderingRuleDto> rules = new();
+    private RuleFormModel form = new();
+    private int? editingRuleId = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var events = await EventService.GetEventsAsync();
+        eventName = events.FirstOrDefault(e => e.Id == EventId)?.Name ?? string.Empty;
+        await LoadRulesAsync();
+    }
+
+    private async Task LoadRulesAsync()
+    {
+        isLoading = true;
+        try
+        {
+            rules = (await OrderingRuleService.GetRulesAsync(EventId)).ToList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading rules: {ex.Message}";
+        }
+        isLoading = false;
+    }
+
+    private void EditRule(OrderingRuleDto rule)
+    {
+        editingRuleId = rule.Id;
+        form = new RuleFormModel
+        {
+            Scope = Enum.TryParse<OrderingRuleScope>(rule.Scope, true, out var scope) ? scope : OrderingRuleScope.Order,
+            TargetCode = rule.TargetCode,
+            Expression = rule.Expression,
+            ErrorMessage = rule.ErrorMessage,
+            WarningMessage = rule.WarningMessage,
+            Priority = rule.Priority,
+            IsActive = rule.IsActive
+        };
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+    }
+
+    private void CancelEdit()
+    {
+        editingRuleId = null;
+        form = new RuleFormModel();
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+    }
+
+    private async Task SaveRuleAsync()
+    {
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(form.Expression))
+        {
+            errorMessage = "Expression is required.";
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            if (editingRuleId.HasValue)
+            {
+                var response = await OrderingRuleService.UpdateRuleAsync(EventId, editingRuleId.Value,
+                    new UpdateOrderingRuleRequest(
+                        form.Scope,
+                        form.TargetCode,
+                        form.Expression,
+                        form.ErrorMessage,
+                        form.WarningMessage,
+                        form.Priority
+                    ));
+
+                if (response is not null && !response.Success)
+                {
+                    errorMessage = response.Message;
+                }
+                else
+                {
+                    successMessage = "Rule updated successfully.";
+                    CancelEdit();
+                    await LoadRulesAsync();
+                }
+            }
+            else
+            {
+                var response = await OrderingRuleService.CreateRuleAsync(EventId,
+                    new CreateOrderingRuleRequest(
+                        form.Scope,
+                        form.TargetCode,
+                        form.Expression,
+                        form.ErrorMessage,
+                        form.WarningMessage,
+                        form.Priority,
+                        form.IsActive
+                    ));
+
+                if (response is not null && !response.Success)
+                {
+                    errorMessage = response.Message;
+                }
+                else
+                {
+                    successMessage = "Rule created successfully.";
+                    CancelEdit();
+                    await LoadRulesAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+        isSaving = false;
+    }
+
+    private async Task ToggleActiveAsync(OrderingRuleDto rule)
+    {
+        errorMessage = string.Empty;
+        try
+        {
+            var response = await OrderingRuleService.SetActiveAsync(EventId, rule.Id, !rule.IsActive);
+            if (response is not null && !response.Success)
+            {
+                errorMessage = response.Message;
+            }
+            else
+            {
+                await LoadRulesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteRuleAsync(int ruleId)
+    {
+        errorMessage = string.Empty;
+        try
+        {
+            var response = await OrderingRuleService.DeleteRuleAsync(EventId, ruleId);
+            if (response is not null && !response.Success)
+            {
+                errorMessage = response.Message;
+            }
+            else
+            {
+                successMessage = "Rule deleted successfully.";
+                await LoadRulesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private class RuleFormModel
+    {
+        public OrderingRuleScope Scope { get; set; } = OrderingRuleScope.Order;
+        public string? TargetCode { get; set; } = string.Empty;
+        public string Expression { get; set; } = string.Empty;
+        public string? ErrorMessage { get; set; } = string.Empty;
+        public string? WarningMessage { get; set; } = string.Empty;
+        public int Priority { get; set; } = 0;
+        public bool IsActive { get; set; } = true;
+    }
+}

@@ -25,6 +25,18 @@ public class GetEventAdditionalOptionsHandlerTests
                 Reservations = new ReservationOptions
                 {
                     PartyCompletion = new PartyCompletionOptions { Enabled = true, MinPartySize = 10 }
+                },
+                Orders = new OrderOptions
+                {
+                    EnabledContexts = [SagraFacile.Domain.Features.Orders.OrderContext.Table],
+                    CoverChargeEnabled = true,
+                    DefaultCoverChargeInCents = 150,
+                    Lifecycle = new OrderLifecycleOptions
+                    {
+                        DefaultConfirmerRole = SagraFacile.Domain.Features.Orders.OrderActor.Supervisor,
+                        AllowEditAfterConfirmation = true,
+                        AllowFollowUpOrders = false
+                    }
                 }
             }
         };
@@ -36,6 +48,12 @@ public class GetEventAdditionalOptionsHandlerTests
         Assert.Equal(1, result!.EventId);
         Assert.True(result.AdditionalOptions.Reservations.PartyCompletion.Enabled);
         Assert.Equal(10, result.AdditionalOptions.Reservations.PartyCompletion.MinPartySize);
+        Assert.Single(result.AdditionalOptions.Orders.EnabledContexts);
+        Assert.True(result.AdditionalOptions.Orders.CoverChargeEnabled);
+        Assert.Equal(150, result.AdditionalOptions.Orders.DefaultCoverChargeInCents);
+        Assert.Equal(SagraFacile.Domain.Features.Orders.OrderActor.Supervisor, result.AdditionalOptions.Orders.DefaultConfirmerRole);
+        Assert.True(result.AdditionalOptions.Orders.AllowEditAfterConfirmation);
+        Assert.False(result.AdditionalOptions.Orders.AllowFollowUpOrders);
     }
 
     [Fact]

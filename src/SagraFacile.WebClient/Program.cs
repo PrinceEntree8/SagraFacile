@@ -25,6 +25,8 @@ builder.Services.AddHttpClient<IAuthService, AuthHttpService>(client => client.B
     .AddHttpMessageHandler<AuthorizationMessageHandler>();
 builder.Services.AddHttpClient<IEventService, EventService>(client => client.BaseAddress = appBaseAddress)
     .AddHttpMessageHandler<AuthorizationMessageHandler>();
+builder.Services.AddHttpClient<IOrderingRuleService, OrderingRuleService>(client => client.BaseAddress = appBaseAddress)
+    .AddHttpMessageHandler<AuthorizationMessageHandler>();
 builder.Services.AddHttpClient<IMenuService, MenuService>(client => client.BaseAddress = appBaseAddress)
     .AddHttpMessageHandler<AuthorizationMessageHandler>();
 builder.Services.AddHttpClient<IReservationService, ReservationService>(client => client.BaseAddress = appBaseAddress)

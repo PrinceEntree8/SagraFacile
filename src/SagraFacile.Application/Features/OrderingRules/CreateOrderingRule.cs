@@ -17,7 +17,7 @@ public static class CreateOrderingRule
         int Priority = 0,
         bool IsActive = true) : ICommand<Result>;
 
-    public record Result(int Id);
+    public record Result(bool Success, string Message, int Id = 0);
 
     public class Validator : AbstractValidator<Command>
     {
@@ -69,7 +69,7 @@ public static class CreateOrderingRule
 
             await repository.AddAsync(rule, ct);
             await repository.SaveChangesAsync(ct);
-            return new Result(rule.Id);
+            return new Result(true, "Rule created successfully.", rule.Id);
         }
     }
 }

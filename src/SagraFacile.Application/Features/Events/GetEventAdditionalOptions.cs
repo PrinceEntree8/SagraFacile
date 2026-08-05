@@ -1,6 +1,7 @@
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
 using SagraFacile.Domain.Features.Events;
+using SagraFacile.Domain.Features.Orders;
 
 namespace SagraFacile.Application.Features.Events;
 
@@ -10,13 +11,21 @@ public static class GetEventAdditionalOptions
 
     public record Result(int EventId, AdditionalOptionsDto AdditionalOptions);
 
-    public record AdditionalOptionsDto(ReservationOptionsDto Reservations, ViewOptionsDto View);
+    public record AdditionalOptionsDto(ReservationOptionsDto Reservations, ViewOptionsDto View, OrderOptionsDto Orders);
 
     public record ReservationOptionsDto(PartyCompletionOptionsDto PartyCompletion);
 
     public record PartyCompletionOptionsDto(bool Enabled, int MinPartySize);
 
     public record ViewOptionsDto(bool ShowNotesField, bool CounterPeopleFirst, bool ShowCallCount, int MaxWaitTimeMinutes);
+
+    public record OrderOptionsDto(
+        IReadOnlyCollection<OrderContext> EnabledContexts,
+        bool CoverChargeEnabled,
+        int DefaultCoverChargeInCents,
+        OrderActor DefaultConfirmerRole,
+        bool AllowEditAfterConfirmation,
+        bool AllowFollowUpOrders);
 
     public class Handler : IQueryHandler<Query, Result?>
     {
@@ -46,7 +55,14 @@ public static class GetEventAdditionalOptions
                         opts.View.ShowNotesField,
                         opts.View.CounterPeopleFirst,
                         opts.View.ShowCallCount,
-                        opts.View.MaxWaitTimeMinutes)));
+                        opts.View.MaxWaitTimeMinutes),
+                    new OrderOptionsDto(
+                        opts.Orders.EnabledContexts,
+                        opts.Orders.CoverChargeEnabled,
+                        opts.Orders.DefaultCoverChargeInCents,
+                        opts.Orders.Lifecycle.DefaultConfirmerRole,
+                        opts.Orders.Lifecycle.AllowEditAfterConfirmation,
+                        opts.Orders.Lifecycle.AllowFollowUpOrders)));
         }
     }
 }

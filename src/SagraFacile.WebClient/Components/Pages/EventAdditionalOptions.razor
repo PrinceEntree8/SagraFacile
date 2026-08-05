@@ -2,6 +2,7 @@
 @attribute [Authorize(Roles = "Admin")]
 @inject IEventService EventService
 @inject IStringLocalizer<SharedResource> L
+@using SagraFacile.Domain.Features.Orders
 
 <PageTitle>@string.Format(L["EventOptions_PageTitle"], eventName)</PageTitle>
 
@@ -103,6 +104,61 @@ else
                 </div>
             </div>
 
+            <!-- Order Options -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">@L["EventOptions_OrderOptions"]</h4>
+                </div>
+                <div class="card-body">
+                    <h5>@L["EventOptions_EnabledContexts"]</h5>
+                    <div class="mb-2 form-check">
+                        <input type="checkbox" class="form-check-input" id="contextTable" @bind="model.ContextTable" />
+                        <label class="form-check-label" for="contextTable">@L["EventOptions_ContextTable"]</label>
+                    </div>
+                    <div class="mb-2 form-check">
+                        <input type="checkbox" class="form-check-input" id="contextReservation" @bind="model.ContextReservation" />
+                        <label class="form-check-label" for="contextReservation">@L["EventOptions_ContextReservation"]</label>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="contextTakeaway" @bind="model.ContextTakeaway" />
+                        <label class="form-check-label" for="contextTakeaway">@L["EventOptions_ContextTakeaway"]</label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="defaultConfirmerRole">@L["EventOptions_DefaultConfirmerRole"]</label>
+                        <select class="form-select" id="defaultConfirmerRole" @bind="model.DefaultConfirmerRole" style="max-width: 200px;">
+                            <option value="@OrderActor.Cashier">@L["Actor_Cashier"]</option>
+                            <option value="@OrderActor.Supervisor">@L["Actor_Supervisor"]</option>
+                            <option value="@OrderActor.Admin">@L["Actor_Admin"]</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="allowEditAfterConfirmation" @bind="model.AllowEditAfterConfirmation" />
+                        <label class="form-check-label" for="allowEditAfterConfirmation">@L["EventOptions_AllowEditAfterConfirmation"]</label>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="allowFollowUpOrders" @bind="model.AllowFollowUpOrders" />
+                        <label class="form-check-label" for="allowFollowUpOrders">@L["EventOptions_AllowFollowUpOrders"]</label>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="coverChargeEnabled" @bind="model.CoverChargeEnabled" />
+                        <label class="form-check-label" for="coverChargeEnabled">@L["EventOptions_CoverChargeEnabled"]</label>
+                    </div>
+
+                    @if (model.CoverChargeEnabled)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label" for="defaultCoverCharge">@L["EventOptions_DefaultCoverCharge"] (€)</label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="defaultCoverCharge"
+                                   @bind="model.CoverChargeEuro" style="max-width: 150px;" />
+                        </div>
+                    }
+                </div>
+            </div>
+
             <button class="btn btn-primary" @onclick="SaveAsync" disabled="@isSaving">
                 @if (isSaving) { <span class="spinner-border spinner-border-sm me-2"></span> }
                 @L["EventOptions_Save"]
@@ -140,6 +196,18 @@ else
             model.ShowCallCount = result.ShowCallCount;
             model.MaxWaitTimeMinutes = result.MaxWaitTimeMinutes;
 
+            if (result.EnabledContexts is not null)
+            {
+                model.ContextTable = result.EnabledContexts.Contains(OrderContext.Table);
+                model.ContextReservation = result.EnabledContexts.Contains(OrderContext.Reservation);
+                model.ContextTakeaway = result.EnabledContexts.Contains(OrderContext.Takeaway);
+            }
+            model.CoverChargeEnabled = result.CoverChargeEnabled;
+            model.CoverChargeEuro = result.DefaultCoverChargeInCents / 100m;
+            model.DefaultConfirmerRole = result.DefaultConfirmerRole;
+            model.AllowEditAfterConfirmation = result.AllowEditAfterConfirmation;
+            model.AllowFollowUpOrders = result.AllowFollowUpOrders;
+
             var events = await EventService.GetEventsAsync();
             eventName = events.FirstOrDefault(e => e.Id == EventId)?.Name ?? string.Empty;
         }
@@ -164,6 +232,26 @@ else
             return;
         }
 
+        var enabledContexts = new List<OrderContext>();
+        if (model.ContextTable) enabledContexts.Add(OrderContext.Table);
+        if (model.ContextReservation) enabledContexts.Add(OrderContext.Reservation);
+        if (model.ContextTakeaway) enabledContexts.Add(OrderContext.Takeaway);
+
+        if (enabledContexts.Count == 0)
+        {
+            statusMessage = "At least one order context must be enabled.";
+            saveSuccess = false;
+            return;
+        }
+
+        int coverChargeCents = (int)(model.CoverChargeEuro * 100);
+        if (coverChargeCents < 0)
+        {
+            statusMessage = "Cover charge cannot be negative.";
+            saveSuccess = false;
+            return;
+        }
+
         isSaving = true;
         try
         {
@@ -174,7 +262,13 @@ else
                     model.ShowNotesField,
                     model.CounterPeopleFirst,
                     model.ShowCallCount,
-                    model.MaxWaitTimeMinutes));
+                    model.MaxWaitTimeMinutes,
+                    enabledContexts,
+                    model.CoverChargeEnabled,
+                    coverChargeCents,
+                    model.DefaultConfirmerRole,
+                    model.AllowEditAfterConfirmation,
+                    model.AllowFollowUpOrders));
 
             statusMessage = L["EventOptions_Saved"];
             saveSuccess = true;
@@ -195,5 +289,13 @@ else
         public bool CounterPeopleFirst { get; set; } = true;
         public bool ShowCallCount { get; set; } = false;
         public int MaxWaitTimeMinutes { get; set; } = 45;
+        public bool ContextTable { get; set; } = true;
+        public bool ContextReservation { get; set; } = true;
+        public bool ContextTakeaway { get; set; } = true;
+        public OrderActor DefaultConfirmerRole { get; set; } = OrderActor.Cashier;
+        public bool AllowEditAfterConfirmation { get; set; } = false;
+        public bool AllowFollowUpOrders { get; set; } = true;
+        public bool CoverChargeEnabled { get; set; } = false;
+        public decimal CoverChargeEuro { get; set; } = 0m;
     }
 }
