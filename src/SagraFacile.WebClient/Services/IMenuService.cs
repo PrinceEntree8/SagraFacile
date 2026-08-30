@@ -13,6 +13,6 @@ public interface IMenuService
     Task<UpdateMenuItemResponse> UpdateItemAsync(int eventId, int itemId, UpdateMenuItemRequest request, CancellationToken ct = default);
     Task<DeleteMenuItemResponse> DeleteItemAsync(int eventId, int itemId, CancellationToken ct = default);
     Task<IReadOnlyList<AllergenDto>> GetAllergensAsync(CancellationToken ct = default);
-    Task<MenuDetailsDto> GetMenuDetailsAsync(int eventId, CancellationToken ct = default);
+    Task<MenuDetailsDto?> GetMenuDetailsAsync(int eventId, CancellationToken ct = default);
     Task<UpdateMenuDetailsResponse> UpdateMenuDetailsAsync(int eventId, UpdateMenuDetailsRequest request, CancellationToken ct = default);
 }

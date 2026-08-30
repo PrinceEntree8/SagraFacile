@@ -28,18 +28,22 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EndpointName("Auth_Login")]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
-            return BadRequest(new { message = "Username and password are required" });
+            return BadRequest(new ErrorResponse("Username and password are required"));
 
         var user = await _userManager.FindByNameAsync(request.Username);
         if (user == null)
-            return Unauthorized(new { message = "Invalid credentials" });
+            return Unauthorized(new ErrorResponse("Invalid credentials"));
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false);
         if (!result.Succeeded)
-            return Unauthorized(new { message = "Invalid credentials" });
+            return Unauthorized(new ErrorResponse("Invalid credentials"));
 
         var roles = await _userManager.GetRolesAsync(user);
         var token = GenerateJwtToken(user, roles);

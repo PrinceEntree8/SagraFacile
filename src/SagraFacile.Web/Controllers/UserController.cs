@@ -12,6 +12,10 @@ namespace SagraFacile.Web.Controllers;
 public class UserController(UserManager<ApplicationUser> userManager) : ControllerBase
 {
     [HttpGet]
+    [EndpointName("Users_List")]
+    [ProducesResponseType(typeof(IEnumerable<UserDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetUsers()
     {
         var users = userManager.Users.ToList();
@@ -32,6 +36,11 @@ public class UserController(UserManager<ApplicationUser> userManager) : Controll
     }
 
     [HttpPost]
+    [EndpointName("Users_Create")]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
     {
         var user = new ApplicationUser
@@ -57,6 +66,11 @@ public class UserController(UserManager<ApplicationUser> userManager) : Controll
     }
 
     [HttpGet("{id}/roles")]
+    [EndpointName("Users_GetRoles")]
+    [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetRoles(string id)
     {
         var user = await userManager.FindByIdAsync(id);
@@ -68,6 +82,12 @@ public class UserController(UserManager<ApplicationUser> userManager) : Controll
     }
 
     [HttpPost("{id}/roles")]
+    [EndpointName("Users_AssignRoles")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> AssignRoles(string id, [FromBody] AssignRolesRequest request)
     {
         var user = await userManager.FindByIdAsync(id);

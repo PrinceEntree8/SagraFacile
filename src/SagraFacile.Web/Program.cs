@@ -1,7 +1,9 @@
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using Microsoft.IdentityModel.Tokens;
 using SagraFacile.Application;
 using SagraFacile.Application.Interfaces;
@@ -14,6 +16,48 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
+builder.Services.AddOpenApi(options =>
+{
+    options.CreateSchemaReferenceId = type =>
+    {
+        var defaultReferenceId = Microsoft.AspNetCore.OpenApi.OpenApiOptions.CreateDefaultSchemaReferenceId(type);
+        var schemaType = Nullable.GetUnderlyingType(type.Type) ?? type.Type;
+        return defaultReferenceId is null
+            ? null
+            : schemaType.FullName?.Replace("+", ".", StringComparison.Ordinal) ?? defaultReferenceId;
+    };
+
+    options.AddOperationTransformer((operation, context, _) =>
+    {
+        var metadata = context.Description.ActionDescriptor.EndpointMetadata;
+        var isAnonymous = metadata.OfType<IAllowAnonymous>().Any();
+        var requiresAuthorization = metadata.OfType<IAuthorizeData>().Any();
+
+        if (!isAnonymous && requiresAuthorization)
+        {
+            operation.Security ??= [];
+            operation.Security.Add(new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("Bearer", context.Document)] = []
+            });
+        }
+
+        return Task.CompletedTask;
+    });
+
+    options.AddDocumentTransformer((document, _, _) =>
+    {
+        document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT"
+        };
+        return Task.CompletedTask;
+    });
+});
 
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<ReservationNotificationChannel>();
@@ -129,6 +173,9 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
+
+if (app.Environment.IsDevelopment())
+    app.MapOpenApi();
 
 app.UseAuthentication();
 app.UseAuthorization();
