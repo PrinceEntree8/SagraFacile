@@ -19,7 +19,7 @@ public class EventController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetEvents(CancellationToken ct)
     {
         var result = await mediator.QueryAsync(new GetEvents.Query(), ct);
-        return Ok(result.Events.Select(MapEvent));
+        return Ok(result.Events.AsParallel().Select(MapEvent).ToList());
     }
 
     [AllowAnonymous]
