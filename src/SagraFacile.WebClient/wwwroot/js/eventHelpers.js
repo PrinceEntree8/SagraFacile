@@ -22,3 +22,25 @@ window.visibilityHelpers = {
     this._dotNetRef = null;
   }
 };
+
+window.bootstrapHelpers = {
+  hideCollapse(collapseId) {
+    try {
+      const el = document.getElementById(collapseId);
+      if (!el) return;
+      if (typeof bootstrap === 'undefined' || !bootstrap.Collapse) return;
+      const instance = bootstrap.Collapse.getInstance(el);
+      if (instance) {
+        instance.hide();
+        return;
+      }
+      // Only create an instance if the element is currently shown; otherwise hide is a no-op
+      // and creating it would run _initializeChildren unnecessarily.
+      if (el.classList.contains('show')) {
+        bootstrap.Collapse.getOrCreateInstance(el).hide();
+      }
+    } catch (e) {
+      console.warn('bootstrapHelpers.hideCollapse failed for', collapseId, e);
+    }
+  }
+};

@@ -385,8 +385,6 @@
     private async Task SeatReservationCommand(int reservationId, string collapseId)
     {
         await SeatReservationAsync(reservationId);
-        await JS.InvokeVoidAsync("eval",
-            $"bootstrap.Collapse.getOrCreateInstance(document.getElementById('{collapseId}')).hide()");
     }
 
     private async Task SeatReservationAsync(int reservationId)
@@ -400,6 +398,17 @@
             {
                 seatError = string.Format(L["HeadWaiter_ErrorSeating"], result.Message);
                 return;
+            }
+            
+            var collapseId = $"accordion-{reservationId}";
+            
+            try
+            {
+                await JS.InvokeVoidAsync("bootstrapHelpers.hideCollapse", collapseId);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to hide collapse {CollapseId}", collapseId);
             }
             
             if (coverCountForSearch > 0)
