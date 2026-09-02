@@ -8,6 +8,9 @@ public interface IReservationService
 {
     [Get("/api/reservations")]
     Task<ReservationsDto> GetReservationsAsync(int eventId, string? status = null, int page = 1, int pageSize = 50, CancellationToken ct = default);
+    
+    [Get("/api/reservations/{id}")]
+    Task<ReservationsDto> GetReservationAsync(int id, CancellationToken ct = default);
 
     [Get("/api/reservations/last-called")]
     Task<IReadOnlyList<CalledEntry>> GetLastCalledReservationsAsync(int eventId, int maxEntries = 10, CancellationToken ct = default);

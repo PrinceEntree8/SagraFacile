@@ -1,6 +1,6 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
@@ -124,7 +124,11 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Cassiere", policy => policy.RequireRole("Admin", "Supervisore", "Cassiere"))
     .AddPolicy("Cucina", policy => policy.RequireRole("Admin", "Supervisore", "Cucina"));
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(opts =>
+{
+    opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 /*builder.Services.AddCors(options =>
 {
