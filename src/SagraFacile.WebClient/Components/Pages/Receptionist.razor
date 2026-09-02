@@ -320,8 +320,8 @@
         try
         {
             var normalizedStatus = status == "AllWaiting" ? null : status;
-            var (items, _) = await ReservationService.GetReservationsAsync(activeEventId, normalizedStatus, page: 1, pageSize: 100);
-            reservations = items.ToList();
+            var result = await ReservationService.GetReservationsAsync(activeEventId, normalizedStatus, page: 1, pageSize: 100);
+            reservations = result.Reservations;
             UpdateCounters(await ReservationService.GetCountersAsync(activeEventId));
         }
         finally
@@ -359,16 +359,16 @@
                 newReservation.PartyComplete
             );
             var result = await ReservationService.CreateAsync(request);
-            if (result is { Success: true, Data.SequenceNumber: > 0 })
+            if (result is { SequenceNumber: > 0 })
             {
-                var sequenceNumber = result.Data.SequenceNumber;
-                creationMessage = string.Format(L["Receptionist_ReservationCreated"].ToString(), sequenceNumber);
+                var sequenceNumber = result.SequenceNumber;
+                creationMessage = string.Format(L["Receptionist_ReservationCreated"], sequenceNumber);
                 newReservation = new();
                 await LoadReservations(currentFilter);
             }
             else
             {
-                creationMessage = string.Format(L["Receptionist_Error"].ToString(), result.Message ?? "");
+                creationMessage = string.Format(L["Receptionist_Error"].ToString(), "Unknown error");
             }
         }
         catch (Exception ex)

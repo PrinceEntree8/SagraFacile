@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Refit;
 using SagraFacile.WebClient;
 using SagraFacile.WebClient.Auth;
 using SagraFacile.WebClient.Services;
@@ -21,15 +22,20 @@ builder.Services.AddTransient<IReservationRealtimeService, ReservationRealtimeSe
 
 builder.Services.AddLocalization();
 
-builder.Services.AddHttpClient<IAuthService, AuthHttpService>(client => client.BaseAddress = appBaseAddress)
+builder.Services.AddRefitGeneratedClient<IAuthService>()
+    .ConfigureHttpClient(client => client.BaseAddress = appBaseAddress)
     .AddHttpMessageHandler<AuthorizationMessageHandler>();
-builder.Services.AddHttpClient<IEventService, EventService>(client => client.BaseAddress = appBaseAddress)
+builder.Services.AddRefitGeneratedClient<IEventService>()
+    .ConfigureHttpClient(client => client.BaseAddress = appBaseAddress)
     .AddHttpMessageHandler<AuthorizationMessageHandler>();
-builder.Services.AddHttpClient<IMenuService, MenuService>(client => client.BaseAddress = appBaseAddress)
+builder.Services.AddRefitGeneratedClient<IMenuService>()
+    .ConfigureHttpClient(client => client.BaseAddress = appBaseAddress)
     .AddHttpMessageHandler<AuthorizationMessageHandler>();
-builder.Services.AddHttpClient<IReservationService, ReservationService>(client => client.BaseAddress = appBaseAddress)
+builder.Services.AddRefitGeneratedClient<IReservationService>()
+    .ConfigureHttpClient(client => client.BaseAddress = appBaseAddress)
     .AddHttpMessageHandler<AuthorizationMessageHandler>();
-builder.Services.AddHttpClient<IUserService, UserService>(client => client.BaseAddress = appBaseAddress)
+builder.Services.AddRefitGeneratedClient<IUserService>()
+    .ConfigureHttpClient(client => client.BaseAddress = appBaseAddress)
     .AddHttpMessageHandler<AuthorizationMessageHandler>();
 
 builder.Services.AddScoped(sp =>
