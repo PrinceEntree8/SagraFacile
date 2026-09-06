@@ -2,7 +2,6 @@ using FluentValidation;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
-using SagraFacile.Contracts.Common;
 using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Extensions;
 using SagraFacile.Domain.Features.Reservations;
@@ -11,7 +10,7 @@ namespace SagraFacile.Application.Features.Reservations;
 
 public static class MarkPartyComplete
 {
-    public record Command(int ReservationId, string MarkedBy = "System") : ICommand<CommandResult>;
+    public record Command(int ReservationId, string MarkedBy = "System") : ICommand<ReservationCommandResponse>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -25,20 +24,20 @@ public static class MarkPartyComplete
     }
 
     public class Handler(IReservationRepository repository, IReservationNotifier notifier)
-        : ICommandHandler<Command, CommandResult>
+        : ICommandHandler<Command, ReservationCommandResponse>
     {
-        public async Task<CommandResult> Handle(Command command, CancellationToken cancellationToken)
+        public async Task<ReservationCommandResponse> Handle(Command command, CancellationToken cancellationToken)
         {
             var reservation = await repository.GetByIdWithEventAsync(command.ReservationId, cancellationToken);
 
             if (reservation == null)
-                return new CommandResult(false, "Reservation not found");
+                return new ReservationCommandResponse(false, null, "Reservation not found");
 
             if (!reservation.Event.AdditionalOptions.Reservations.PartyCompletion.Enabled)
-                return new CommandResult(false, "Party completion is not enabled for this event");
+                return new ReservationCommandResponse(false, null, "Party completion is not enabled for this event");
 
             if (reservation.Status != ReservationStatus.Waiting)
-                return new CommandResult(false, "Reservation is not in waiting status");
+                return new ReservationCommandResponse(false, null, "Reservation is not in waiting status");
 
             var oldStatus = reservation.Status;
             reservation.Status = ReservationStatus.PartyCompleted;
@@ -49,7 +48,7 @@ public static class MarkPartyComplete
             }
             catch (RepositoryConcurrencyException)
             {
-                return new CommandResult(false, "This reservation was modified by another user. Please refresh and try again.");
+                return new ReservationCommandResponse(false, null, "This reservation was modified by another user. Please refresh and try again.");
             }
 
             notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
@@ -70,7 +69,8 @@ public static class MarkPartyComplete
                 new CountersUpdatedNotification(counters),
                 cancellationToken).Forget();
 
-            return new CommandResult(true, $"Reservation {reservation.SequenceNumber} marked as party complete");
+            return new ReservationCommandResponse(true, ReservationDtoMapper.Map(reservation),
+                $"Reservation {reservation.SequenceNumber} marked as party complete");
         }
     }
 }

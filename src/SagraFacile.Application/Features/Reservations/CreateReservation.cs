@@ -2,7 +2,6 @@ using FluentValidation;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
-using SagraFacile.Contracts.Common;
 using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Extensions;
 using SagraFacile.Domain.Features.Reservations;
@@ -17,7 +16,7 @@ public static class CreateReservation
         int PartySize,
         string? Notes = null,
         bool PartyComplete = false
-    ) : ICommand<CommandResult<CreateReservationResult>>;
+    ) : ICommand<ReservationCommandResponse>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -38,10 +37,10 @@ public static class CreateReservation
     }
 
     public class Handler(IReservationRepository repository, IReservationNotifier notifier, IEventRepository eventRepository)
-        : ICommandHandler<Command, CommandResult<CreateReservationResult>>
+        : ICommandHandler<Command, ReservationCommandResponse>
     {
 
-        public async Task<CommandResult<CreateReservationResult>> Handle(Command command, CancellationToken cancellationToken)
+        public async Task<ReservationCommandResponse> Handle(Command command, CancellationToken cancellationToken)
         {
             var reservationEvent = await eventRepository.GetByIdAsync(command.EventId, cancellationToken);
             var partyCompletionEnabled = reservationEvent?.AdditionalOptions.Reservations.PartyCompletion.Enabled ?? false;
@@ -90,8 +89,7 @@ public static class CreateReservation
                         new CountersUpdatedNotification(counters),
                         cancellationToken).Forget();
 
-                    return new CommandResult<CreateReservationResult>(true,
-                        new CreateReservationResult(reservation.Id, reservation.SequenceNumber));
+                    return new ReservationCommandResponse(true, ReservationDtoMapper.Map(reservation));
                 }
                 catch (RepositoryUniqueConstraintException)
                 {
@@ -99,8 +97,8 @@ public static class CreateReservation
                 }
             }
 
-            return new CommandResult<CreateReservationResult>(false, default,
-                Message: "Failed to create reservation after maximum retries.");
+            return new ReservationCommandResponse(false, null,
+                "Failed to create reservation after maximum retries.");
         }
     }
 }

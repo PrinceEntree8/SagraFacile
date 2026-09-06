@@ -38,7 +38,7 @@ public class ReservationHub(IMediator mediator) : Hub<IReservationHubClient>
         => await mediator.QueryAsync(new GetBestFitReservation.Query(eventId, tableCoverCount));
 
     [Authorize(Policy = "Cassiere")]
-    public async Task<CommandResult<CreateReservationResult>> CreateReservation(
+    public async Task<ReservationCommandResponse> CreateReservation(
         int eventId,
         string customerName,
         int partySize,
@@ -47,7 +47,7 @@ public class ReservationHub(IMediator mediator) : Hub<IReservationHubClient>
         => await mediator.SendAsync(new CreateReservation.Command(eventId, customerName, partySize, notes, partyComplete));
 
     [Authorize(Policy = "Cassiere")]
-    public async Task<CommandResult> EditReservation(
+    public async Task<ReservationCommandResponse> EditReservation(
         int id,
         string? customerName = null,
         int? partySize = null,
@@ -56,32 +56,32 @@ public class ReservationHub(IMediator mediator) : Hub<IReservationHubClient>
         => await mediator.SendAsync(new EditReservation.Command(id, customerName, partySize, notes, status));
 
     [Authorize(Policy = "Cassiere")]
-    public async Task<CommandResult> CallReservation(
+    public async Task<ReservationCommandResponse> CallReservation(
         int reservationId,
         string calledBy = "Receptionist",
         string? notes = null)
         => await mediator.SendAsync(new CallReservation.Command(reservationId, calledBy, notes));
 
     [Authorize(Policy = "Cassiere")]
-    public async Task<CommandResult> MarkPartyComplete(
+    public async Task<ReservationCommandResponse> MarkPartyComplete(
         int reservationId,
         string markedBy = "System")
         => await mediator.SendAsync(new MarkPartyComplete.Command(reservationId, markedBy));
 
     [Authorize(Policy = "Cassiere")]
-    public async Task<CommandResult> SeatReservation(int reservationId)
+    public async Task<ReservationCommandResponse> SeatReservation(int reservationId)
         => await mediator.SendAsync(new SeatReservation.Command(reservationId));
 
     [Authorize(Policy = "Cassiere")]
-    public async Task<CommandResult> CallAndSeatReservation(int eventId, int sequenceNumber)
+    public async Task<ReservationCommandResponse> CallAndSeatReservation(int eventId, int sequenceNumber)
         => await mediator.SendAsync(new CallAndSeatReservation.Command(eventId, sequenceNumber));
 
     [Authorize(Policy = "Cassiere")]
-    public async Task<CommandResult> VoidReservation(int reservationId)
+    public async Task<ReservationCommandResponse> VoidReservation(int reservationId)
         => await mediator.SendAsync(new VoidReservation.Command(reservationId));
 
     [Authorize(Policy = "Cassiere")]
-    public async Task<CommandResult> RestoreReservation(int reservationId)
+    public async Task<ReservationCommandResponse> RestoreReservation(int reservationId)
         => await mediator.SendAsync(new RestoreReservation.Command(reservationId));
 
     [Authorize(Policy = "Cassiere")]

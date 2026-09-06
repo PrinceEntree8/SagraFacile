@@ -394,7 +394,7 @@
         try
         {
             var result = await ReservationService.SeatAsync(reservationId);
-            if (!result.Success)
+            if (!result.Success || result.Reservation is null)
             {
                 seatError = string.Format(L["HeadWaiter_ErrorSeating"], result.Message);
                 return;
@@ -448,7 +448,7 @@
 
             var result = await ReservationService.CallAndSeatAsync(new CallAndSeatRequest(activeEventId, seqNum));
             
-            if (result.Success)
+            if (result.Success && result.Reservation is not null)
             {
                 manualSeatSuccess = result.Message ?? L["HeadWaiter_ManualSeatSuccess"];
                 manualSeatQueueNumber = string.Empty;

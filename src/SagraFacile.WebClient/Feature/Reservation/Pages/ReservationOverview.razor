@@ -157,28 +157,44 @@ else
     private async Task CallReservationAsync(int id)
     {
         isActionInProgress = true;
-        try { await ReservationService.CallAsync(id, new CallReservationRequest("Receptionist")); }
+        try
+        {
+            var result = await ReservationService.CallAsync(id, new CallReservationRequest("Receptionist"));
+            ApplyCommandReservation(result.Reservation);
+        }
         finally { isActionInProgress = false; }
     }
 
     private async Task MarkPartyCompleteAsync(int id)
     {
         isActionInProgress = true;
-        try { await ReservationService.MarkPartyCompleteAsync(id); }
+        try
+        {
+            var result = await ReservationService.MarkPartyCompleteAsync(id);
+            ApplyCommandReservation(result.Reservation);
+        }
         finally { isActionInProgress = false; }
     }
 
     private async Task SeatReservationAsync(int id)
     {
         isActionInProgress = true;
-        try { await ReservationService.SeatAsync(id); }
+        try
+        {
+            var result = await ReservationService.SeatAsync(id);
+            ApplyCommandReservation(result.Reservation);
+        }
         finally { isActionInProgress = false; }
     }
 
     private async Task RestoreReservationAsync(int id)
     {
         isActionInProgress = true;
-        try { await ReservationService.RestoreAsync(id); }
+        try
+        {
+            var result = await ReservationService.RestoreAsync(id);
+            ApplyCommandReservation(result.Reservation);
+        }
         finally { isActionInProgress = false; }
     }
 
@@ -207,6 +223,16 @@ else
 
     private void PatchReservationStatus(ReservationStatusChangedNotification r)
         => PatchReservationStatus(r.ReservationId, r.SequenceNumber, r.CustomerName, r.PartySize, r.NewStatus.ToString());
+
+    private void ApplyCommandReservation(ReservationDto? reservation)
+    {
+        if (reservation is null)
+            return;
+
+        sortedReservations[reservation.Id] = reservation;
+        if (selectedReservation?.Id == reservation.Id)
+            selectedReservation = reservation;
+    }
 
     private void PatchReservationStatus(int id, int? sequenceNumber, string? customerName, int? partySize, string status)
     {

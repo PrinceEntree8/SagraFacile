@@ -359,16 +359,16 @@
                 newReservation.PartyComplete
             );
             var result = await ReservationService.CreateAsync(request);
-            if (result is { SequenceNumber: > 0 })
+            if (result.Success && result.Reservation is { SequenceNumber: > 0 } reservation)
             {
-                var sequenceNumber = result.SequenceNumber;
+                var sequenceNumber = reservation.SequenceNumber;
                 creationMessage = string.Format(L["Receptionist_ReservationCreated"], sequenceNumber);
                 newReservation = new();
                 await LoadReservations(currentFilter);
             }
             else
             {
-                creationMessage = string.Format(L["Receptionist_Error"].ToString(), "Unknown error");
+                creationMessage = string.Format(L["Receptionist_Error"].ToString(), result.Message ?? "Unknown error");
             }
         }
         catch (Exception ex)
@@ -387,7 +387,7 @@
         try
         {
             var result = await ReservationService.CallAsync(reservationId, new CallReservationRequest("Receptionist"));
-            if (result.Success)
+            if (result.Success && result.Reservation is not null)
                 await LoadReservations(currentFilter);
         }
         finally
@@ -402,7 +402,7 @@
         try
         {
             var result = await ReservationService.MarkPartyCompleteAsync(reservationId);
-            if (result.Success)
+            if (result.Success && result.Reservation is not null)
                 await LoadReservations(currentFilter);
         }
         finally
@@ -417,7 +417,7 @@
         try
         {
             var result = await ReservationService.SeatAsync(reservationId);
-            if (result.Success)
+            if (result.Success && result.Reservation is not null)
                 await LoadReservations(currentFilter);
         }
         finally
@@ -432,7 +432,7 @@
         try
         {
             var result = await ReservationService.RestoreAsync(reservationId);
-            if (result.Success)
+            if (result.Success && result.Reservation is not null)
                 await LoadReservations(currentFilter);
         }
         finally

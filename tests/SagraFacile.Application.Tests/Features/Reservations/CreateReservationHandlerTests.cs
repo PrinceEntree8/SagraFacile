@@ -39,7 +39,8 @@ public class CreateReservationHandlerTests
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
-        var created = Assert.IsType<CreateReservationResult>(result.Data);
+        Assert.NotNull(result.Reservation);
+        var created = result.Reservation;
 
         // Assert
         Assert.Equal(1, created.SequenceNumber);

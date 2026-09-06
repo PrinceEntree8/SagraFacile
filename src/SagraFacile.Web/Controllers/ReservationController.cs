@@ -108,7 +108,7 @@ public class ReservationController(IMediator mediator) : ControllerBase
 
     [HttpPost]
     [EndpointName("Reservations_Create")]
-    [ProducesResponseType(typeof(CommandResult<CreateReservationResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateReservation([FromBody] CreateReservationRequest req, CancellationToken ct)
@@ -116,17 +116,17 @@ public class ReservationController(IMediator mediator) : ControllerBase
         var commandResult = await mediator.SendAsync(
             new CreateReservation.Command(req.EventId, req.CustomerName, req.PartySize, req.Notes, req.PartyComplete),
             ct);
-        if (!commandResult.Success )
+        if (!commandResult.Success)
         {
             return BadRequest(commandResult.Message);
         }
 
-        return CreatedAtAction(nameof(GetReservation), new { id = commandResult.Data!.Id }, commandResult.Data);
+        return CreatedAtAction(nameof(GetReservation), new { id = commandResult.Reservation!.Id }, commandResult);
     }
 
     [HttpPost("{id:int}/call")]
     [EndpointName("Reservations_Call")]
-    [ProducesResponseType(typeof(CommandResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Call(int id, [FromBody] CallReservationRequest req, CancellationToken ct)
@@ -134,7 +134,7 @@ public class ReservationController(IMediator mediator) : ControllerBase
 
     [HttpPost("{id:int}/seat")]
     [EndpointName("Reservations_Seat")]
-    [ProducesResponseType(typeof(CommandResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Seat(int id, CancellationToken ct)
@@ -142,7 +142,7 @@ public class ReservationController(IMediator mediator) : ControllerBase
 
     [HttpPost("call-and-seat")]
     [EndpointName("Reservations_CallAndSeat")]
-    [ProducesResponseType(typeof(CommandResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CallAndSeat([FromBody] CallAndSeatRequest req, CancellationToken ct)
@@ -150,7 +150,7 @@ public class ReservationController(IMediator mediator) : ControllerBase
 
     [HttpPut("{id:int}")]
     [EndpointName("Reservations_Edit")]
-    [ProducesResponseType(typeof(CommandResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Edit(int id, [FromBody] EditReservationRequest req, CancellationToken ct)
@@ -158,7 +158,7 @@ public class ReservationController(IMediator mediator) : ControllerBase
 
     [HttpPost("{id:int}/party-complete")]
     [EndpointName("Reservations_MarkPartyComplete")]
-    [ProducesResponseType(typeof(CommandResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> MarkPartyComplete(int id, CancellationToken ct)
@@ -166,7 +166,7 @@ public class ReservationController(IMediator mediator) : ControllerBase
 
     [HttpDelete("{id:int}")]
     [EndpointName("Reservations_Void")]
-    [ProducesResponseType(typeof(CommandResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Void(int id, CancellationToken ct)
@@ -174,7 +174,7 @@ public class ReservationController(IMediator mediator) : ControllerBase
 
     [HttpPost("{id:int}/restore")]
     [EndpointName("Reservations_Restore")]
-    [ProducesResponseType(typeof(CommandResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Restore(int id, CancellationToken ct)

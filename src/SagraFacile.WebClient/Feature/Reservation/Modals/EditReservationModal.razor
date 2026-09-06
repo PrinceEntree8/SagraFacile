@@ -69,7 +69,7 @@
             return;
         }
         
-        await ReservationService.EditAsync(
+        var result = await ReservationService.EditAsync(
             Reservation.Id,
             new EditReservationRequest(
                 CustomerName: reservation.CustomerName,
@@ -78,6 +78,11 @@
                 Status: Enum.Parse<ReservationStatus>(reservation.Status)
             ),
             CancellationToken.None);
+
+        if (!result.Success)
+        {
+            throw new InvalidOperationException(result.Message ?? "Failed to update reservation");
+        }
     }
 
 }
