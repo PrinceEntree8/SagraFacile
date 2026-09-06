@@ -24,6 +24,17 @@ window.visibilityHelpers = {
 };
 
 window.bootstrapHelpers = {
+  hideModal(modalId) {
+    try {
+      const el = document.getElementById(modalId);
+      if (!el) return;
+      if (typeof bootstrap === 'undefined' || !bootstrap.Modal) return;
+      const instance = bootstrap.Modal.getInstance(el) ?? bootstrap.Modal.getOrCreateInstance(el);
+      instance.hide();
+    } catch (e) {
+      console.warn('bootstrapHelpers.hideModal failed for', modalId, e);
+    }
+  },
   hideCollapse(collapseId) {
     try {
       const el = document.getElementById(collapseId);
