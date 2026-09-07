@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SagraFacile.Application;
@@ -8,6 +9,8 @@ using SagraFacile.Application.Interfaces;
 using SagraFacile.Infrastructure;
 using SagraFacile.Infrastructure.Data;
 using SagraFacile.Infrastructure.Identity;
+using SagraFacile.Web.Auth;
+using SagraFacile.Web.Components;
 using SagraFacile.Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +22,13 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<ReservationNotificationChannel>();
 builder.Services.AddScoped<IReservationNotifier, SignalRReservationNotifier>();
 builder.Services.AddHostedService<ReservationNotificationDispatcher>();
+
+builder.Services.AddRazorComponents()
+    .AddInteractiveWebAssemblyComponents();
+builder.Services.AddLocalization();
+builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<AuthenticationStateProvider, AnonymousAuthenticationStateProvider>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                        ?? "Host=localhost;Port=5432;Database=sagrafacile;Username=postgres;Password=postgres";
@@ -132,8 +142,14 @@ if (!app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
+
+app.MapStaticAssets();
 
 app.MapControllers();
 app.MapHub<ReservationHub>("/hubs/reservations");
+app.MapRazorComponents<App>()
+    .AddInteractiveWebAssemblyRenderMode()
+    .AddAdditionalAssemblies(typeof(SagraFacile.WebClient._Imports).Assembly);
 
 app.Run();
