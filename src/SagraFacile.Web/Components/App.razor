@@ -13,11 +13,11 @@
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
     <link rel="stylesheet" href="/lib/bootstrap-icons/bootstrap-icons.min.css" />
-    <HeadOutlet />
+    <HeadOutlet @rendermode="RouteRenderMode" />
 </head>
 
 <body>
-    <Routes />
+    <SagraFacile.WebClient.Components.Routes @rendermode="RouteRenderMode" />
 
     <div id="blazor-error-ui">
         An unhandled error has occurred.
@@ -32,3 +32,19 @@
 </body>
 
 </html>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    // Home ("/") and PublicMenu ("/menu") stay on the static server-rendered path (step 3);
+    // every other route (login + all operative pages) boots through the interactive
+    // WebAssembly router so client-side JWT auth (JwtAuthStateProvider) can run.
+    private IComponentRenderMode? RouteRenderMode =>
+        IsPublicStaticPath(HttpContext.Request.Path)
+            ? null
+            : new InteractiveWebAssemblyRenderMode(prerender: false);
+
+    private static bool IsPublicStaticPath(PathString path) =>
+        path == "/" || path.StartsWithSegments("/menu");
+}

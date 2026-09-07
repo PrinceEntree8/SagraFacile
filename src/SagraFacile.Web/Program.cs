@@ -150,6 +150,7 @@ app.MapControllers();
 app.MapHub<ReservationHub>("/hubs/reservations");
 app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(SagraFacile.WebClient._Imports).Assembly);
+    .AddAdditionalAssemblies(typeof(SagraFacile.WebClient._Imports).Assembly)
+    .AllowAnonymous();
 
 app.Run();
