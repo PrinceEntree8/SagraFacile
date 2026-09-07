@@ -1,8 +1,10 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+@using SagraFacile.WebClient.Components.Layout
+@using SagraFacile.WebClient.Components.Pages
 
-<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+<Router AppAssembly="typeof(_Imports).Assembly"
+        NotFoundPage="typeof(NotFound)">
     <Found Context="routeData">
-        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
             <NotAuthorized>
                 <RedirectToLogin />
             </NotAuthorized>

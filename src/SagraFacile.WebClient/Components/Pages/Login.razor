@@ -1,4 +1,5 @@
 @page "/login"
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 @using SagraFacile.Contracts.Auth
 @inject AuthService AuthService
 @inject AuthenticationStateProvider AuthenticationStateProvider
