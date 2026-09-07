@@ -17,7 +17,23 @@
 </head>
 
 <body>
-    <SagraFacile.WebClient.Components.Routes @rendermode="RouteRenderMode" />
+    @if (IsPublicStaticPath(HttpContext.Request.Path))
+    {
+        <LayoutView Layout="typeof(SagraFacile.Web.Components.Layout.PublicLayout)">
+            @if (HttpContext.Request.Path == "/")
+            {
+                <SagraFacile.Web.Components.Pages.Public.Home />
+            }
+            else
+            {
+                <SagraFacile.Web.Components.Pages.Public.PublicMenu />
+            }
+        </LayoutView>
+    }
+    else
+    {
+        <SagraFacile.WebClient.Components.Routes @rendermode="RouteRenderMode" />
+    }
 
     <div id="blazor-error-ui">
         An unhandled error has occurred.
