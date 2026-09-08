@@ -7,8 +7,6 @@ using SagraFacile.WebClient.Auth;
 using SagraFacile.WebClient.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
-builder.RootComponents.Add<App>("#app");
-builder.RootComponents.Add<HeadOutlet>("head::after");
 
 var appBaseAddress = new Uri(builder.Configuration["services:api:https:0"] ?? builder.HostEnvironment.BaseAddress);
 

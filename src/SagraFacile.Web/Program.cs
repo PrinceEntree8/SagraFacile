@@ -1,7 +1,10 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Microsoft.IdentityModel.Tokens;
@@ -10,6 +13,8 @@ using SagraFacile.Application.Interfaces;
 using SagraFacile.Infrastructure;
 using SagraFacile.Infrastructure.Data;
 using SagraFacile.Infrastructure.Identity;
+using SagraFacile.Web.Auth;
+using SagraFacile.Web.Components;
 using SagraFacile.Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -63,6 +68,26 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<ReservationNotificationChannel>();
 builder.Services.AddScoped<IReservationNotifier, SignalRReservationNotifier>();
 builder.Services.AddHostedService<ReservationNotificationDispatcher>();
+
+builder.Services.AddRazorComponents()
+    .AddInteractiveWebAssemblyComponents();
+builder.Services.AddLocalization();
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[]
+    {
+        new CultureInfo("it"),
+        new CultureInfo("en")
+    };
+
+    options.DefaultRequestCulture = new RequestCulture("it");
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
+    options.RequestCultureProviders.Insert(0, new AcceptLanguageHeaderRequestCultureProvider());
+});
+builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<AuthenticationStateProvider, AnonymousAuthenticationStateProvider>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                        ?? "Host=localhost;Port=5432;Database=sagrafacile;Username=postgres;Password=postgres";
@@ -177,14 +202,23 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
-
-if (app.Environment.IsDevelopment())
+else
+{
     app.MapOpenApi();
+}
 
+app.UseRequestLocalization();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
+
+app.MapStaticAssets();
 
 app.MapControllers();
 app.MapHub<ReservationHub>("/hubs/reservations");
+app.MapRazorComponents<App>()
+    .AddInteractiveWebAssemblyRenderMode()
+    .AddAdditionalAssemblies(typeof(SagraFacile.WebClient._Imports).Assembly)
+    .AllowAnonymous();
 
 app.Run();

@@ -1,0 +1,33 @@
+@page "/"
+@using SagraFacile.Application.Features.Events
+@using SagraFacile.Application.Features.Reservations
+@using SagraFacile.Application.Infrastructure.CQRS
+@using SagraFacile.Contracts.Reservations
+@using SagraFacile.WebClient.Components.Pages.Public
+@inject IMediator Mediator
+<HomeLive ActiveEventName="@activeEvent?.Name"
+          InitialCalledEntries="@calledEntries"
+          InitialLoadFailed="@initialLoadFailed" />
+
+@code {
+    private GetActiveEvent.EventDto? activeEvent;
+    private List<CalledEntry> calledEntries = [];
+    private bool initialLoadFailed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var activeEventResult = await Mediator.QueryAsync(new GetActiveEvent.Query());
+        activeEvent = activeEventResult.ActiveEvent;
+        if (activeEvent is not null)
+        {
+            try
+            {
+                calledEntries = (await Mediator.QueryAsync(new GetLastCalled.Query(activeEvent.Id, 10))).ToList();
+            }
+            catch
+            {
+                initialLoadFailed = true;
+            }
+        }
+    }
+}
