@@ -34,7 +34,9 @@
         <section class="card mb-4">
             <div class="card-body">
                 <h2 class="h5 mb-3">@L["PublicMenu_LatestCalled"]</h2>
-                <LatestCalledTicket EventId="activeEvent.Id" />
+                <LatestCalledTicket EventId="activeEvent.Id"
+                                    InitialLatestCalled="@latestCalled"
+                                    InitialLoadFailed="@latestCalledLoadFailed" />
             </div>
         </section>
 
@@ -111,6 +113,8 @@
     private IReadOnlyList<MenuItemDto> items = [];
     private IReadOnlyList<MenuCategoryDto> categories = [];
     private MenuDetailsDto? menuDetails;
+    private CalledEntry? latestCalled;
+    private bool latestCalledLoadFailed;
 
     protected override async Task OnInitializedAsync()
     {
@@ -118,6 +122,15 @@
         activeEvent = activeEventResult.ActiveEvent;
         if (activeEvent is not null)
         {
+            try
+            {
+                latestCalled = (await Mediator.QueryAsync(new GetLastCalled.Query(activeEvent.Id, 1))).FirstOrDefault();
+            }
+            catch
+            {
+                latestCalledLoadFailed = true;
+            }
+
             categories = (await Mediator.QueryAsync(new GetMenuCategories.Query())).Categories;
             items = (await Mediator.QueryAsync(new GetEventMenu.Query(activeEvent.Id, false))).Items;
             menuDetails = (await Mediator.QueryAsync(new GetMenuDetails.Query(activeEvent.Id))).Details;

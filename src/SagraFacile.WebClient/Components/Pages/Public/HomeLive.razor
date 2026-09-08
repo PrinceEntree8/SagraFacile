@@ -1,0 +1,146 @@
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: true))
+@using SagraFacile.Contracts.Reservations
+@using SagraFacile.Domain.Features.Reservations
+@inject IServiceProvider Services
+@inject IStringLocalizer<SharedResource> L
+@implements IDisposable
+
+<PageTitle>@L["Home_PageTitle"]</PageTitle>
+
+<div class="home-container container py-4">
+    @if (ActiveEventName is null)
+    {
+        <div class="text-center text-muted mt-5">
+            <h2>🍽️ @L["PublicMenu_NoActiveEvent"]</h2>
+        </div>
+    }
+    else
+    {
+        <div class="text-center mb-4">
+            <h1>🍽️ @ActiveEventName</h1>
+        </div>
+
+        <div class="text-center mb-4">
+            <a class="btn btn-primary btn-lg home-menu-button" href="/menu">
+                @L["Home_GoToMenu"]
+            </a>
+        </div>
+
+        @if (InitialLoadFailed)
+        {
+            <div class="alert alert-warning" role="alert">
+                @L["NowCalling_LoadWarning"]
+            </div>
+        }
+
+        @if (calledEntries.Count == 0)
+        {
+            <div class="text-center text-muted mt-4" role="status" aria-live="polite">
+                <p class="fs-5 mb-0">@L["NowCalling_WaitingForCall"]</p>
+            </div>
+        }
+        else
+        {
+            var lastCalled = calledEntries[0];
+            <section class="mb-4" aria-label="Last called reservation" aria-live="assertive">
+                <h2 class="h4 mb-3">@L["Home_LastCalled"]</h2>
+                <div class="card home-last-called-card">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div class="home-entry-queue">#@lastCalled.SequenceNumber</div>
+                        <div class="home-entry-name">@lastCalled.CustomerName</div>
+                        <div class="home-entry-party"><i class="bi bi-people"></i> @lastCalled.PartySize</div>
+                    </div>
+                </div>
+            </section>
+
+            @if (calledEntries.Count > 1)
+            {
+                <section aria-label="Latest called reservations">
+                    <h2 class="h5 mb-3">@L["Home_LatestNineCalled"]</h2>
+                    <ul class="list-group home-latest-list" role="list">
+                        @foreach (var entry in calledEntries.Skip(1).Take(9))
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center" role="listitem">
+                                <span class="home-entry-queue">#@entry.SequenceNumber</span>
+                                <span class="home-entry-name">@entry.CustomerName</span>
+                                <span class="home-entry-party"><i class="bi bi-people"></i> @entry.PartySize</span>
+                            </li>
+                        }
+                    </ul>
+                </section>
+            }
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? ActiveEventName { get; set; }
+
+    [Parameter]
+    public List<CalledEntry> InitialCalledEntries { get; set; } = [];
+
+    [Parameter]
+    public bool InitialLoadFailed { get; set; }
+
+    private readonly List<CalledEntry> calledEntries = [];
+    private IDisposable? reservationSubscription;
+
+    protected override void OnParametersSet()
+    {
+        calledEntries.Clear();
+        calledEntries.AddRange(InitialCalledEntries);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && ActiveEventName is not null)
+        {
+            await InitializeSignalRAsync();
+        }
+    }
+
+    private async Task InitializeSignalRAsync()
+    {
+        try
+        {
+            var realtimeService = Services.GetRequiredService<IReservationRealtimeService>();
+            await realtimeService.EnsureStartedAsync();
+
+            reservationSubscription = realtimeService.SubscribeReservationStatusChanged(async notification =>
+            {
+                if (notification.NewStatus != ReservationStatus.Called)
+                {
+                    calledEntries.RemoveAll(entry => entry.Id == notification.ReservationId);
+                }
+                else
+                {
+                    var entry = new CalledEntry(
+                        notification.ReservationId,
+                        notification.SequenceNumber,
+                        notification.CustomerName,
+                        notification.PartySize,
+                        notification.CallCount ?? 0);
+
+                    calledEntries.RemoveAll(existing => existing.Id == entry.Id);
+                    calledEntries.Insert(0, entry);
+                    if (calledEntries.Count > 10)
+                    {
+                        calledEntries.RemoveRange(10, calledEntries.Count - 10);
+                    }
+                }
+
+                await InvokeAsync(StateHasChanged);
+            });
+        }
+        catch
+        {
+            // Keep the page usable if the realtime hub is temporarily unavailable.
+        }
+    }
+
+    public void Dispose()
+    {
+        reservationSubscription?.Dispose();
+    }
+}

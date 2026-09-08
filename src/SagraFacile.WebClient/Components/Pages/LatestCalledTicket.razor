@@ -1,11 +1,11 @@
-@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: true))
 @using SagraFacile.Contracts.Reservations
-@inject IReservationService ReservationService
-@inject IReservationRealtimeService ReservationRealtimeService
+@using SagraFacile.Domain.Features.Reservations
+@inject IServiceProvider Services
 @inject IStringLocalizer<SharedResource> L
 @implements IAsyncDisposable
 
-@if (initialLoadFailed)
+@if (InitialLoadFailed)
 {
     <div class="alert alert-warning mb-3" role="alert">
         @L["NowCalling_LoadWarning"]
@@ -28,26 +28,25 @@ else
     [Parameter, EditorRequired]
     public int EventId { get; set; }
 
+    [Parameter]
+    public CalledEntry? InitialLatestCalled { get; set; }
+
+    [Parameter]
+    public bool InitialLoadFailed { get; set; }
+
     private CalledEntry? latestCalled;
-    private bool initialLoadFailed;
     private IDisposable? reservationSubscription;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnParametersSet()
     {
-        await LoadInitialLatestCalledAsync();
-        await InitializeSignalRAsync();
+        latestCalled = InitialLatestCalled;
     }
 
-    private async Task LoadInitialLatestCalledAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        try
+        if (firstRender && EventId > 0)
         {
-            var reservations = await ReservationService.GetLastCalledReservationsAsync(EventId, 1);
-            latestCalled = reservations.FirstOrDefault();
-        }
-        catch
-        {
-            initialLoadFailed = true;
+            await InitializeSignalRAsync();
         }
     }
 
@@ -55,12 +54,19 @@ else
     {
         try
         {
-            await ReservationRealtimeService.EnsureStartedAsync();
+            var realtimeService = Services.GetRequiredService<IReservationRealtimeService>();
+            await realtimeService.EnsureStartedAsync();
 
-            reservationSubscription = ReservationRealtimeService.SubscribeReservationStatusChanged(async notification =>
+            reservationSubscription = realtimeService.SubscribeReservationStatusChanged(async notification =>
             {
-                if (notification.NewStatus != SagraFacile.Domain.Features.Reservations.ReservationStatus.Called)
+                if (notification.NewStatus != ReservationStatus.Called)
                 {
+                    if (latestCalled?.Id == notification.ReservationId)
+                    {
+                        latestCalled = null;
+                        await InvokeAsync(StateHasChanged);
+                    }
+
                     return;
                 }
 
