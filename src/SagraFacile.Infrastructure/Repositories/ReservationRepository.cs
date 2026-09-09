@@ -36,7 +36,7 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
             .FirstOrDefaultAsync(r => r.EventId == eventId && r.SequenceNumber == sequenceNumber, cancellationToken);
 
     public async Task<int> GetNextSequenceNumberAsync(int eventId, CancellationToken cancellationToken)
-    {
+    {   
         var last = await _db.Reservations
             .Where(r => r.EventId == eventId)
             .MaxAsync(r => (int?)r.SequenceNumber, cancellationToken);

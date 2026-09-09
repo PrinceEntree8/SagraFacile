@@ -5,6 +5,7 @@ using SagraFacile.Application.Interfaces;
 using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Extensions;
 using SagraFacile.Domain.Features.Reservations;
+using System.Threading;
 
 namespace SagraFacile.Application.Features.Reservations;
 
@@ -65,12 +66,9 @@ public static class CreateReservation
                     CreatedAt      = DateTime.UtcNow
                 };
 
-                try
-                {
                     await repository.AddAsync(reservation, cancellationToken);
                     await repository.SaveChangesAsync(cancellationToken);
-                    
-                                
+
                     notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
                         reservation.Id,
                         reservation.SequenceNumber,
@@ -90,11 +88,7 @@ public static class CreateReservation
                         cancellationToken).Forget();
 
                     return new ReservationCommandResponse(true, ReservationDtoMapper.Map(reservation));
-                }
-                catch (RepositoryUniqueConstraintException)
-                {
-                    if (attempt == maxRetries - 1) throw;
-                }
+
             }
 
             return new ReservationCommandResponse(false, null,

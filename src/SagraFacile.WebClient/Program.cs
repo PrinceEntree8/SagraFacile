@@ -42,6 +42,8 @@ builder.Services.AddScoped(sp =>
     return new HttpClient(handler) { BaseAddress = appBaseAddress };
 });
 
+builder.Services.AddBlazorBootstrap();
+
 var app = builder.Build();
 
 await app.RunAsync();

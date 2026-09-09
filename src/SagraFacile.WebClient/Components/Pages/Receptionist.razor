@@ -8,6 +8,7 @@
 @inject IEventService EventService
 @inject IReservationRealtimeService ReservationRealtimeService
 @inject IStringLocalizer<SharedResource> L
+@inject ToastService ToastService
 @implements IAsyncDisposable
 
 <PageTitle>@L["Receptionist_PageTitle"]</PageTitle>
@@ -15,10 +16,6 @@
 <h1>@L["Receptionist_Heading"]</h1>
 
 <div class="row receptionist-layout g-3">
-    @if (!string.IsNullOrEmpty(creationMessage))
-    {
-        <div class="alert alert-success mt-3 z-1">@creationMessage</div>
-    }
     <div class="col-12 col-lg-5">
 
         <div class="card mb-4">
@@ -228,7 +225,6 @@
     private int availableSeats = 0;
     private bool isLoading = true;
     private bool isCreating = false;
-    private string creationMessage = string.Empty;
     private string nameError = string.Empty;
     private string partySizeError = string.Empty;
     private int? actionInProgress = null;
@@ -335,7 +331,6 @@
     {
         nameError = string.Empty;
         partySizeError = string.Empty;
-        creationMessage = string.Empty;
 
         if (string.IsNullOrWhiteSpace(newReservation.CustomerName))
         {
@@ -363,18 +358,18 @@
             if (result.Success && result.Reservation is { SequenceNumber: > 0 } reservation)
             {
                 var sequenceNumber = reservation.SequenceNumber;
-                creationMessage = string.Format(L["Receptionist_ReservationCreated"], sequenceNumber);
+                ToastService.Notify(new ToastMessage(ToastType.Success, string.Format(L["Receptionist_ReservationCreated"], sequenceNumber)));
                 newReservation = new();
                 await LoadReservations(currentFilter);
             }
             else
             {
-                creationMessage = string.Format(L["Receptionist_Error"].ToString(), result.Message ?? "Unknown error");
+                ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["Receptionist_Error"].ToString(), result.Message ?? "Unknown error")));
             }
         }
         catch (Exception ex)
         {
-            creationMessage = string.Format(L["Receptionist_Error"].ToString(), ex.Message);
+            ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["Receptionist_Error"].ToString(), ex.Message)));
         }
         finally
         {

@@ -4,19 +4,12 @@
 @inject IMenuService MenuService
 @inject IEventService EventService
 @inject IStringLocalizer<SharedResource> L
+@inject ToastService ToastService
 
 <PageTitle>@L["MenuMgmt_PageTitle"]</PageTitle>
 
 <h1>🍽️ @L["MenuMgmt_Heading"] — @eventName</h1>
 <a href="/events" class="btn btn-outline-secondary btn-sm mb-3">← @L["MenuMgmt_BackToEvents"]</a>
-
-@if (!string.IsNullOrEmpty(message))
-{
-    <div class="alert @(messageSuccess ? "alert-success" : "alert-danger") alert-dismissible">
-        @message
-        <button type="button" class="btn-close" @onclick="() => message = string.Empty"></button>
-    </div>
-}
 
 <!-- Category management accordion -->
 <div class="accordion mb-4" id="catAccordion">
@@ -291,8 +284,6 @@
     private List<MenuCategoryDto> categories = new();
     private bool isLoading = true;
     private bool isSaving;
-    private string message = string.Empty;
-    private bool messageSuccess;
     private int? editingId;
     private int? deletingId;
 
@@ -352,17 +343,15 @@
     private async Task SaveAppearanceAsync()
     {
         isSavingAppearance = true;
-        message = string.Empty;
         try
         {
             await MenuService.UpdateMenuDetailsAsync(
                 EventId, new UpdateMenuDetailsRequest(appearanceForm.Header, appearanceForm.Footer, appearanceForm.WarningMessage));
-            message = L["MenuAppearance_Saved"];
-            messageSuccess = true;
+            ToastService.Notify(new ToastMessage(ToastType.Success, L["MenuAppearance_Saved"]));
         }
         catch (Exception ex)
         {
-            ShowError(string.Format(L["MenuMgmt_Error"], ex.Message));
+            ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["MenuMgmt_Error"], ex.Message)));
         }
 
         isSavingAppearance = false;
@@ -392,22 +381,22 @@
 
     private async Task SaveItemAsync()
     {
-        message = string.Empty;
+        var operationSucceeded = false;
         if (string.IsNullOrWhiteSpace(form.Name))
         {
-            ShowError(L["MenuMgmt_NameRequired"]);
+            ToastService.Notify(new ToastMessage(ToastType.Danger, L["MenuMgmt_NameRequired"]));
             return;
         }
 
         if (form.PriceInCents < 0)
         {
-            ShowError(L["MenuMgmt_PriceInvalid"]);
+            ToastService.Notify(new ToastMessage(ToastType.Danger, L["MenuMgmt_PriceInvalid"]));
             return;
         }
 
         if (form.CategoryId <= 0)
         {
-            ShowError(L["MenuMgmt_CategoryRequired"]);
+            ToastService.Notify(new ToastMessage(ToastType.Danger, L["MenuMgmt_CategoryRequired"]));
             return;
         }
 
@@ -421,8 +410,9 @@
                     form.Name, form.Description, form.PriceInCents,
                     form.CategoryId, allergenIds, form.IsAvailable)
                     );
-                message = r.Success ? string.Format(L["MenuMgmt_ItemUpdated"], form.Name) : r.Message;
-                messageSuccess = r.Success;
+                ToastService.Notify(new ToastMessage(r.Success ? ToastType.Success : ToastType.Danger,
+                    r.Success ? string.Format(L["MenuMgmt_ItemUpdated"], form.Name) : r.Message));
+                operationSucceeded = r.Success;
             }
             else
             {
@@ -430,11 +420,11 @@
                     form.CategoryId, form.Name, form.Description, form.PriceInCents,
                     allergenIds),
                     CancellationToken.None);
-                message = string.Format(L["MenuMgmt_ItemAdded"], r.Name);
-                messageSuccess = true;
+                ToastService.Notify(new ToastMessage(ToastType.Success, string.Format(L["MenuMgmt_ItemAdded"], r.Name)));
+                operationSucceeded = true;
             }
 
-            if (messageSuccess)
+            if (operationSucceeded)
             {
                 CancelEdit();
                 await LoadItemsAsync();
@@ -442,7 +432,7 @@
         }
         catch (Exception ex)
         {
-            ShowError(string.Format(L["MenuMgmt_Error"], ex.Message));
+            ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["MenuMgmt_Error"], ex.Message)));
         }
 
         isSaving = false;
@@ -451,12 +441,11 @@
     private async Task ConfirmDeleteAsync(int id, string name)
     {
         deletingId = id;
-        message = string.Empty;
         try
         {
             var r = await MenuService.DeleteItemAsync(EventId, id, CancellationToken.None);
-            message = r.Success ? string.Format(L["MenuMgmt_ItemDeleted"], name) : r.Message;
-            messageSuccess = r.Success;
+            ToastService.Notify(new ToastMessage(r.Success ? ToastType.Success : ToastType.Danger,
+                r.Success ? string.Format(L["MenuMgmt_ItemDeleted"], name) : r.Message));
             if (r.Success)
             {
                 if (editingId == id) CancelEdit();
@@ -465,7 +454,7 @@
         }
         catch (Exception ex)
         {
-            ShowError(string.Format(L["MenuMgmt_Error"], ex.Message));
+            ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["MenuMgmt_Error"], ex.Message)));
         }
 
         deletingId = null;
@@ -487,10 +476,10 @@
 
     private async Task SaveCategoryAsync()
     {
-        message = string.Empty;
+        var operationSucceeded = false;
         if (string.IsNullOrWhiteSpace(catForm.Name))
         {
-            ShowError(L["MenuMgmt_CatNameRequired"]);
+            ToastService.Notify(new ToastMessage(ToastType.Danger, L["MenuMgmt_CatNameRequired"]));
             return;
         }
 
@@ -502,19 +491,20 @@
                 var r = await MenuService.UpdateCategoryAsync(EventId, editingCatId.Value, new UpdateMenuCategoryRequest(
                     catForm.Name, catForm.DisplayOrder),
                     CancellationToken.None);
-                message = r.Success ? string.Format(L["MenuMgmt_CatUpdated"], catForm.Name) : r.Message;
-                messageSuccess = r.Success;
+                ToastService.Notify(new ToastMessage(r.Success ? ToastType.Success : ToastType.Danger,
+                    r.Success ? string.Format(L["MenuMgmt_CatUpdated"], catForm.Name) : r.Message));
+                operationSucceeded = r.Success;
             }
             else
             {
                 var r = await MenuService.CreateCategoryAsync(EventId, new CreateMenuCategoryRequest(
                     catForm.Name, catForm.DisplayOrder),
                     CancellationToken.None);
-                message = string.Format(L["MenuMgmt_CatAdded"], r.Name);
-                messageSuccess = true;
+                ToastService.Notify(new ToastMessage(ToastType.Success, string.Format(L["MenuMgmt_CatAdded"], r.Name)));
+                operationSucceeded = true;
             }
 
-            if (messageSuccess)
+            if (operationSucceeded)
             {
                 CancelCatEdit();
                 await LoadCategoriesAsync();
@@ -522,7 +512,7 @@
         }
         catch (Exception ex)
         {
-            ShowError(string.Format(L["MenuMgmt_Error"], ex.Message));
+            ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["MenuMgmt_Error"], ex.Message)));
         }
 
         isSavingCat = false;
@@ -531,12 +521,11 @@
     private async Task DeleteCategoryAsync(int id)
     {
         deletingCatId = id;
-        message = string.Empty;
         try
         {
             var r = await MenuService.DeleteCategoryAsync(EventId, id, CancellationToken.None);
-            message = r.Success ? L["MenuMgmt_CatDeleted"] : r.Message;
-            messageSuccess = r.Success;
+            ToastService.Notify(new ToastMessage(r.Success ? ToastType.Success : ToastType.Danger,
+                r.Success ? L["MenuMgmt_CatDeleted"] : r.Message));
             if (r.Success)
             {
                 if (editingCatId == id) CancelCatEdit();
@@ -545,7 +534,7 @@
         }
         catch (Exception ex)
         {
-            ShowError(string.Format(L["MenuMgmt_Error"], ex.Message));
+            ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["MenuMgmt_Error"], ex.Message)));
         }
 
         deletingCatId = null;
@@ -557,12 +546,6 @@
     {
         if (add) form.AllergenIds.Add(id);
         else form.AllergenIds.Remove(id);
-    }
-
-    private void ShowError(string msg)
-    {
-        message = msg;
-        messageSuccess = false;
     }
 
     private static int ToCents(string? input)

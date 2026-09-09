@@ -3,6 +3,7 @@
 @attribute [Authorize(Roles = "Admin")]
 @inject IUserService UserService
 @inject IStringLocalizer<SharedResource> L
+@inject ToastService ToastService
 
 <PageTitle>@L["Admin_PageTitle"]</PageTitle>
 
@@ -15,10 +16,6 @@
                 <h3 class="mb-0">@L["Admin_CreateUser"]</h3>
             </div>
             <div class="card-body">
-                @if (!string.IsNullOrEmpty(createUserMessage))
-                {
-                    <div class="alert @(createUserSuccess ? "alert-success" : "alert-danger")">@createUserMessage</div>
-                }
                 <EditForm Model="newUser" OnValidSubmit="CreateUserAsync" FormName="CreateUserForm">
                     <DataAnnotationsValidator />
                     <div class="mb-3">
@@ -108,8 +105,6 @@
     private NewUserModel newUser = new();
     private bool isLoadingUsers = true;
     private bool isCreatingUser = false;
-    private string createUserMessage = string.Empty;
-    private bool createUserSuccess = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -127,7 +122,6 @@
     private async Task CreateUserAsync()
     {
         isCreatingUser = true;
-        createUserMessage = string.Empty;
         try
         {
             var created = await UserService.CreateUserAsync(new CreateUserRequest(
@@ -142,15 +136,13 @@
                 await UserService.AssignRolesAsync(created.Id, new AssignRolesRequest([newUser.Role]));
             }
 
-            createUserMessage = string.Format(L["Admin_UserCreated"], newUser.Username);
-            createUserSuccess = true;
+            ToastService.Notify(new ToastMessage(ToastType.Success, string.Format(L["Admin_UserCreated"], newUser.Username)));
             newUser = new();
             await LoadUsersAsync();
         }
         catch (Exception ex)
         {
-            createUserMessage = ex.Message;
-            createUserSuccess = false;
+            ToastService.Notify(new ToastMessage(ToastType.Danger, ex.Message));
         }
         isCreatingUser = false;
     }

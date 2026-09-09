@@ -3,6 +3,7 @@
 @attribute [Authorize(Roles = "Admin")]
 @inject IEventService EventService
 @inject IStringLocalizer<SharedResource> L
+@inject ToastService ToastService
 
 <PageTitle>@string.Format(L["EventOptions_PageTitle"], eventName)</PageTitle>
 
@@ -26,11 +27,6 @@ else if (notFound)
 }
 else
 {
-    @if (!string.IsNullOrEmpty(statusMessage))
-    {
-        <div class="alert @(saveSuccess ? "alert-success" : "alert-danger")">@statusMessage</div>
-    }
-
     <div class="row">
         <div class="col-md-7">
 
@@ -120,8 +116,6 @@ else
     private bool isLoading = true;
     private bool notFound = false;
     private bool isSaving = false;
-    private string statusMessage = string.Empty;
-    private bool saveSuccess = false;
 
     private OptionsModel model = new();
 
@@ -149,19 +143,15 @@ else
 
     private async Task SaveAsync()
     {
-        statusMessage = string.Empty;
-
         if (model.MinPartySize < 1)
         {
-            statusMessage = L["EventOptions_MinPartySizeInvalid"];
-            saveSuccess = false;
+            ToastService.Notify(new ToastMessage(ToastType.Danger, L["EventOptions_MinPartySizeInvalid"]));
             return;
         }
 
         if (model.MaxWaitTimeMinutes < 1)
         {
-            statusMessage = L["EventOptions_MaxWaitTimeMinutesInvalid"];
-            saveSuccess = false;
+            ToastService.Notify(new ToastMessage(ToastType.Danger, L["EventOptions_MaxWaitTimeMinutesInvalid"]));
             return;
         }
 
@@ -177,13 +167,11 @@ else
                     model.ShowCallCount,
                     model.MaxWaitTimeMinutes));
 
-            statusMessage = L["EventOptions_Saved"];
-            saveSuccess = true;
+            ToastService.Notify(new ToastMessage(ToastType.Success, L["EventOptions_Saved"]));
         }
         catch (Exception ex)
         {
-            statusMessage = string.Format(L["EventOptions_Error"], ex.Message);
-            saveSuccess = false;
+            ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["EventOptions_Error"], ex.Message)));
         }
         isSaving = false;
     }

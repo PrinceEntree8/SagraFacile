@@ -7,6 +7,7 @@
 @inject IReservationService ReservationService
 @inject IReservationRealtimeService ReservationRealtimeService
 @inject IJSRuntime JS
+@inject ToastService ToastService
 @implements IAsyncDisposable
 
 <PageTitle>@L["HeadWaiter_PageTitle"]</PageTitle>
@@ -49,14 +50,6 @@
                 <small class="text-muted">@L["HeadWaiter_FilterHint"]</small>
             </div>
 
-            @if (!string.IsNullOrEmpty(signalRError))
-            {
-                <div class="alert alert-warning">@signalRError</div>
-            }
-            @if (!string.IsNullOrEmpty(seatError))
-            {
-                <div class="alert alert-danger">@seatError</div>
-            }
             @if (isSearching)
             {
                 <p><em>@L["HeadWaiter_Searching"]</em></p>
@@ -190,10 +183,6 @@
                     <InputNumber @bind-Value="availableSeatsToAnnounce" class="form-control" min="0" />
                     <small class="text-muted">@L["HeadWaiter_ShownAtReception"]</small>
                 </div>
-                @if (!string.IsNullOrEmpty(announcementMessage))
-                {
-                    <div class="alert alert-success">@announcementMessage</div>
-                }
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@L["Common_Close"]</button>
@@ -223,14 +212,6 @@
                     <label class="form-label">@L["HeadWaiter_QueueNumber"]</label>
                     <input type="text" class="form-control" @bind="manualSeatQueueNumber" placeholder="@L["HeadWaiter_QueueNumberPlaceholder"]" />
                 </div>
-                @if (!string.IsNullOrEmpty(manualSeatError))
-                {
-                    <div class="alert alert-danger">@manualSeatError</div>
-                }
-                @if (!string.IsNullOrEmpty(manualSeatSuccess))
-                {
-                    <div class="alert alert-success">@manualSeatSuccess</div>
-                }
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@L["Common_Close"]</button>
@@ -252,18 +233,13 @@
     private int coverCountForSearch = 0;
     private int availableSeatsToAnnounce = 0;
     private bool isAnnouncing = false;
-    private string announcementMessage = string.Empty;
     private int? actionInProgress = null;
     private bool isSearching = false;
 
     // Manual Seat modal state
     private int activeEventId;
     private string manualSeatQueueNumber = string.Empty;
-    private string manualSeatError = string.Empty;
-    private string manualSeatSuccess = string.Empty;
     private bool isManualSeating = false;
-    private string seatError = string.Empty;
-    private string signalRError = string.Empty;
     private bool showCallCount = false;
 
     protected override async Task OnInitializedAsync()
@@ -302,7 +278,7 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "SignalR initialization failed");
-            signalRError = L["HeadWaiter_SignalRError"];
+            ToastService.Notify(new ToastMessage(ToastType.Warning, L["HeadWaiter_SignalRError"]));
         }
     }
 
@@ -322,18 +298,17 @@
     private async Task AnnounceAvailableSeats()
     {
         isAnnouncing = true;
-        announcementMessage = string.Empty;
         try
         {
             await ReservationRealtimeService.NotifyAvailableSeatsUpdatedAsync(availableSeatsToAnnounce);
-            announcementMessage = string.Format(L["HeadWaiter_Announced"], availableSeatsToAnnounce);
+            ToastService.Notify(new ToastMessage(ToastType.Success, string.Format(L["HeadWaiter_Announced"], availableSeatsToAnnounce)));
 
             coverCountForSearch = availableSeatsToAnnounce;
             await SearchBestFit();
         }
         catch (Exception ex)
         {
-            announcementMessage = string.Format(L["HeadWaiter_Error"], ex.Message);
+            ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["HeadWaiter_Error"], ex.Message)));
         }
         finally
         {
@@ -391,13 +366,12 @@
     private async Task SeatReservationAsync(int reservationId)
     {
         actionInProgress = reservationId;
-        seatError = string.Empty;
         try
         {
             var result = await ReservationService.SeatAsync(reservationId);
             if (!result.Success || result.Reservation is null)
             {
-                seatError = string.Format(L["HeadWaiter_ErrorSeating"], result.Message);
+                ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["HeadWaiter_ErrorSeating"], result.Message)));
                 return;
             }
             
@@ -419,7 +393,7 @@
         }
         catch (Exception ex)
         {
-            seatError = string.Format(L["HeadWaiter_ErrorSeating"], ex.Message);
+            ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["HeadWaiter_ErrorSeating"], ex.Message)));
         }
         finally
         {
@@ -429,12 +403,9 @@
 
     private async Task CallAndSeatAsync()
     {
-        manualSeatError = string.Empty;
-        manualSeatSuccess = string.Empty;
-
         if (string.IsNullOrWhiteSpace(manualSeatQueueNumber))
         {
-            manualSeatError = L["HeadWaiter_ManualSeatQueueRequired"];
+            ToastService.Notify(new ToastMessage(ToastType.Danger, L["HeadWaiter_ManualSeatQueueRequired"]));
             return;
         }
 
@@ -443,7 +414,7 @@
         {
             if (!int.TryParse(manualSeatQueueNumber.Trim(), out var seqNum))
             {
-                manualSeatError = L["HeadWaiter_ManualSeatQueueRequired"];
+                ToastService.Notify(new ToastMessage(ToastType.Danger, L["HeadWaiter_ManualSeatQueueRequired"]));
                 return;
             }
 
@@ -451,7 +422,7 @@
             
             if (result.Success && result.Reservation is not null)
             {
-                manualSeatSuccess = result.Message ?? L["HeadWaiter_ManualSeatSuccess"];
+                ToastService.Notify(new ToastMessage(ToastType.Success, result.Message ?? L["HeadWaiter_ManualSeatSuccess"]));
                 manualSeatQueueNumber = string.Empty;
 
                 if (coverCountForSearch > 0)
@@ -461,12 +432,12 @@
             }
             else
             {
-                manualSeatError = result.Message ?? L["HeadWaiter_ManualSeatError"];
+                ToastService.Notify(new ToastMessage(ToastType.Danger, result.Message ?? L["HeadWaiter_ManualSeatError"]));
             }
         }
         catch (Exception ex)
         {
-            manualSeatError = string.Format(L["HeadWaiter_Error"], ex.Message);
+            ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["HeadWaiter_Error"], ex.Message)));
         }
         finally
         {
