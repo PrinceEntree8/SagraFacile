@@ -10,7 +10,7 @@ public class EventAdditionalOptionsRepositoryTests
     public async Task AdditionalOptions_DefaultEvent_HasSafeDefaults()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new EventRepository(factory);
+        var repo = new EventRepository(factory.DbContext);
 
         var ev = new Event { Name = "Default Options Test", Currency = "EUR", CurrencySymbol = "€" };
         await repo.AddAsync(ev, CancellationToken.None);
@@ -28,7 +28,7 @@ public class EventAdditionalOptionsRepositoryTests
     public async Task AdditionalOptions_RoundTrip_PersistsAndRestoresCorrectly()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new EventRepository(factory);
+        var repo = new EventRepository(factory.DbContext);
 
         var ev = new Event
         {
@@ -46,7 +46,7 @@ public class EventAdditionalOptionsRepositoryTests
         await repo.AddAsync(ev, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
-        await using var repo2 = new EventRepository(factory);
+        var repo2 = new EventRepository(factory.DbContext);
         var found = await repo2.GetByIdAsync(ev.Id, CancellationToken.None);
 
         Assert.NotNull(found);
@@ -58,7 +58,7 @@ public class EventAdditionalOptionsRepositoryTests
     public async Task AdditionalOptions_Update_PersistsNewValues()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new EventRepository(factory);
+        var repo = new EventRepository(factory.DbContext);
 
         var ev = new Event { Name = "Update Test", Currency = "EUR", CurrencySymbol = "€" };
         await repo.AddAsync(ev, CancellationToken.None);
@@ -73,7 +73,7 @@ public class EventAdditionalOptionsRepositoryTests
         };
         await repo.SaveChangesAsync(CancellationToken.None);
 
-        await using var repo2 = new EventRepository(factory);
+        var repo2 = new EventRepository(factory.DbContext);
         var found = await repo2.GetByIdAsync(ev.Id, CancellationToken.None);
 
         Assert.NotNull(found);

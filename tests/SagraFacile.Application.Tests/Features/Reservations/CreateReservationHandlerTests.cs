@@ -122,7 +122,6 @@ public class CreateReservationHandlerTests
 
         // Assert
         Assert.Equal(2, callCount);
-        await _repository.Received(1).ClearChangeTrackerAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -141,7 +140,6 @@ public class CreateReservationHandlerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<RepositoryUniqueConstraintException>(() => _handler.Handle(command, CancellationToken.None));
-        await _repository.Received(9).ClearChangeTrackerAsync(Arg.Any<CancellationToken>());
     }
     private static Event CreateEventWithOptions(int id, bool enabled, int minPartySize)
     {

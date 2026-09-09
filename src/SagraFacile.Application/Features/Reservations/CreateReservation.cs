@@ -95,8 +95,6 @@ public static class CreateReservation
                 {
                     if (attempt == maxRetries - 1) throw;
 
-                    await repository.ClearChangeTrackerAsync(cancellationToken);
-
                     var delayMs = (int)Math.Min(50 * Math.Pow(2, attempt) + Random.Shared.Next(0, 50), 2000);
                     await Task.Delay(delayMs, cancellationToken);
                 }

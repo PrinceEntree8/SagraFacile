@@ -10,7 +10,7 @@ public class MenuCategoryRepositoryTests
     public async Task AddAsync_ThenGetById_ReturnsCategory()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new MenuCategoryRepository(factory);
+        var repo = new MenuCategoryRepository(factory.DbContext);
         var cat = new MenuCategory { Name = "Starters", DisplayOrder = 1 };
 
         await repo.AddAsync(cat, CancellationToken.None);
@@ -27,7 +27,7 @@ public class MenuCategoryRepositoryTests
     public async Task GetByIdAsync_NonExistentId_ReturnsNull()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new MenuCategoryRepository(factory);
+        var repo = new MenuCategoryRepository(factory.DbContext);
 
         var found = await repo.GetByIdAsync(9999, CancellationToken.None);
 
@@ -38,7 +38,7 @@ public class MenuCategoryRepositoryTests
     public async Task GetAllAsync_ReturnsAllOrderedByDisplayOrderThenName()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new MenuCategoryRepository(factory);
+        var repo = new MenuCategoryRepository(factory.DbContext);
 
         await repo.AddAsync(new MenuCategory { Name = "Drinks", DisplayOrder = 5 }, CancellationToken.None);
         await repo.AddAsync(new MenuCategory { Name = "Dessert", DisplayOrder = 4 }, CancellationToken.None);
@@ -57,7 +57,7 @@ public class MenuCategoryRepositoryTests
     public async Task GetAllAsync_SameDisplayOrder_OrdersByName()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new MenuCategoryRepository(factory);
+        var repo = new MenuCategoryRepository(factory.DbContext);
 
         await repo.AddAsync(new MenuCategory { Name = "Zucchini", DisplayOrder = 1 }, CancellationToken.None);
         await repo.AddAsync(new MenuCategory { Name = "Antipasto", DisplayOrder = 1 }, CancellationToken.None);
@@ -74,7 +74,7 @@ public class MenuCategoryRepositoryTests
     public async Task DeleteAsync_RemovesCategory()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new MenuCategoryRepository(factory);
+        var repo = new MenuCategoryRepository(factory.DbContext);
         var cat = new MenuCategory { Name = "ToDelete", DisplayOrder = 1 };
 
         await repo.AddAsync(cat, CancellationToken.None);
@@ -92,7 +92,7 @@ public class MenuCategoryRepositoryTests
     public async Task DeleteAsync_NonExistentId_DoesNotThrow()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new MenuCategoryRepository(factory);
+        var repo = new MenuCategoryRepository(factory.DbContext);
 
         // Deleting a non-existent category should not throw
         await repo.DeleteAsync(9999, CancellationToken.None);
@@ -103,7 +103,7 @@ public class MenuCategoryRepositoryTests
     public async Task AddAsync_MultipleCategories_AllPersisted()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new MenuCategoryRepository(factory);
+        var repo = new MenuCategoryRepository(factory.DbContext);
 
         await repo.AddAsync(new MenuCategory { Name = "Cat1", DisplayOrder = 1 }, CancellationToken.None);
         await repo.AddAsync(new MenuCategory { Name = "Cat2", DisplayOrder = 2 }, CancellationToken.None);

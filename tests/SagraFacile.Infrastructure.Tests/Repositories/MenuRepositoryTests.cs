@@ -18,10 +18,10 @@ public class MenuRepositoryTests
     public async Task AddAsync_ThenGetById_ReturnsMenuItem()
     {
         using var factory = new TestDbContextFactory();
-        await using var catRepo = new MenuCategoryRepository(factory);
+        var catRepo = new MenuCategoryRepository(factory.DbContext);
         var cat = await CreateCategoryAsync(catRepo);
 
-        await using var repo = new MenuRepository(factory);
+        var repo = new MenuRepository(factory.DbContext);
         var item = new MenuItem { EventId = 1, Name = "Pizza", PriceInCents = 800, CategoryId = cat.Id };
 
         await repo.AddAsync(item, CancellationToken.None);
@@ -37,10 +37,10 @@ public class MenuRepositoryTests
     public async Task GetByEventIdAsync_FiltersCorrectly()
     {
         using var factory = new TestDbContextFactory();
-        await using var catRepo = new MenuCategoryRepository(factory);
+        var catRepo = new MenuCategoryRepository(factory.DbContext);
         var cat = await CreateCategoryAsync(catRepo);
 
-        await using var repo = new MenuRepository(factory);
+        var repo = new MenuRepository(factory.DbContext);
         await repo.AddAsync(new MenuItem { EventId = 1, Name = "Item1", PriceInCents = 500, CategoryId = cat.Id }, CancellationToken.None);
         await repo.AddAsync(new MenuItem { EventId = 2, Name = "Item2", PriceInCents = 500, CategoryId = cat.Id }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
@@ -55,10 +55,10 @@ public class MenuRepositoryTests
     public async Task GetByEventIdAsync_ExcludesUnavailableWhenFlagFalse()
     {
         using var factory = new TestDbContextFactory();
-        await using var catRepo = new MenuCategoryRepository(factory);
+        var catRepo = new MenuCategoryRepository(factory.DbContext);
         var cat = await CreateCategoryAsync(catRepo);
 
-        await using var repo = new MenuRepository(factory);
+        var repo = new MenuRepository(factory.DbContext);
         await repo.AddAsync(new MenuItem { EventId = 1, Name = "Available", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = true }, CancellationToken.None);
         await repo.AddAsync(new MenuItem { EventId = 1, Name = "Unavailable", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = false }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
@@ -73,10 +73,10 @@ public class MenuRepositoryTests
     public async Task GetByEventIdAsync_IncludesUnavailableWhenFlagTrue()
     {
         using var factory = new TestDbContextFactory();
-        await using var catRepo = new MenuCategoryRepository(factory);
+        var catRepo = new MenuCategoryRepository(factory.DbContext);
         var cat = await CreateCategoryAsync(catRepo);
 
-        await using var repo = new MenuRepository(factory);
+        var repo = new MenuRepository(factory.DbContext);
         await repo.AddAsync(new MenuItem { EventId = 1, Name = "Available", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = true }, CancellationToken.None);
         await repo.AddAsync(new MenuItem { EventId = 1, Name = "Unavailable", PriceInCents = 500, CategoryId = cat.Id, IsAvailable = false }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
@@ -90,10 +90,10 @@ public class MenuRepositoryTests
     public async Task DeleteAsync_RemovesItem()
     {
         using var factory = new TestDbContextFactory();
-        await using var catRepo = new MenuCategoryRepository(factory);
+        var catRepo = new MenuCategoryRepository(factory.DbContext);
         var cat = await CreateCategoryAsync(catRepo);
 
-        await using var repo = new MenuRepository(factory);
+        var repo = new MenuRepository(factory.DbContext);
         var item = new MenuItem { EventId = 1, Name = "ToDelete", PriceInCents = 300, CategoryId = cat.Id };
         await repo.AddAsync(item, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);

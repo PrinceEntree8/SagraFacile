@@ -11,7 +11,7 @@ public class EventRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new EventRepository(factory);
+        var repo = new EventRepository(factory.DbContext);
         var ev = new Event { Name = "Sagra 2026", Description = "Test", Date = DateTime.UtcNow, Currency = "EUR", CurrencySymbol = "€" };
 
         // Act
@@ -30,7 +30,7 @@ public class EventRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new EventRepository(factory);
+        var repo = new EventRepository(factory.DbContext);
 
         await repo.AddAsync(new Event { Name = "Old", Date = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Currency = "EUR", CurrencySymbol = "€" }, CancellationToken.None);
         await repo.AddAsync(new Event { Name = "New", Date = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), Currency = "EUR", CurrencySymbol = "€" }, CancellationToken.None);
@@ -51,7 +51,7 @@ public class EventRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new EventRepository(factory);
+        var repo = new EventRepository(factory.DbContext);
 
         await repo.AddAsync(new Event { Name = "E1", IsActive = true, Date = DateTime.UtcNow, Currency = "EUR", CurrencySymbol = "€" }, CancellationToken.None);
         await repo.AddAsync(new Event { Name = "E2", IsActive = true, Date = DateTime.UtcNow, Currency = "EUR", CurrencySymbol = "€" }, CancellationToken.None);
@@ -60,9 +60,10 @@ public class EventRepositoryTests
         // Act
         await repo.DeactivateAllAsync(CancellationToken.None);
 
-        // Open a new repository instance to verify the bulk update was persisted
-        await using var repo2 = new EventRepository(factory);
-        var events = await repo2.GetAllOrderedByDateDescAsync(CancellationToken.None);
+        // Clear the change tracker so the next query fetches fresh data from the database
+        factory.DbContext.ChangeTracker.Clear();
+
+        var events = await repo.GetAllOrderedByDateDescAsync(CancellationToken.None);
 
         // Assert
         Assert.All(events, e => Assert.False(e.IsActive));

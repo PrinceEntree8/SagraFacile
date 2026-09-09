@@ -5,13 +5,11 @@ using SagraFacile.Infrastructure.Data;
 
 namespace SagraFacile.Infrastructure.Repositories;
 
-public class AllergenRepository : IAllergenRepository, IAsyncDisposable
+public class AllergenRepository : IAllergenRepository
 {
     private readonly ApplicationDbContext _db;
 
-    public AllergenRepository(IDbContextFactory<ApplicationDbContext> factory) => _db = factory.CreateDbContext();
+    public AllergenRepository(ApplicationDbContext db) => _db = db;
 
     public Task<List<Allergen>> GetAllAsync(CancellationToken ct) => _db.Allergens.OrderBy(a => a.Id).ToListAsync(ct);
-
-    public ValueTask DisposeAsync() => _db.DisposeAsync();
 }

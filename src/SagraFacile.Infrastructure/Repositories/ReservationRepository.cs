@@ -9,16 +9,16 @@ using SagraFacile.Infrastructure.Data;
 
 namespace SagraFacile.Infrastructure.Repositories;
 
-public class ReservationRepository : IReservationRepository, IAsyncDisposable
+public class ReservationRepository : IReservationRepository
 {
     private readonly ApplicationDbContext _db;
     private readonly IReservationNotifier _notifier;
 
     public ReservationRepository(
-        IDbContextFactory<ApplicationDbContext> factory,
+        ApplicationDbContext db,
         IReservationNotifier notifier)
     {
-        _db = factory.CreateDbContext();
+        _db = db;
         _notifier = notifier;
     }
 
@@ -117,18 +117,14 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
         }
         catch (DbUpdateConcurrencyException)
         {
+            _db.ChangeTracker.Clear();
             throw new RepositoryConcurrencyException();
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" })
         {
+            _db.ChangeTracker.Clear();
             throw new RepositoryUniqueConstraintException("A unique constraint violation occurred.", ex);
         }
-    }
-
-    public Task ClearChangeTrackerAsync(CancellationToken cancellationToken = default)
-    {
-        _db.ChangeTracker.Clear();
-        return Task.CompletedTask;
     }
 
     public Task<List<Reservation>> GetLastCalledAsync(int eventId, int maxEntries = 10,
@@ -139,11 +135,5 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
             .OrderByDescending(r => r.LastCalledAt)
             .Take(maxEntries)
             .ToListAsync(cancellationToken);
-    }
-
-    public ValueTask DisposeAsync()
-    {
-        GC.SuppressFinalize(this);
-        return _db.DisposeAsync();
     }
 }

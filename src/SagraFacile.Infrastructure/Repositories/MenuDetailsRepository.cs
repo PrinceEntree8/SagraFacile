@@ -5,11 +5,11 @@ using SagraFacile.Infrastructure.Data;
 
 namespace SagraFacile.Infrastructure.Repositories;
 
-public class MenuDetailsRepository : IMenuDetailsRepository, IAsyncDisposable
+public class MenuDetailsRepository : IMenuDetailsRepository
 {
     private readonly ApplicationDbContext _db;
 
-    public MenuDetailsRepository(IDbContextFactory<ApplicationDbContext> factory) => _db = factory.CreateDbContext();
+    public MenuDetailsRepository(ApplicationDbContext db) => _db = db;
 
     public Task<MenuDetails?> GetByEventIdAsync(int eventId, CancellationToken ct)
         => _db.MenuDetails.FirstOrDefaultAsync(d => d.EventId == eventId, ct);
@@ -28,6 +28,4 @@ public class MenuDetailsRepository : IMenuDetailsRepository, IAsyncDisposable
     }
 
     public Task SaveChangesAsync(CancellationToken ct) => _db.SaveChangesAsync(ct);
-
-    public ValueTask DisposeAsync() => _db.DisposeAsync();
 }
