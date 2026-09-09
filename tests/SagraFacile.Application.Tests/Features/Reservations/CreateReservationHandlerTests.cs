@@ -106,7 +106,6 @@ public class CreateReservationHandlerTests
         _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
             .Do(ci => ci.Arg<Reservation>().Id = 1);
 
-        // First call throws unique violation, second succeeds
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>())
             .Returns(ci =>
             {
@@ -121,8 +120,9 @@ public class CreateReservationHandlerTests
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert — SaveChanges was called twice (one failure + one success)
+        // Assert
         Assert.Equal(2, callCount);
+        await _repository.Received(1).ClearChangeTrackerAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -141,6 +141,7 @@ public class CreateReservationHandlerTests
 
         // Act & Assert
         await Assert.ThrowsAsync<RepositoryUniqueConstraintException>(() => _handler.Handle(command, CancellationToken.None));
+        await _repository.Received(9).ClearChangeTrackerAsync(Arg.Any<CancellationToken>());
     }
     private static Event CreateEventWithOptions(int id, bool enabled, int minPartySize)
     {

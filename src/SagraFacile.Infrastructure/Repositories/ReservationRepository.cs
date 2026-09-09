@@ -125,6 +125,12 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
         }
     }
 
+    public Task ClearChangeTrackerAsync(CancellationToken cancellationToken = default)
+    {
+        _db.ChangeTracker.Clear();
+        return Task.CompletedTask;
+    }
+
     public Task<List<Reservation>> GetLastCalledAsync(int eventId, int maxEntries = 10,
         CancellationToken cancellationToken = default)
     {
