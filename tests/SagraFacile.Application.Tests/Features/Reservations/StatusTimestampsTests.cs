@@ -24,7 +24,7 @@ public class StatusTimestampsTests
     [Fact]
     public async Task CreateReservation_SetsCreatedAtAsUtc()
     {
-        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
+        _repository.GetNextSequenceNumberWithLockAsync(1, Arg.Any<CancellationToken>()).Returns(1);
         Reservation? saved = null;
 
         _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))

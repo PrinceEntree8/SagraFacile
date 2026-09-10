@@ -29,7 +29,7 @@ public class CreateReservationHandlerTests
     public async Task Handle_ValidCommand_SetsEventIdAndSequenceNumber()
     {
         // Arrange
-        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
+        _repository.GetNextSequenceNumberWithLockAsync(1, Arg.Any<CancellationToken>()).Returns(1);
 
         Reservation? saved = null;
         _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
@@ -64,7 +64,7 @@ public class CreateReservationHandlerTests
     public async Task Handle_ValidCommand_SetsStatusWaiting()
     {
         // Arrange
-        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
+        _repository.GetNextSequenceNumberWithLockAsync(1, Arg.Any<CancellationToken>()).Returns(1);
 
         Reservation? saved = null;
         _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
@@ -82,7 +82,7 @@ public class CreateReservationHandlerTests
     public async Task Handle_ValidCommand_NullNotes_IsAccepted()
     {
         // Arrange
-        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
+        _repository.GetNextSequenceNumberWithLockAsync(1, Arg.Any<CancellationToken>()).Returns(1);
 
         Reservation? saved = null;
         _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
@@ -97,38 +97,10 @@ public class CreateReservationHandlerTests
     }
 
     [Fact]
-    public async Task Handle_UniqueViolationOnFirstAttempt_Retries()
+    public async Task Handle_UniqueViolation_Throws()
     {
         // Arrange
-        var callCount = 0;
-        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
-
-        _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
-            .Do(ci => ci.Arg<Reservation>().Id = 1);
-
-        _repository.SaveChangesAsync(Arg.Any<CancellationToken>())
-            .Returns(ci =>
-            {
-                callCount++;
-                if (callCount == 1)
-                    throw new RepositoryUniqueConstraintException();
-                return Task.CompletedTask;
-            });
-
-        var command = new CreateReservation.Command(1, "Mario", 4);
-
-        // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(2, callCount);
-    }
-
-    [Fact]
-    public async Task Handle_UniqueViolationExceedsMaxRetries_Throws()
-    {
-        // Arrange
-        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
+        _repository.GetNextSequenceNumberWithLockAsync(1, Arg.Any<CancellationToken>()).Returns(1);
 
         _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
             .Do(ci => ci.Arg<Reservation>().Id = 1);
@@ -166,7 +138,7 @@ public class CreateReservationHandlerTests
         // Arrange
         _eventRepository.GetByIdAsync(1, Arg.Any<CancellationToken>())
             .Returns(CreateEventWithOptions(1, true, 4));
-        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
+        _repository.GetNextSequenceNumberWithLockAsync(1, Arg.Any<CancellationToken>()).Returns(1);
         Reservation? saved = null;
         _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
             .Do(ci => saved = ci.Arg<Reservation>());
@@ -184,7 +156,7 @@ public class CreateReservationHandlerTests
         // Arrange
         _eventRepository.GetByIdAsync(1, Arg.Any<CancellationToken>())
             .Returns(CreateEventWithOptions(1, true, 4));
-        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
+        _repository.GetNextSequenceNumberWithLockAsync(1, Arg.Any<CancellationToken>()).Returns(1);
         Reservation? saved = null;
         _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
             .Do(ci => saved = ci.Arg<Reservation>());
@@ -202,7 +174,7 @@ public class CreateReservationHandlerTests
         // Arrange
         _eventRepository.GetByIdAsync(1, Arg.Any<CancellationToken>())
             .Returns(CreateEventWithOptions(1, true, 4));
-        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
+        _repository.GetNextSequenceNumberWithLockAsync(1, Arg.Any<CancellationToken>()).Returns(1);
         Reservation? saved = null;
         _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
             .Do(ci => saved = ci.Arg<Reservation>());

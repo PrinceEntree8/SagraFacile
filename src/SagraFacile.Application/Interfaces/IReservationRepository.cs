@@ -8,7 +8,7 @@ public interface IReservationRepository
     Task<Reservation?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<Reservation?> GetByIdWithEventAsync(int id, CancellationToken cancellationToken = default);
     Task<Reservation?> GetByEventAndSequenceAsync(int eventId, int sequenceNumber, CancellationToken cancellationToken = default);
-    Task<int> GetNextSequenceNumberAsync(int eventId, CancellationToken cancellationToken = default);
+    Task<int> GetNextSequenceNumberWithLockAsync(int eventId, CancellationToken cancellationToken = default);
     Task<(List<Reservation> Items, int TotalCount)> GetPagedAsync(
         int eventId, int page, int pageSize, ReservationStatusFilter filter, CancellationToken cancellationToken = default);
     Task<List<Reservation>> GetCalledReservationsOrderedByCreatedAtAsync(int eventId, CancellationToken cancellationToken = default);
@@ -18,6 +18,7 @@ public interface IReservationRepository
     Task AddAsync(Reservation reservation, CancellationToken cancellationToken = default);
     Task AddCallAsync(ReservationCall call, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task CommitTransactionAsync(CancellationToken cancellationToken = default);
     Task<List<Reservation>> GetLastCalledAsync(int eventId, int maxEntries = 10,
         CancellationToken cancellationToken = default);
 }

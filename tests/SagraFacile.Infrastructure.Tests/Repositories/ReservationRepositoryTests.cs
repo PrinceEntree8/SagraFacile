@@ -35,18 +35,19 @@ public class ReservationRepositoryTests
     }
 
     [Fact]
-    public async Task GetNextSequenceNumberAsync_NoReservations_Returns1()
+    public async Task GetNextSequenceNumberWithLockAsync_NoReservations_Returns1()
     {
         using var factory = new TestDbContextFactory();
         var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
 
-        var next = await repo.GetNextSequenceNumberAsync(EventId1, CancellationToken.None);
+        var next = await repo.GetNextSequenceNumberWithLockAsync(EventId1, CancellationToken.None);
+        await repo.CommitTransactionAsync(CancellationToken.None);
 
         Assert.Equal(1, next);
     }
 
     [Fact]
-    public async Task GetNextSequenceNumberAsync_ExistingReservations_ReturnsMaxPlusOne()
+    public async Task GetNextSequenceNumberWithLockAsync_ExistingReservations_ReturnsMaxPlusOne()
     {
         using var factory = new TestDbContextFactory();
         var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
@@ -55,13 +56,14 @@ public class ReservationRepositoryTests
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 3, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
-        var next = await repo.GetNextSequenceNumberAsync(EventId1, CancellationToken.None);
+        var next = await repo.GetNextSequenceNumberWithLockAsync(EventId1, CancellationToken.None);
+        await repo.CommitTransactionAsync(CancellationToken.None);
 
         Assert.Equal(4, next);
     }
 
     [Fact]
-    public async Task GetNextSequenceNumberAsync_MultipleEvents_ReturnsPerEventScope()
+    public async Task GetNextSequenceNumberWithLockAsync_MultipleEvents_ReturnsPerEventScope()
     {
         using var factory = new TestDbContextFactory();
         var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
@@ -70,8 +72,10 @@ public class ReservationRepositoryTests
         await repo.AddAsync(new Reservation { EventId = EventId2, SequenceNumber = 2, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
-        var nextEvent1 = await repo.GetNextSequenceNumberAsync(EventId1, CancellationToken.None);
-        var nextEvent2 = await repo.GetNextSequenceNumberAsync(EventId2, CancellationToken.None);
+        var nextEvent1 = await repo.GetNextSequenceNumberWithLockAsync(EventId1, CancellationToken.None);
+        await repo.CommitTransactionAsync(CancellationToken.None);
+        var nextEvent2 = await repo.GetNextSequenceNumberWithLockAsync(EventId2, CancellationToken.None);
+        await repo.CommitTransactionAsync(CancellationToken.None);
 
         Assert.Equal(6, nextEvent1);
         Assert.Equal(3, nextEvent2);

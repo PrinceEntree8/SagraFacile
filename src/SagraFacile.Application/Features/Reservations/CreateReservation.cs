@@ -51,57 +51,41 @@ public static class CreateReservation
             if (partyCompletionEnabled && !command.PartyComplete)
                 partyComplete = command.PartySize < minPartySize;
 
-            const int maxRetries = 10;
-            for (int attempt = 0; attempt < maxRetries; attempt++)
+            var sequenceNumber = await repository.GetNextSequenceNumberWithLockAsync(command.EventId, cancellationToken);
+            var reservation = new Reservation
             {
-                var sequenceNumber = await repository.GetNextSequenceNumberAsync(command.EventId, cancellationToken);
-                var reservation = new Reservation
-                {
-                    EventId        = command.EventId,
-                    SequenceNumber = sequenceNumber,
-                    CustomerName   = command.CustomerName,
-                    PartySize      = command.PartySize,
-                    Notes          = command.Notes,
-                    Status         = partyComplete && partyCompletionEnabled ? ReservationStatus.PartyCompleted : ReservationStatus.Waiting,
-                    CreatedAt      = DateTime.UtcNow
-                };
+                EventId        = command.EventId,
+                SequenceNumber = sequenceNumber,
+                CustomerName   = command.CustomerName,
+                PartySize      = command.PartySize,
+                Notes          = command.Notes,
+                Status         = partyComplete && partyCompletionEnabled ? ReservationStatus.PartyCompleted : ReservationStatus.Waiting,
+                CreatedAt      = DateTime.UtcNow
+            };
 
-                try
-                {
-                    await repository.AddAsync(reservation, cancellationToken);
-                    await repository.SaveChangesAsync(cancellationToken);
+            await repository.AddAsync(reservation, cancellationToken);
+            await repository.SaveChangesAsync(cancellationToken);
+            await repository.CommitTransactionAsync(cancellationToken);
 
-                    notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
-                        reservation.Id,
-                        reservation.SequenceNumber,
-                        reservation.CustomerName,
-                        reservation.PartySize,
-                        NewStatus: reservation.Status,
-                        OldStatus: null,
-                        CallCount: reservation.CallCount
-                    ), cancellationToken).Forget();
+            notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
+                reservation.Id,
+                reservation.SequenceNumber,
+                reservation.CustomerName,
+                reservation.PartySize,
+                NewStatus: reservation.Status,
+                OldStatus: null,
+                CallCount: reservation.CallCount
+            ), cancellationToken).Forget();
 
-                    var counters = (await repository.GetCountersAsync(reservation.EventId, cancellationToken))
-                        .Select(x => new ReservationCounterDto(x.Status, x.Count, x.TotalPeople))
-                        .ToList();
+            var counters = (await repository.GetCountersAsync(reservation.EventId, cancellationToken))
+                .Select(x => new ReservationCounterDto(x.Status, x.Count, x.TotalPeople))
+                .ToList();
 
-                    notifier.EnqueueCountersUpdatedAsync(
-                        new CountersUpdatedNotification(counters),
-                        cancellationToken).Forget();
+            notifier.EnqueueCountersUpdatedAsync(
+                new CountersUpdatedNotification(counters),
+                cancellationToken).Forget();
 
-                    return new ReservationCommandResponse(true, ReservationDtoMapper.Map(reservation));
-                }
-                catch (RepositoryUniqueConstraintException)
-                {
-                    if (attempt == maxRetries - 1) throw;
-
-                    var delayMs = (int)Math.Min(50 * Math.Pow(2, attempt) + Random.Shared.Next(0, 50), 2000);
-                    await Task.Delay(delayMs, cancellationToken);
-                }
-            }
-
-            return new ReservationCommandResponse(false, null,
-                "Failed to create reservation after maximum retries.");
+            return new ReservationCommandResponse(true, ReservationDtoMapper.Map(reservation));
         }
     }
 }
