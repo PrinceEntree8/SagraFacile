@@ -5,7 +5,6 @@ using SagraFacile.Application.Interfaces;
 using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Extensions;
 using SagraFacile.Domain.Features.Reservations;
-using System.Threading;
 
 namespace SagraFacile.Application.Features.Reservations;
 
@@ -54,6 +53,7 @@ public static class CreateReservation
             const int maxRetries = 5;
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
+                await repository.AcquireEventLockAsync(command.EventId, cancellationToken);
                 var sequenceNumber = await repository.GetNextSequenceNumberAsync(command.EventId, cancellationToken);
                 var reservation = new Reservation
                 {
@@ -67,7 +67,14 @@ public static class CreateReservation
                 };
 
                     await repository.AddAsync(reservation, cancellationToken);
-                    await repository.SaveChangesAsync(cancellationToken);
+                    try
+                    {
+                        await repository.SaveChangesAsync(cancellationToken);
+                    }
+                    catch (RepositoryUniqueConstraintException) when (attempt < maxRetries - 1)
+                    {
+                        continue;
+                    }
 
                     notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
                         reservation.Id,
