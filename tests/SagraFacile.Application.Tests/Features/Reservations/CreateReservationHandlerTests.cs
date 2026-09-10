@@ -14,6 +14,7 @@ public class CreateReservationHandlerTests
     private readonly IReservationRepository _repository = Substitute.For<IReservationRepository>();
     private readonly IReservationNotifier _notifier = Substitute.For<IReservationNotifier>();
     private readonly IEventRepository _eventRepository = Substitute.For<IEventRepository>();
+    private readonly IReservationSequenceLock _sequenceLock = Substitute.For<IReservationSequenceLock>();
     private readonly CreateReservation.Handler _handler;
 
     public CreateReservationHandlerTests()
@@ -22,7 +23,7 @@ public class CreateReservationHandlerTests
             .Returns(ci => new Event { Id = ci.Arg<int>() });
         _repository.GetCountersAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new List<ReservationCounterDto>());
-        _handler = new CreateReservation.Handler(_repository, _notifier, _eventRepository);
+        _handler = new CreateReservation.Handler(_repository, _notifier, _eventRepository, _sequenceLock);
     }
 
     [Fact]

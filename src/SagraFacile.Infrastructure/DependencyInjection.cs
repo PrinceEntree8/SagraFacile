@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<IMenuDetailsRepository, MenuDetailsRepository>();
         services.AddMemoryCache();
         services.AddSingleton<IMenuCacheService, MenuCacheService>();
+        services.AddSingleton<IReservationSequenceLock, ReservationSequenceLock>();
 
         return services;
     }

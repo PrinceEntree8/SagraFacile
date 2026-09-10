@@ -37,7 +37,7 @@ public static class CreateReservation
         }
     }
 
-    public class Handler(IReservationRepository repository, IReservationNotifier notifier, IEventRepository eventRepository)
+    public class Handler(IReservationRepository repository, IReservationNotifier notifier, IEventRepository eventRepository, IReservationSequenceLock sequenceLock)
         : ICommandHandler<Command, ReservationCommandResponse>
     {
 
@@ -61,7 +61,15 @@ public static class CreateReservation
                 CreatedAt      = DateTime.UtcNow
             };
 
-            await repository.CreateReservationWithLockAsync(reservation, cancellationToken);
+            await sequenceLock.AcquireAsync(command.EventId, cancellationToken);
+            try
+            {
+                await repository.CreateReservationWithLockAsync(reservation, cancellationToken);
+            }
+            finally
+            {
+                sequenceLock.Release(command.EventId);
+            }
 
             notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
                 reservation.Id,
