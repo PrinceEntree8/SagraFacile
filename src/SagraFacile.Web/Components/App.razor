@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SagraFacile</title>
+    <base href="/" />
+    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="SagraFacile.Web.styles.css" />
+    <link rel="stylesheet" href="SagraFacile.WebClient.styles.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="manifest.webmanifest" rel="manifest" />
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
+    <link rel="stylesheet" href="/lib/bootstrap-icons/bootstrap-icons.min.css" />
+    <link href="_content/Blazor.Bootstrap/blazor.bootstrap.css" rel="stylesheet" />
+    <HeadOutlet @rendermode="RouteRenderMode" />
+</head>
+
+<body>
+    @if (IsPublicStaticPath(HttpContext.Request.Path))
+    {
+        <LayoutView Layout="typeof(SagraFacile.Web.Components.Layout.PublicLayout)">
+            @if (HttpContext.Request.Path == "/")
+            {
+                <SagraFacile.Web.Components.Pages.Public.Home />
+            }
+            else
+            {
+                <SagraFacile.Web.Components.Pages.Public.PublicMenu />
+            }
+        </LayoutView>
+    }
+    else
+    {
+        <SagraFacile.WebClient.Components.Routes @rendermode="RouteRenderMode" />
+    }
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+
+    <script src="_framework/blazor.web.js"></script>
+    <script>navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });</script>
+    <script src="lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="_content/Blazor.Bootstrap/blazor.bootstrap.js"></script>
+    <script src="js/eventHelpers.js"></script>
+</body>
+
+</html>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    // Home ("/") and PublicMenu ("/menu") stay on the static server-rendered path (step 3);
+    // every other route (login + all operative pages) boots through the interactive
+    // WebAssembly router so client-side JWT auth (JwtAuthStateProvider) can run.
+    private IComponentRenderMode? RouteRenderMode =>
+        IsPublicStaticPath(HttpContext.Request.Path)
+            ? null
+            : new InteractiveWebAssemblyRenderMode(prerender: false);
+
+    private static bool IsPublicStaticPath(PathString path) =>
+        path == "/" || path.StartsWithSegments("/menu");
+}

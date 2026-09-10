@@ -1,24 +1,93 @@
+using System.Globalization;
 using System.Text;
-using Microsoft.AspNetCore.Authentication;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using Microsoft.IdentityModel.Tokens;
 using SagraFacile.Application;
 using SagraFacile.Application.Interfaces;
 using SagraFacile.Infrastructure;
 using SagraFacile.Infrastructure.Data;
 using SagraFacile.Infrastructure.Identity;
+using SagraFacile.Web.Auth;
+using SagraFacile.Web.Components;
 using SagraFacile.Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
+builder.Services.AddOpenApi(options =>
+{
+    options.CreateSchemaReferenceId = type =>
+    {
+        var defaultReferenceId = Microsoft.AspNetCore.OpenApi.OpenApiOptions.CreateDefaultSchemaReferenceId(type);
+        var schemaType = Nullable.GetUnderlyingType(type.Type) ?? type.Type;
+        return defaultReferenceId is null
+            ? null
+            : schemaType.FullName?.Replace("+", ".", StringComparison.Ordinal) ?? defaultReferenceId;
+    };
+
+    options.AddOperationTransformer((operation, context, _) =>
+    {
+        var metadata = context.Description.ActionDescriptor.EndpointMetadata;
+        var isAnonymous = metadata.OfType<IAllowAnonymous>().Any();
+        var requiresAuthorization = metadata.OfType<IAuthorizeData>().Any();
+
+        if (!isAnonymous && requiresAuthorization)
+        {
+            operation.Security ??= [];
+            operation.Security.Add(new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("Bearer", context.Document)] = []
+            });
+        }
+
+        return Task.CompletedTask;
+    });
+
+    options.AddDocumentTransformer((document, _, _) =>
+    {
+        document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT"
+        };
+        return Task.CompletedTask;
+    });
+});
 
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<ReservationNotificationChannel>();
 builder.Services.AddScoped<IReservationNotifier, SignalRReservationNotifier>();
 builder.Services.AddHostedService<ReservationNotificationDispatcher>();
+
+builder.Services.AddRazorComponents()
+    .AddInteractiveWebAssemblyComponents();
+builder.Services.AddLocalization();
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[]
+    {
+        new CultureInfo("it"),
+        new CultureInfo("en")
+    };
+
+    options.DefaultRequestCulture = new RequestCulture("it");
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
+    options.RequestCultureProviders.Insert(0, new AcceptLanguageHeaderRequestCultureProvider());
+});
+builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<AuthenticationStateProvider, AnonymousAuthenticationStateProvider>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                        ?? "Host=localhost;Port=5432;Database=sagrafacile;Username=postgres;Password=postgres";
@@ -80,7 +149,11 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Cassiere", policy => policy.RequireRole("Admin", "Supervisore", "Cassiere"))
     .AddPolicy("Cucina", policy => policy.RequireRole("Admin", "Supervisore", "Cucina"));
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(opts =>
+{
+    opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 /*builder.Services.AddCors(options =>
 {
@@ -129,11 +202,23 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
+else
+{
+    app.MapOpenApi();
+}
 
+app.UseRequestLocalization();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
+
+app.MapStaticAssets();
 
 app.MapControllers();
 app.MapHub<ReservationHub>("/hubs/reservations");
+app.MapRazorComponents<App>()
+    .AddInteractiveWebAssemblyRenderMode()
+    .AddAdditionalAssemblies(typeof(SagraFacile.WebClient._Imports).Assembly)
+    .AllowAnonymous();
 
 app.Run();

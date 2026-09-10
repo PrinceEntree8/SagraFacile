@@ -12,6 +12,7 @@ public class StatusTimestampsTests
     private readonly IReservationRepository _repository = Substitute.For<IReservationRepository>();
     private readonly IReservationNotifier _notifier = Substitute.For<IReservationNotifier>();
     private readonly IEventRepository _eventRepository = Substitute.For<IEventRepository>();
+    private readonly IReservationSequenceLock _sequenceLock = Substitute.For<IReservationSequenceLock>();
 
     public StatusTimestampsTests()
     {
@@ -24,13 +25,12 @@ public class StatusTimestampsTests
     [Fact]
     public async Task CreateReservation_SetsCreatedAtAsUtc()
     {
-        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
         Reservation? saved = null;
 
-        _repository.When(r => r.AddAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
-            .Do(ci => saved = ci.Arg<Reservation>());
+        _repository.When(r => r.CreateReservationWithLockAsync(Arg.Any<Reservation>(), Arg.Any<CancellationToken>()))
+            .Do(ci => { saved = ci.Arg<Reservation>(); saved.SequenceNumber = 1; });
 
-        var handler = new CreateReservation.Handler(_repository, _notifier, _eventRepository);
+        var handler = new CreateReservation.Handler(_repository, _notifier, _eventRepository, _sequenceLock);
 
         await handler.Handle(new CreateReservation.Command(1, "Mario", 4), CancellationToken.None);
 

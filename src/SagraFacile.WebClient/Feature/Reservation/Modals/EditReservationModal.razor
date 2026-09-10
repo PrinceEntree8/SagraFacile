@@ -15,6 +15,10 @@
             </div>
 
             <div class="modal-body">
+                @if (!string.IsNullOrEmpty(_saveError))
+                {
+                    <div class="alert alert-danger">@_saveError</div>
+                }
                 @if (_editReservation is not null)
                 {
                     <EditReservationForm Reservation="Reservation" OnSave="SaveReservationAsync"/>
@@ -22,7 +26,7 @@
             </div>
                 
             <div class="modal-footer">
-                <button type="submit" onclick="" form="EditReservationForm" class="btn btn-primary" data-bs-dismiss="modal">
+                <button type="submit" onclick="" form="EditReservationForm" class="btn btn-primary">
                     @L["Common_Save"]
                 </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -60,6 +64,7 @@
     }
 
     private EditReservationModel? _editReservation;
+    private string? _saveError;
 
     private async Task SaveReservationAsync(EditReservationModel reservation)
     {
@@ -69,7 +74,7 @@
             return;
         }
         
-        await ReservationService.EditAsync(
+        var result = await ReservationService.EditAsync(
             Reservation.Id,
             new EditReservationRequest(
                 CustomerName: reservation.CustomerName,
@@ -78,6 +83,15 @@
                 Status: Enum.Parse<ReservationStatus>(reservation.Status)
             ),
             CancellationToken.None);
+
+        if (!result.Success)
+        {
+            _saveError = result.Message ?? L["Common_Error"];
+            return;
+        }
+
+        _saveError = null;
+        await JS.InvokeVoidAsync("bootstrapHelpers.hideModal", Id);
     }
 
 }

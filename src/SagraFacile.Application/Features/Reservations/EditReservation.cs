@@ -1,7 +1,6 @@
 using FluentValidation;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
-using SagraFacile.Contracts.Common;
 using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Extensions;
 using SagraFacile.Domain.Features.Reservations;
@@ -16,7 +15,7 @@ public static class EditReservation
         int? PartySize = null,
         string? Notes = null,
         ReservationStatus? Status = null
-    ) : ICommand<CommandResult>;
+    ) : ICommand<ReservationCommandResponse>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -40,15 +39,15 @@ public static class EditReservation
     }
     
     public class Handler(IReservationRepository repository, IReservationNotifier notifier)
-        : ICommandHandler<Command, CommandResult>
+        : ICommandHandler<Command, ReservationCommandResponse>
     {
-        public async Task<CommandResult> Handle(Command command, CancellationToken cancellationToken)
+        public async Task<ReservationCommandResponse> Handle(Command command, CancellationToken cancellationToken)
         {
             var reservation = await repository.GetByIdAsync(command.Id, cancellationToken);
             
             if (reservation == null)
             {
-                return new CommandResult(false, Message: "Failed to update reservation");
+                return new ReservationCommandResponse(false, null, "Failed to update reservation");
             }
             
             var oldStatus = reservation.Status;
@@ -93,7 +92,8 @@ public static class EditReservation
                 new CountersUpdatedNotification(counters),
                 cancellationToken).Forget();
             
-            return new CommandResult(true, $"Reservation {reservation.Id} has been updated");
+            return new ReservationCommandResponse(true, ReservationDtoMapper.Map(reservation),
+                $"Reservation {reservation.Id} has been updated");
         }
     }
 }

@@ -1,4 +1,5 @@
 @page "/receptionist"
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 @attribute [Authorize]
 @using SagraFacile.WebClient.Components.Buttons
 @using SagraFacile.WebClient.Feature.Reservation.Modals
@@ -7,6 +8,7 @@
 @inject IEventService EventService
 @inject IReservationRealtimeService ReservationRealtimeService
 @inject IStringLocalizer<SharedResource> L
+@inject ToastService ToastService
 @implements IAsyncDisposable
 
 <PageTitle>@L["Receptionist_PageTitle"]</PageTitle>
@@ -14,10 +16,6 @@
 <h1>@L["Receptionist_Heading"]</h1>
 
 <div class="row receptionist-layout g-3">
-    @if (!string.IsNullOrEmpty(creationMessage))
-    {
-        <div class="alert alert-success mt-3 z-1">@creationMessage</div>
-    }
     <div class="col-12 col-lg-5">
 
         <div class="card mb-4">
@@ -227,7 +225,6 @@
     private int availableSeats = 0;
     private bool isLoading = true;
     private bool isCreating = false;
-    private string creationMessage = string.Empty;
     private string nameError = string.Empty;
     private string partySizeError = string.Empty;
     private int? actionInProgress = null;
@@ -320,8 +317,8 @@
         try
         {
             var normalizedStatus = status == "AllWaiting" ? null : status;
-            var (items, _) = await ReservationService.GetReservationsAsync(activeEventId, normalizedStatus, page: 1, pageSize: 100);
-            reservations = items.ToList();
+            var result = await ReservationService.GetReservationsAsync(activeEventId, normalizedStatus, page: 1, pageSize: 100);
+            reservations = result.Reservations;
             UpdateCounters(await ReservationService.GetCountersAsync(activeEventId));
         }
         finally
@@ -334,7 +331,6 @@
     {
         nameError = string.Empty;
         partySizeError = string.Empty;
-        creationMessage = string.Empty;
 
         if (string.IsNullOrWhiteSpace(newReservation.CustomerName))
         {
@@ -359,21 +355,21 @@
                 newReservation.PartyComplete
             );
             var result = await ReservationService.CreateAsync(request);
-            if (result is { Success: true, Data.SequenceNumber: > 0 })
+            if (result.Success && result.Reservation is { SequenceNumber: > 0 } reservation)
             {
-                var sequenceNumber = result.Data.SequenceNumber;
-                creationMessage = string.Format(L["Receptionist_ReservationCreated"].ToString(), sequenceNumber);
+                var sequenceNumber = reservation.SequenceNumber;
+                ToastService.Notify(new ToastMessage(ToastType.Success, string.Format(L["Receptionist_ReservationCreated"], sequenceNumber)));
                 newReservation = new();
                 await LoadReservations(currentFilter);
             }
             else
             {
-                creationMessage = string.Format(L["Receptionist_Error"].ToString(), result.Message ?? "");
+                ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["Receptionist_Error"].ToString(), result.Message ?? "Unknown error")));
             }
         }
         catch (Exception ex)
         {
-            creationMessage = string.Format(L["Receptionist_Error"].ToString(), ex.Message);
+            ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["Receptionist_Error"].ToString(), ex.Message)));
         }
         finally
         {
@@ -387,7 +383,7 @@
         try
         {
             var result = await ReservationService.CallAsync(reservationId, new CallReservationRequest("Receptionist"));
-            if (result.Success)
+            if (result.Success && result.Reservation is not null)
                 await LoadReservations(currentFilter);
         }
         finally
@@ -402,7 +398,7 @@
         try
         {
             var result = await ReservationService.MarkPartyCompleteAsync(reservationId);
-            if (result.Success)
+            if (result.Success && result.Reservation is not null)
                 await LoadReservations(currentFilter);
         }
         finally
@@ -417,7 +413,7 @@
         try
         {
             var result = await ReservationService.SeatAsync(reservationId);
-            if (result.Success)
+            if (result.Success && result.Reservation is not null)
                 await LoadReservations(currentFilter);
         }
         finally
@@ -432,7 +428,7 @@
         try
         {
             var result = await ReservationService.RestoreAsync(reservationId);
-            if (result.Success)
+            if (result.Success && result.Reservation is not null)
                 await LoadReservations(currentFilter);
         }
         finally

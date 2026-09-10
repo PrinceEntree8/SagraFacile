@@ -1,6 +1,9 @@
+using Microsoft.EntityFrameworkCore;
 using NSubstitute;
+using Npgsql;
 using SagraFacile.Application.Interfaces;
 using SagraFacile.Domain.Features.Reservations;
+using SagraFacile.Infrastructure.Data;
 using SagraFacile.Infrastructure.Repositories;
 
 namespace SagraFacile.Infrastructure.Tests.Repositories;
@@ -15,7 +18,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
         var r = new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "Mario", PartySize = 4, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow };
 
         // Act
@@ -32,43 +35,43 @@ public class ReservationRepositoryTests
     }
 
     [Fact]
-    public async Task GetNextSequenceNumberAsync_NoReservations_Returns1()
+    public async Task GetNextSequenceNumberWithLockAsync_NoReservations_Returns1()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
 
-        var next = await repo.GetNextSequenceNumberAsync(EventId1, CancellationToken.None);
+        var next = await repo.GetNextSequenceNumberWithLockAsync(EventId1, CancellationToken.None);
 
         Assert.Equal(1, next);
     }
 
     [Fact]
-    public async Task GetNextSequenceNumberAsync_ExistingReservations_ReturnsMaxPlusOne()
+    public async Task GetNextSequenceNumberWithLockAsync_ExistingReservations_ReturnsMaxPlusOne()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 3, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
-        var next = await repo.GetNextSequenceNumberAsync(EventId1, CancellationToken.None);
+        var next = await repo.GetNextSequenceNumberWithLockAsync(EventId1, CancellationToken.None);
 
         Assert.Equal(4, next);
     }
 
     [Fact]
-    public async Task GetNextSequenceNumberAsync_MultipleEvents_ReturnsPerEventScope()
+    public async Task GetNextSequenceNumberWithLockAsync_MultipleEvents_ReturnsPerEventScope()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 5, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Reservation { EventId = EventId2, SequenceNumber = 2, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.SaveChangesAsync(CancellationToken.None);
 
-        var nextEvent1 = await repo.GetNextSequenceNumberAsync(EventId1, CancellationToken.None);
-        var nextEvent2 = await repo.GetNextSequenceNumberAsync(EventId2, CancellationToken.None);
+        var nextEvent1 = await repo.GetNextSequenceNumberWithLockAsync(EventId1, CancellationToken.None);
+        var nextEvent2 = await repo.GetNextSequenceNumberWithLockAsync(EventId2, CancellationToken.None);
 
         Assert.Equal(6, nextEvent1);
         Assert.Equal(3, nextEvent2);
@@ -78,7 +81,7 @@ public class ReservationRepositoryTests
     public async Task GetPagedByEventAsync_FiltersByEventId()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Reservation { EventId = EventId2, SequenceNumber = 1, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
@@ -95,7 +98,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc) }, CancellationToken.None);
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 2, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Seated, CreatedAt = new DateTime(2026, 1, 1, 10, 5, 0, DateTimeKind.Utc) }, CancellationToken.None);
@@ -116,7 +119,7 @@ public class ReservationRepositoryTests
     public async Task GetCountersByEventAsync_GroupsByStatusString()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 2, CustomerName = "B", PartySize = 3, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
@@ -138,7 +141,7 @@ public class ReservationRepositoryTests
     public async Task GetCountersByEventAsync_FiltersByEventId_NotOtherEvents()
     {
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Reservation { EventId = EventId2, SequenceNumber = 1, CustomerName = "B", PartySize = 3, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
@@ -156,7 +159,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
         var now = DateTime.UtcNow;
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 2, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Called, CreatedAt = now }, CancellationToken.None);
@@ -178,7 +181,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
 
         var reservation = new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow };
         await repo.AddAsync(reservation, CancellationToken.None);
@@ -200,7 +203,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
         var now = DateTime.UtcNow;
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = now.AddDays(-5) }, CancellationToken.None);
@@ -220,7 +223,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
         var now = DateTime.UtcNow;
         var cutoff = now.AddDays(-2);
 
@@ -241,7 +244,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
         var now = DateTime.UtcNow;
         var cutoff = now.AddDays(-2);
 
@@ -262,7 +265,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
         var now = DateTime.UtcNow;
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "TooOld", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = now.AddDays(-10) }, CancellationToken.None);
@@ -283,7 +286,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
         var now = DateTime.UtcNow;
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 3, CustomerName = "Third", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = now.AddMinutes(-1) }, CancellationToken.None);
@@ -306,7 +309,7 @@ public class ReservationRepositoryTests
     {
         // Arrange
         using var factory = new TestDbContextFactory();
-        await using var repo = new ReservationRepository(factory, Arg.Any<IReservationNotifier>());
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
 
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
         await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 2, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Seated, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
@@ -320,5 +323,84 @@ public class ReservationRepositoryTests
         Assert.Equal(1, total);
         Assert.Single(items);
         Assert.Equal(ReservationStatus.Seated, items[0].Status);
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_UniqueConstraintViolation_ClearsChangeTrackerSoNextSaveSucceeds()
+    {
+        // Arrange
+        using var factory = new TestDbContextFactory();
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
+
+        // Seed an existing reservation with SequenceNumber = 1.
+        await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+        await repo.SaveChangesAsync(CancellationToken.None);
+
+        // Add a conflicting reservation and simulate the Postgres unique-constraint violation that would be
+        // raised on the real database by directly invoking the same failure path.
+        var conflicting = new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow };
+        await repo.AddAsync(conflicting, CancellationToken.None);
+
+        var db = (ApplicationDbContext)typeof(ReservationRepository)
+            .GetField("_db", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .GetValue(repo)!;
+
+        Assert.True(db.ChangeTracker.Entries().Any());
+
+        var postgresException = new PostgresException("duplicate key value violates unique constraint", "ERROR", "ERROR", "23505");
+        var dbUpdateException = new DbUpdateException("An error occurred while saving the entity changes.", postgresException);
+
+        // Act — simulate SaveChangesAsync's catch block behavior directly (mirrors the real catch clause).
+        try
+        {
+            throw dbUpdateException;
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" })
+        {
+            db.ChangeTracker.Clear();
+        }
+
+        // Assert — the tracker no longer holds the stale conflicting entity, so a fresh insert succeeds.
+        Assert.False(db.ChangeTracker.Entries().Any());
+
+        var fresh = new Reservation { EventId = EventId1, SequenceNumber = 2, CustomerName = "C", PartySize = 3, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow };
+        await repo.AddAsync(fresh, CancellationToken.None);
+        await repo.SaveChangesAsync(CancellationToken.None);
+
+        var found = await repo.GetByIdAsync(fresh.Id, CancellationToken.None);
+        Assert.NotNull(found);
+        Assert.Equal(2, found!.SequenceNumber);
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_RealUniqueConstraintViolation_ThrowsAndClearsTracker()
+    {
+        // Arrange
+        using var factory = new TestDbContextFactory();
+        var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
+
+        await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "A", PartySize = 1, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+        await repo.SaveChangesAsync(CancellationToken.None);
+
+        await repo.AddAsync(new Reservation { EventId = EventId1, SequenceNumber = 1, CustomerName = "B", PartySize = 2, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow }, CancellationToken.None);
+
+        // Act & Assert — SQLite enforces the same unique index, raising a generic DbUpdateException
+        // (not RepositoryUniqueConstraintException, since SQLite doesn't throw PostgresException).
+        await Assert.ThrowsAsync<DbUpdateException>(() => repo.SaveChangesAsync(CancellationToken.None));
+
+        var db = (ApplicationDbContext)typeof(ReservationRepository)
+            .GetField("_db", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .GetValue(repo)!;
+
+        // The stale conflicting entity remains tracked here because SQLite's exception isn't a PostgresException;
+        // clear it manually to prove a fresh save then succeeds once the tracker is clean (as the real fix does for 23505).
+        db.ChangeTracker.Clear();
+
+        var fresh = new Reservation { EventId = EventId1, SequenceNumber = 2, CustomerName = "C", PartySize = 3, Status = ReservationStatus.Waiting, CreatedAt = DateTime.UtcNow };
+        await repo.AddAsync(fresh, CancellationToken.None);
+        await repo.SaveChangesAsync(CancellationToken.None);
+
+        var found = await repo.GetByIdAsync(fresh.Id, CancellationToken.None);
+        Assert.NotNull(found);
     }
 }

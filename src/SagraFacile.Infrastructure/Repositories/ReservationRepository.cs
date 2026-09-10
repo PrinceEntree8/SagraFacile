@@ -9,16 +9,16 @@ using SagraFacile.Infrastructure.Data;
 
 namespace SagraFacile.Infrastructure.Repositories;
 
-public class ReservationRepository : IReservationRepository, IAsyncDisposable
+public class ReservationRepository : IReservationRepository
 {
     private readonly ApplicationDbContext _db;
     private readonly IReservationNotifier _notifier;
 
     public ReservationRepository(
-        IDbContextFactory<ApplicationDbContext> factory,
+        ApplicationDbContext db,
         IReservationNotifier notifier)
     {
-        _db = factory.CreateDbContext();
+        _db = db;
         _notifier = notifier;
     }
 
@@ -35,13 +35,68 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
             .Include(r => r.Event)
             .FirstOrDefaultAsync(r => r.EventId == eventId && r.SequenceNumber == sequenceNumber, cancellationToken);
 
-    public async Task<int> GetNextSequenceNumberAsync(int eventId, CancellationToken cancellationToken)
+    public async Task<int> GetNextSequenceNumberWithLockAsync(int eventId, CancellationToken cancellationToken)
     {
-        var last = await _db.Reservations
-            .Where(r => r.EventId == eventId)
-            .MaxAsync(r => (int?)r.SequenceNumber, cancellationToken);
+        var strategy = _db.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
 
-        return (last ?? 0) + 1;
+            var connection = _db.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+                await connection.OpenAsync(cancellationToken);
+
+            if (connection.GetType().Name.Contains("Npgsql"))
+            {
+                await using var command = connection.CreateCommand();
+                command.CommandText = "SELECT pg_advisory_xact_lock(@eventId)";
+                var param = command.CreateParameter();
+                param.ParameterName = "@eventId";
+                param.Value = eventId;
+                command.Parameters.Add(param);
+                await command.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            var last = await _db.Reservations
+                .Where(r => r.EventId == eventId)
+                .MaxAsync(r => (int?)r.SequenceNumber, cancellationToken);
+
+            return (last ?? 0) + 1;
+        });
+    }
+
+    public async Task CreateReservationWithLockAsync(Reservation reservation, CancellationToken cancellationToken)
+    {
+        var strategy = _db.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+
+            var connection = _db.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+                await connection.OpenAsync(cancellationToken);
+
+            if (connection.GetType().Name.Contains("Npgsql"))
+            {
+                await using var command = connection.CreateCommand();
+                command.CommandText = "SELECT pg_advisory_xact_lock(@eventId)";
+                var param = command.CreateParameter();
+                param.ParameterName = "@eventId";
+                param.Value = reservation.EventId;
+                command.Parameters.Add(param);
+                await command.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            var last = await _db.Reservations
+                .Where(r => r.EventId == reservation.EventId)
+                .MaxAsync(r => (int?)r.SequenceNumber, cancellationToken);
+
+            reservation.SequenceNumber = (last ?? 0) + 1;
+
+            await _db.Reservations.AddAsync(reservation, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        });
     }
 
     public async Task<(List<Reservation> Items, int TotalCount)> GetPagedAsync(
@@ -117,10 +172,12 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
         }
         catch (DbUpdateConcurrencyException)
         {
+            _db.ChangeTracker.Clear();
             throw new RepositoryConcurrencyException();
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" })
         {
+            _db.ChangeTracker.Clear();
             throw new RepositoryUniqueConstraintException("A unique constraint violation occurred.", ex);
         }
     }
@@ -133,11 +190,5 @@ public class ReservationRepository : IReservationRepository, IAsyncDisposable
             .OrderByDescending(r => r.LastCalledAt)
             .Take(maxEntries)
             .ToListAsync(cancellationToken);
-    }
-
-    public ValueTask DisposeAsync()
-    {
-        GC.SuppressFinalize(this);
-        return _db.DisposeAsync();
     }
 }

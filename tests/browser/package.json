@@ -1,0 +1,14 @@
+{
+  "name": "sagrafacile-browser-perf",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Playwright Core Web Vitals harness for SagraFacile public pages",
+  "scripts": {
+    "perf:vitals": "playwright test --config=playwright.perf.config.ts",
+    "perf:vitals:headed": "playwright test --config=playwright.perf.config.ts --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1"
+  }
+}

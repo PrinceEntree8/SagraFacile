@@ -9,33 +9,34 @@ public interface IReservationHubClient
     Task CountersUpdated(List<ReservationCounterDto> counters);
     Task AvailableSeatsUpdated(int availableSeats);
 
-    Task<CommandResult<CreateReservationResult>> CreateReservation(
+    Task<ReservationCommandResponse> CreateReservation(
         int eventId,
         string customerName,
         int partySize,
         string? notes = null,
         bool partyComplete = false);
 
-    Task<CommandResult> EditReservation(
+    Task<ReservationCommandResponse> EditReservation(
         int id,
         string? customerName = null,
         int? partySize = null,
         string? notes = null,
         ReservationStatus? status = null);
 
-    Task<CommandResult> CallReservation(
+    Task<ReservationCommandResponse> CallReservation(
         int reservationId,
         string calledBy = "Receptionist",
         string? notes = null);
 
-    Task<CommandResult> MarkPartyComplete(
+    Task<ReservationCommandResponse> MarkPartyComplete(
         int reservationId,
         string markedBy = "System");
 
-    Task<CommandResult> SeatReservation(int reservationId);
-    Task<CommandResult> CallAndSeatReservation(int eventId, int sequenceNumber);
+    Task<ReservationCommandResponse> SeatReservation(int reservationId);
+    Task<ReservationCommandResponse> CallAndSeatReservation(int eventId, int sequenceNumber);
 
-    Task<CommandResult> VoidReservation(int reservationId);
+    Task<ReservationCommandResponse> VoidReservation(int reservationId);
+    Task<ReservationCommandResponse> RestoreReservation(int reservationId);
 
     Task<CommandResult> UpdateTableCover(
         int? tableId,

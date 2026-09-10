@@ -14,17 +14,13 @@ var api = builder.AddProject<Projects.SagraFacile_Web>("web")
     .WithExternalHttpEndpoints()
     .WithEnvironment("AllowHttp", "true");
 
-var webclient = builder.AddProject<Projects.SagraFacile_WebClient>("webclient")
-    .WithReference(api)
-    .WaitFor(api);
-
 var gateway = builder.AddYarp("gateway")
     .WithHostPort(5100)
     .WithConfiguration(yarp =>
     {
-        yarp.AddRoute(webclient);
         yarp.AddRoute("/api/{**catch-all}", api);
         yarp.AddRoute("/hubs/{**catch-all}", api);
+        yarp.AddRoute(api);
     });
 
 builder.Build().Run();

@@ -5,11 +5,11 @@ using SagraFacile.Infrastructure.Data;
 
 namespace SagraFacile.Infrastructure.Repositories;
 
-public class MenuCategoryRepository : IMenuCategoryRepository, IAsyncDisposable
+public class MenuCategoryRepository : IMenuCategoryRepository
 {
     private readonly ApplicationDbContext _db;
 
-    public MenuCategoryRepository(IDbContextFactory<ApplicationDbContext> factory) => _db = factory.CreateDbContext();
+    public MenuCategoryRepository(ApplicationDbContext db) => _db = db;
 
     public Task<List<MenuCategory>> GetAllAsync(CancellationToken ct)
         => _db.MenuCategories.OrderBy(c => c.DisplayOrder).ThenBy(c => c.Name).ToListAsync(ct);
@@ -27,6 +27,4 @@ public class MenuCategoryRepository : IMenuCategoryRepository, IAsyncDisposable
     }
 
     public Task SaveChangesAsync(CancellationToken ct) => _db.SaveChangesAsync(ct);
-
-    public ValueTask DisposeAsync() => _db.DisposeAsync();
 }

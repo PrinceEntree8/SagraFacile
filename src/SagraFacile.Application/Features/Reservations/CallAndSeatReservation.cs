@@ -2,7 +2,6 @@ using FluentValidation;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
-using SagraFacile.Contracts.Common;
 using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Features.Reservations;
 
@@ -10,7 +9,7 @@ namespace SagraFacile.Application.Features.Reservations;
 
 public static class CallAndSeatReservation
 {
-    public record Command(int EventId, int SequenceNumber) : ICommand<CommandResult>;
+    public record Command(int EventId, int SequenceNumber) : ICommand<ReservationCommandResponse>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -24,20 +23,20 @@ public static class CallAndSeatReservation
     }
 
     public class Handler(IReservationRepository repository, IReservationNotifier notifier)
-        : ICommandHandler<Command, CommandResult>
+        : ICommandHandler<Command, ReservationCommandResponse>
     {
-        public async Task<CommandResult> Handle(Command command, CancellationToken cancellationToken)
+        public async Task<ReservationCommandResponse> Handle(Command command, CancellationToken cancellationToken)
         {
             var reservation = await repository.GetByEventAndSequenceAsync(command.EventId, command.SequenceNumber, cancellationToken);
 
             if (reservation == null)
-                return new CommandResult(false, $"Reservation '{command.SequenceNumber}' not found for this event");
+                return new ReservationCommandResponse(false, null, $"Reservation '{command.SequenceNumber}' not found for this event");
 
             if (reservation.Status == ReservationStatus.Voided)
-                return new CommandResult(false, "Cannot seat a voided reservation");
+                return new ReservationCommandResponse(false, null, "Cannot seat a voided reservation");
 
             if (reservation.Status == ReservationStatus.Seated)
-                return new CommandResult(false, "Reservation is already seated");
+                return new ReservationCommandResponse(false, null, "Reservation is already seated");
 
             var oldStatus = reservation.Status;
             var now = DateTime.UtcNow;
@@ -73,7 +72,7 @@ public static class CallAndSeatReservation
             }
             catch (RepositoryConcurrencyException)
             {
-                return new CommandResult(false, "This reservation was modified by another user. Please refresh and try again.");
+                return new ReservationCommandResponse(false, null, "This reservation was modified by another user. Please refresh and try again.");
             }
 
             await notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
@@ -93,7 +92,8 @@ public static class CallAndSeatReservation
                 new CountersUpdatedNotification(counters),
                 cancellationToken).ConfigureAwait(false);
 
-            return new CommandResult(true, $"Reservation {reservation.SequenceNumber} ({reservation.CustomerName}, party of {reservation.PartySize}) seated successfully");
+            return new ReservationCommandResponse(true, ReservationDtoMapper.Map(reservation),
+                $"Reservation {reservation.SequenceNumber} ({reservation.CustomerName}, party of {reservation.PartySize}) seated successfully");
         }
     }
 }

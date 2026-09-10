@@ -34,11 +34,11 @@ public static class ReservationLifecycleScenario
                     if (!response.IsSuccessStatusCode)
                         return Response.Fail();
 
-                    var createResult = await response.Content.ReadFromJsonAsync<CommandResult<CreateReservationResult>>(cancellationToken: ctx.ScenarioCancellationToken);
-                    if (createResult is null || !createResult.Success || createResult.Data is null || createResult.Data.Id <= 0)
+                    var createResult = await response.Content.ReadFromJsonAsync<ReservationCommandResponse>(cancellationToken: ctx.ScenarioCancellationToken);
+                    if (createResult is null || !createResult.Success || createResult.Reservation is null || createResult.Reservation.Id <= 0)
                         return Response.Fail(message: "Create response does not contain a valid reservation id");
 
-                    ctx.Data["reservationId"] = createResult.Data.Id;
+                    ctx.Data["reservationId"] = createResult.Reservation.Id;
                     return Response.Ok(sizeBytes: (int)(response.Content.Headers.ContentLength ?? 0));
                 });
 
@@ -95,7 +95,7 @@ public static class ReservationLifecycleScenario
                 ),
                 Simulation.Inject(
                     rate: config.CreateRatePerMinute,
-                    interval: TimeSpan.FromSeconds(30),
+                    interval: TimeSpan.FromSeconds(5),
                     during: duration > warmup ? duration - warmup : TimeSpan.Zero)
                 );
     }

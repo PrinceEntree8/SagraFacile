@@ -8,35 +8,34 @@ namespace SagraFacile.Infrastructure.Tests;
 /// <summary>
 /// Creates a fresh SQLite in-memory ApplicationDbContext for each test.
 /// SQLite is used (instead of EF InMemory) because it supports bulk operations such as ExecuteUpdateAsync.
-/// Implements IDbContextFactory so it can be passed directly to repositories that use the factory pattern.
 /// </summary>
-public sealed class TestDbContextFactory : IDbContextFactory<ApplicationDbContext>, IDisposable
+public sealed class TestDbContextFactory : IDisposable
 {
     private readonly SqliteConnection _connection;
+    public ApplicationDbContext DbContext { get; }
 
     public TestDbContextFactory()
     {
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
-        using var ctx = CreateDbContext();
-        ctx.Database.EnsureCreated();
 
-        // Seed test events so FK constraints on Reservation.EventId are satisfied.
-        ctx.Events.AddRange(
-            new Event { Id = 1, Name = "Test Event 1" },
-            new Event { Id = 2, Name = "Test Event 2" }
-        );
-        ctx.SaveChanges();
-    }
-
-    public ApplicationDbContext CreateDbContext()
-    {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseSqlite(_connection)
             .Options;
-        return new ApplicationDbContext(options);
+        DbContext = new ApplicationDbContext(options);
+        DbContext.Database.EnsureCreated();
+
+        DbContext.Events.AddRange(
+            new Event { Id = 1, Name = "Test Event 1" },
+            new Event { Id = 2, Name = "Test Event 2" }
+        );
+        DbContext.SaveChanges();
     }
 
-    public void Dispose() => _connection.Dispose();
+    public void Dispose()
+    {
+        DbContext.Dispose();
+        _connection.Dispose();
+    }
 }
 

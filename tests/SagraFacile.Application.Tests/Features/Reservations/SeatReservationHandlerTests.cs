@@ -33,6 +33,8 @@ public class SeatReservationHandlerTests
 
         // Assert
         Assert.True(result.Success);
+        Assert.NotNull(result.Reservation);
+        Assert.Equal(ReservationStatus.Seated.ToString(), result.Reservation.Status);
         Assert.Equal(ReservationStatus.Seated, reservation.Status);
         Assert.NotNull(reservation.SeatedAt);
         await _repository.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -58,6 +60,8 @@ public class SeatReservationHandlerTests
 
         // Assert
         Assert.False(result.Success);
+        Assert.Null(result.Reservation);
+        Assert.Equal("Reservation is already seated", result.Message);
         await _repository.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
         await _notifier.DidNotReceive().EnqueueStatusChangedAsync(
             Arg.Any<ReservationStatusChangedNotification>(),

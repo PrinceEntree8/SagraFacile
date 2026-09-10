@@ -8,11 +8,14 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
+    <PackageReference Include="Microsoft.OpenApi" Version="2.12.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.7" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,6 +23,7 @@
     <ProjectReference Include="..\SagraFacile.Contracts\SagraFacile.Contracts.csproj" />
     <ProjectReference Include="..\SagraFacile.Infrastructure\SagraFacile.Infrastructure.csproj" />
     <ProjectReference Include="..\SagraFacile.ServiceDefaults\SagraFacile.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\SagraFacile.WebClient\SagraFacile.WebClient.csproj" />
   </ItemGroup>
 
 </Project>
