@@ -51,11 +51,9 @@ public static class CreateReservation
             if (partyCompletionEnabled && !command.PartyComplete)
                 partyComplete = command.PartySize < minPartySize;
 
-            var sequenceNumber = await repository.GetNextSequenceNumberWithLockAsync(command.EventId, cancellationToken);
             var reservation = new Reservation
             {
                 EventId        = command.EventId,
-                SequenceNumber = sequenceNumber,
                 CustomerName   = command.CustomerName,
                 PartySize      = command.PartySize,
                 Notes          = command.Notes,
@@ -63,9 +61,7 @@ public static class CreateReservation
                 CreatedAt      = DateTime.UtcNow
             };
 
-            await repository.AddAsync(reservation, cancellationToken);
-            await repository.SaveChangesAsync(cancellationToken);
-            await repository.CommitTransactionAsync(cancellationToken);
+            await repository.CreateReservationWithLockAsync(reservation, cancellationToken);
 
             notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
                 reservation.Id,

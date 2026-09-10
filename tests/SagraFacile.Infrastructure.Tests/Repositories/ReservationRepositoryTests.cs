@@ -41,7 +41,6 @@ public class ReservationRepositoryTests
         var repo = new ReservationRepository(factory.DbContext, Arg.Any<IReservationNotifier>());
 
         var next = await repo.GetNextSequenceNumberWithLockAsync(EventId1, CancellationToken.None);
-        await repo.CommitTransactionAsync(CancellationToken.None);
 
         Assert.Equal(1, next);
     }
@@ -57,7 +56,6 @@ public class ReservationRepositoryTests
         await repo.SaveChangesAsync(CancellationToken.None);
 
         var next = await repo.GetNextSequenceNumberWithLockAsync(EventId1, CancellationToken.None);
-        await repo.CommitTransactionAsync(CancellationToken.None);
 
         Assert.Equal(4, next);
     }
@@ -73,9 +71,7 @@ public class ReservationRepositoryTests
         await repo.SaveChangesAsync(CancellationToken.None);
 
         var nextEvent1 = await repo.GetNextSequenceNumberWithLockAsync(EventId1, CancellationToken.None);
-        await repo.CommitTransactionAsync(CancellationToken.None);
         var nextEvent2 = await repo.GetNextSequenceNumberWithLockAsync(EventId2, CancellationToken.None);
-        await repo.CommitTransactionAsync(CancellationToken.None);
 
         Assert.Equal(6, nextEvent1);
         Assert.Equal(3, nextEvent2);

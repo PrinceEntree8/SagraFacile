@@ -37,28 +37,66 @@ public class ReservationRepository : IReservationRepository
 
     public async Task<int> GetNextSequenceNumberWithLockAsync(int eventId, CancellationToken cancellationToken)
     {
-        await _db.Database.BeginTransactionAsync(cancellationToken);
-
-        var connection = _db.Database.GetDbConnection();
-        if (connection.State != System.Data.ConnectionState.Open)
-            await connection.OpenAsync(cancellationToken);
-
-        if (connection.GetType().Name.Contains("Npgsql"))
+        var strategy = _db.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            await using var command = connection.CreateCommand();
-            command.CommandText = "SELECT pg_advisory_xact_lock(@eventId)";
-            var param = command.CreateParameter();
-            param.ParameterName = "@eventId";
-            param.Value = eventId;
-            command.Parameters.Add(param);
-            await command.ExecuteNonQueryAsync(cancellationToken);
-        }
+            await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
 
-        var last = await _db.Reservations
-            .Where(r => r.EventId == eventId)
-            .MaxAsync(r => (int?)r.SequenceNumber, cancellationToken);
+            var connection = _db.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+                await connection.OpenAsync(cancellationToken);
 
-        return (last ?? 0) + 1;
+            if (connection.GetType().Name.Contains("Npgsql"))
+            {
+                await using var command = connection.CreateCommand();
+                command.CommandText = "SELECT pg_advisory_xact_lock(@eventId)";
+                var param = command.CreateParameter();
+                param.ParameterName = "@eventId";
+                param.Value = eventId;
+                command.Parameters.Add(param);
+                await command.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            var last = await _db.Reservations
+                .Where(r => r.EventId == eventId)
+                .MaxAsync(r => (int?)r.SequenceNumber, cancellationToken);
+
+            return (last ?? 0) + 1;
+        });
+    }
+
+    public async Task CreateReservationWithLockAsync(Reservation reservation, CancellationToken cancellationToken)
+    {
+        var strategy = _db.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+
+            var connection = _db.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+                await connection.OpenAsync(cancellationToken);
+
+            if (connection.GetType().Name.Contains("Npgsql"))
+            {
+                await using var command = connection.CreateCommand();
+                command.CommandText = "SELECT pg_advisory_xact_lock(@eventId)";
+                var param = command.CreateParameter();
+                param.ParameterName = "@eventId";
+                param.Value = reservation.EventId;
+                command.Parameters.Add(param);
+                await command.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            var last = await _db.Reservations
+                .Where(r => r.EventId == reservation.EventId)
+                .MaxAsync(r => (int?)r.SequenceNumber, cancellationToken);
+
+            reservation.SequenceNumber = (last ?? 0) + 1;
+
+            await _db.Reservations.AddAsync(reservation, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        });
     }
 
     public async Task<(List<Reservation> Items, int TotalCount)> GetPagedAsync(
@@ -141,15 +179,6 @@ public class ReservationRepository : IReservationRepository
         {
             _db.ChangeTracker.Clear();
             throw new RepositoryUniqueConstraintException("A unique constraint violation occurred.", ex);
-        }
-    }
-
-    public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
-    {
-        var transaction = _db.Database.CurrentTransaction;
-        if (transaction != null)
-        {
-            await transaction.CommitAsync(cancellationToken);
         }
     }
 
