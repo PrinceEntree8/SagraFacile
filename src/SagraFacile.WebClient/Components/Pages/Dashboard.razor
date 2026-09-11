@@ -2,10 +2,16 @@
 @attribute [Authorize]
 @using Microsoft.AspNetCore.Components.Authorization
 @using SagraFacile.Contracts.Events
+@using SagraFacile.Contracts.Reservations
+@using SagraFacile.Domain.Features.Reservations
 @using SagraFacile.WebClient.Services
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IEventService EventService
+@inject IReservationService ReservationService
+@inject IServiceProvider Services
+@inject ToastService ToastService
 @inject IStringLocalizer<SharedResource> L
+@implements IDisposable
 
 <PageTitle>@L["Dashboard_PageTitle"]</PageTitle>
 
@@ -116,6 +122,61 @@
             </div>
         }
     </div>
+
+    @if (activeEvent is not null)
+    {
+        <hr class="my-4" />
+
+        <h2 class="h4 mb-3">
+            <i class="bi bi-bell-fill text-warning me-2"></i>
+            @L["Dashboard_LiveCalls"]
+        </h2>
+
+        @if (initialLoadFailed)
+        {
+            <div class="alert alert-warning" role="alert">
+                @L["NowCalling_LoadWarning"]
+            </div>
+        }
+
+        @if (calledEntries.Count == 0)
+        {
+            <div class="text-center text-muted mt-3" role="status" aria-live="polite">
+                <p class="fs-5 mb-0">@L["Dashboard_WaitingForCalls"]</p>
+            </div>
+        }
+        else
+        {
+            var lastCalled = calledEntries[0];
+            <section class="mb-3" aria-label="Last called reservation" aria-live="assertive">
+                <div class="card border-primary">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-primary fs-5 me-2">#@lastCalled.SequenceNumber</span>
+                            <strong>@lastCalled.CustomerName</strong>
+                        </div>
+                        <div class="text-muted">
+                            <i class="bi bi-people"></i> @lastCalled.PartySize
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            @if (calledEntries.Count > 1)
+            {
+                <ul class="list-group" role="list">
+                    @foreach (var entry in calledEntries.Skip(1).Take(9))
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center" role="listitem">
+                            <span class="badge bg-secondary me-2">#@entry.SequenceNumber</span>
+                            <span class="flex-grow-1">@entry.CustomerName</span>
+                            <span class="text-muted"><i class="bi bi-people"></i> @entry.PartySize</span>
+                        </li>
+                    }
+                </ul>
+            }
+        }
+    }
 </div>
 
 <style>
@@ -133,6 +194,9 @@
     private bool isAdmin;
     private bool isSupervisoreOrAbove;
     private bool isCassiereOrAbove;
+    private readonly List<CalledEntry> calledEntries = [];
+    private bool initialLoadFailed;
+    private IDisposable? reservationSubscription;
 
     protected override async Task OnInitializedAsync()
     {
@@ -146,9 +210,73 @@
         try
         {
             activeEvent = await EventService.GetActiveEventAsync();
+            if (activeEvent is not null)
+            {
+                var lastCalled = await ReservationService.GetLastCalledReservationsAsync(activeEvent.Id, 10);
+                calledEntries.AddRange(lastCalled);
+            }
+        }
+        catch
+        {
+            initialLoadFailed = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && activeEvent is not null)
+        {
+            await InitializeSignalRAsync();
+        }
+    }
+
+    private async Task InitializeSignalRAsync()
+    {
+        try
+        {
+            var realtimeService = Services.GetRequiredService<IReservationRealtimeService>();
+            await realtimeService.EnsureStartedAsync();
+
+            reservationSubscription = realtimeService.SubscribeReservationStatusChanged(async notification =>
+            {
+                if (notification.NewStatus != ReservationStatus.Called)
+                {
+                    calledEntries.RemoveAll(entry => entry.Id == notification.ReservationId);
+                }
+                else
+                {
+                    var entry = new CalledEntry(
+                        notification.ReservationId,
+                        notification.SequenceNumber,
+                        notification.CustomerName,
+                        notification.PartySize,
+                        notification.CallCount ?? 0);
+
+                    calledEntries.RemoveAll(existing => existing.Id == entry.Id);
+                    calledEntries.Insert(0, entry);
+                    if (calledEntries.Count > 10)
+                    {
+                        calledEntries.RemoveRange(10, calledEntries.Count - 10);
+                    }
+
+                    await InvokeAsync(() =>
+                    {
+                        ToastService.Notify(new ToastMessage(
+                            ToastType.Info,
+                            string.Format(L["Dashboard_NewCall"], entry.CustomerName, entry.PartySize)));
+                    });
+                }
+
+                await InvokeAsync(StateHasChanged);
+            });
         }
         catch
         {
         }
+    }
+
+    public void Dispose()
+    {
+        reservationSubscription?.Dispose();
     }
 }

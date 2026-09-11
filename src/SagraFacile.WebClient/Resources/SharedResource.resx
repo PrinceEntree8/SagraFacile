@@ -464,4 +464,7 @@
     <data name="Dashboard_Reports_Desc" xml:space="preserve"><value>Filterable reservation reports and statistics</value></data>
     <data name="Dashboard_Events_Desc" xml:space="preserve"><value>Create and manage events</value></data>
     <data name="Dashboard_Admin_Desc" xml:space="preserve"><value>User management and system settings</value></data>
+    <data name="Dashboard_LiveCalls" xml:space="preserve"><value>Live Calls</value></data>
+    <data name="Dashboard_WaitingForCalls" xml:space="preserve"><value>Waiting for calls...</value></data>
+    <data name="Dashboard_NewCall" xml:space="preserve"><value>New call: {0} (party of {1})</value></data>
 </root>

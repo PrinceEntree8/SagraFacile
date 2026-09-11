@@ -459,4 +459,7 @@
   <data name="Dashboard_Reports_Desc" xml:space="preserve"><value>Report e statistiche delle prenotazioni</value></data>
   <data name="Dashboard_Events_Desc" xml:space="preserve"><value>Crea e gestisci eventi</value></data>
   <data name="Dashboard_Admin_Desc" xml:space="preserve"><value>Gestione utenti e impostazioni di sistema</value></data>
+  <data name="Dashboard_LiveCalls" xml:space="preserve"><value>Chiamate Live</value></data>
+  <data name="Dashboard_WaitingForCalls" xml:space="preserve"><value>In attesa di chiamate...</value></data>
+  <data name="Dashboard_NewCall" xml:space="preserve"><value>Nuova chiamata: {0} (gruppo di {1})</value></data>
 </root>
