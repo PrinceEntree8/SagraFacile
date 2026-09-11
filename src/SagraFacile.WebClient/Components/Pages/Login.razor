@@ -56,7 +56,7 @@
         loginModel ??= new LoginModel();
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         if (authState.User.Identity?.IsAuthenticated == true)
-            Navigation.NavigateTo("/");
+            Navigation.NavigateTo("/dashboard");
     }
 
     private async Task HandleLogin()
@@ -80,7 +80,7 @@
         try
         {
             await AuthService.LoginAsync(new LoginRequest(loginModel.Username, loginModel.Password));
-            Navigation.NavigateTo("/", forceLoad: true);
+            Navigation.NavigateTo("/dashboard", forceLoad: true);
         }
         catch
         {
