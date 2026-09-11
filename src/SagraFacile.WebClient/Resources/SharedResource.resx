@@ -450,4 +450,18 @@
         <value>Reservation</value>
         <comment>ReservationView_ModalTitle</comment>
     </data>
+
+    <!-- Dashboard -->
+    <data name="Nav_Dashboard" xml:space="preserve"><value>Dashboard</value></data>
+    <data name="Dashboard_PageTitle" xml:space="preserve"><value>Dashboard - SagraFacile</value></data>
+    <data name="Dashboard_Heading" xml:space="preserve"><value>Dashboard</value></data>
+    <data name="Dashboard_ActiveEvent" xml:space="preserve"><value>Active Event</value></data>
+    <data name="Dashboard_QuickAccess" xml:space="preserve"><value>Quick Access</value></data>
+    <data name="Dashboard_NowCalling_Desc" xml:space="preserve"><value>Live display board of called reservations</value></data>
+    <data name="Dashboard_Receptionist_Desc" xml:space="preserve"><value>Create and manage reservations, call guests</value></data>
+    <data name="Dashboard_HeadWaiter_Desc" xml:space="preserve"><value>Best-fit table seating and announcements</value></data>
+    <data name="Dashboard_Overview_Desc" xml:space="preserve"><value>Grid overview of all reservations</value></data>
+    <data name="Dashboard_Reports_Desc" xml:space="preserve"><value>Filterable reservation reports and statistics</value></data>
+    <data name="Dashboard_Events_Desc" xml:space="preserve"><value>Create and manage events</value></data>
+    <data name="Dashboard_Admin_Desc" xml:space="preserve"><value>User management and system settings</value></data>
 </root>

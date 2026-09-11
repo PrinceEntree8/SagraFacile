@@ -1,0 +1,154 @@
+@page "/dashboard"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Authorization
+@using SagraFacile.Contracts.Events
+@using SagraFacile.WebClient.Services
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IEventService EventService
+@inject IStringLocalizer<SharedResource> L
+
+<PageTitle>@L["Dashboard_PageTitle"]</PageTitle>
+
+<div class="container py-4">
+    <h1 class="mb-4">@L["Dashboard_Heading"]</h1>
+
+    @if (activeEvent is not null)
+    {
+        <div class="alert alert-info d-flex align-items-center" role="alert">
+            <i class="bi bi-calendar-event me-2"></i>
+            <span>@L["Dashboard_ActiveEvent"]: <strong>@activeEvent.Name</strong></span>
+        </div>
+    }
+
+    <h2 class="h4 mb-3">@L["Dashboard_QuickAccess"]</h2>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <div class="col">
+            <a href="/now-calling" class="text-decoration-none">
+                <div class="card h-100 shadow-sm border-0 hover-card">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-megaphone fs-1 text-primary mb-3"></i>
+                        <h5 class="card-title">@L["Nav_NowCalling"]</h5>
+                        <p class="card-text text-muted small">@L["Dashboard_NowCalling_Desc"]</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        @if (isCassiereOrAbove)
+        {
+            <div class="col">
+                <a href="/receptionist" class="text-decoration-none">
+                    <div class="card h-100 shadow-sm border-0 hover-card">
+                        <div class="card-body text-center p-4">
+                            <i class="bi bi-person-check fs-1 text-success mb-3"></i>
+                            <h5 class="card-title">@L["Nav_Receptionist"]</h5>
+                            <p class="card-text text-muted small">@L["Dashboard_Receptionist_Desc"]</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col">
+                <a href="/headwaiter" class="text-decoration-none">
+                    <div class="card h-100 shadow-sm border-0 hover-card">
+                        <div class="card-body text-center p-4">
+                            <i class="bi bi-table fs-1 text-info mb-3"></i>
+                            <h5 class="card-title">@L["Nav_HeadWaiter"]</h5>
+                            <p class="card-text text-muted small">@L["Dashboard_HeadWaiter_Desc"]</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+
+        @if (isSupervisoreOrAbove)
+        {
+            <div class="col">
+                <a href="/reservation-overview" class="text-decoration-none">
+                    <div class="card h-100 shadow-sm border-0 hover-card">
+                        <div class="card-body text-center p-4">
+                            <i class="bi bi-grid-3x3-gap fs-1 text-warning mb-3"></i>
+                            <h5 class="card-title">@L["ReservationOverview_Title"]</h5>
+                            <p class="card-text text-muted small">@L["Dashboard_Overview_Desc"]</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col">
+                <a href="/reservation-report" class="text-decoration-none">
+                    <div class="card h-100 shadow-sm border-0 hover-card">
+                        <div class="card-body text-center p-4">
+                            <i class="bi bi-bar-chart fs-1 text-secondary mb-3"></i>
+                            <h5 class="card-title">@L["Nav_Reports"]</h5>
+                            <p class="card-text text-muted small">@L["Dashboard_Reports_Desc"]</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+
+        @if (isAdmin)
+        {
+            <div class="col">
+                <a href="/events" class="text-decoration-none">
+                    <div class="card h-100 shadow-sm border-0 hover-card">
+                        <div class="card-body text-center p-4">
+                            <i class="bi bi-calendar-event fs-1 text-danger mb-3"></i>
+                            <h5 class="card-title">@L["Nav_Events"]</h5>
+                            <p class="card-text text-muted small">@L["Dashboard_Events_Desc"]</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col">
+                <a href="/admin" class="text-decoration-none">
+                    <div class="card h-100 shadow-sm border-0 hover-card">
+                        <div class="card-body text-center p-4">
+                            <i class="bi bi-gear fs-1 text-dark mb-3"></i>
+                            <h5 class="card-title">@L["Nav_Admin"]</h5>
+                            <p class="card-text text-muted small">@L["Dashboard_Admin_Desc"]</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .hover-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .hover-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+</style>
+
+@code {
+    private EventDto? activeEvent;
+    private bool isAdmin;
+    private bool isSupervisoreOrAbove;
+    private bool isCassiereOrAbove;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        isAdmin = user.IsInRole("Admin");
+        isSupervisoreOrAbove = isAdmin || user.IsInRole("Supervisore");
+        isCassiereOrAbove = isSupervisoreOrAbove || user.IsInRole("Cassiere");
+
+        try
+        {
+            activeEvent = await EventService.GetActiveEventAsync();
+        }
+        catch
+        {
+        }
+    }
+}
