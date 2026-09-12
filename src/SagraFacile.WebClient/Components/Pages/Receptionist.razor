@@ -13,6 +13,13 @@
 
 <PageTitle>@L["Receptionist_PageTitle"]</PageTitle>
 
+<style>
+    @@keyframes countdown {
+        from { width: 100%; }
+        to { width: 0%; }
+    }
+</style>
+
 <h1>@L["Receptionist_Heading"]</h1>
 
 <div class="row receptionist-layout g-3">
@@ -23,54 +30,69 @@
                 <h3>@L["Receptionist_NewReservation"]</h3>
             </div>
             <div class="card-body">
-                <EditForm Model="@newReservation" OnValidSubmit="@CreateReservation">
-                    <div class="mb-3">
-                        <label class="form-label">@L["Receptionist_CustomerName"]</label>
-                        <InputText @bind-Value="newReservation.CustomerName"
-                                   class="@GetInputClass(nameError)"
-                                   autofocus autocomplete="off"/>
-                        @if (nameError != string.Empty)
-                        {
-                            <div class="invalid-feedback">@nameError</div>
-                        }
+                @if (isShowingSequenceId)
+                {
+                    <div class="text-center py-4" style="cursor: pointer;" @onclick="HideSequenceDisplay">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                        <p class="mb-1 fw-semibold">@L["Receptionist_ReservationCreatedTitle"]</p>
+                        <h1 class="display-1 fw-bold text-success mb-1">@lastCreatedSequenceNumber</h1>
+                        <small class="text-muted">@L["Receptionist_ClickToDismiss"]</small>
+                        <div class="progress mt-3" style="height: 4px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%; animation: countdown 5s linear forwards;"></div>
+                        </div>
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">@L["Receptionist_PartySize"]</label>
-                        <div class="input-group">
-                            <InputNumber @bind-Value="newReservation.PartySize"
-                                         @bind-Value:after="() => OnPartySizeChanged(newReservation.PartySize)"
-                                         class="@GetInputClass(partySizeError)" />
-                            @if (partyCompletionEnabled) {
-                                <span class="input-group-text">@L["Receptionist_Label_PartyComplete"]</span>
-                                <div class="input-group-text ">
-                                    <InputCheckbox @bind-Value="newReservation.PartyComplete" class="form-check-input m-0" id="partyCompleteCheck" />
-                                </div>
+                }
+                else
+                {
+                    <EditForm Model="@newReservation" OnValidSubmit="@CreateReservation">
+                        <div class="mb-3">
+                            <label class="form-label">@L["Receptionist_CustomerName"]</label>
+                            <InputText @bind-Value="newReservation.CustomerName"
+                                       class="@GetInputClass(nameError)"
+                                       autofocus autocomplete="off"/>
+                            @if (nameError != string.Empty)
+                            {
+                                <div class="invalid-feedback">@nameError</div>
                             }
                         </div>
-                        @if (partySizeError != string.Empty)
-                        {
-                            <div class="invalid-feedback">@partySizeError</div>
-                        }
-                    </div>
 
-                    @if (showNotesField)
-                    {
                         <div class="mb-3">
-                            <label class="form-label">@L["Receptionist_Notes"]</label>
-                            <InputTextArea @bind-Value="newReservation.Notes" class="form-control" rows="3" />
-                            <small class="form-text text-muted">@L["Receptionist_NotesHint"]</small>
+                            <label class="form-label">@L["Receptionist_PartySize"]</label>
+                            <div class="input-group">
+                                <InputNumber @bind-Value="newReservation.PartySize"
+                                             @bind-Value:after="() => OnPartySizeChanged(newReservation.PartySize)"
+                                             class="@GetInputClass(partySizeError)" />
+                                @if (partyCompletionEnabled) {
+                                    <span class="input-group-text">@L["Receptionist_Label_PartyComplete"]</span>
+                                    <div class="input-group-text ">
+                                        <InputCheckbox @bind-Value="newReservation.PartyComplete" class="form-check-input m-0" id="partyCompleteCheck" />
+                                    </div>
+                                }
+                            </div>
+                            @if (partySizeError != string.Empty)
+                            {
+                                <div class="invalid-feedback">@partySizeError</div>
+                            }
                         </div>
-                    }
 
-                    <button type="submit" class="btn btn-primary" disabled="@(isCreating || actionInProgress != null)">
-                        @if (isCreating)
+                        @if (showNotesField)
                         {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <div class="mb-3">
+                                <label class="form-label">@L["Receptionist_Notes"]</label>
+                                <InputTextArea @bind-Value="newReservation.Notes" class="form-control" rows="3" />
+                                <small class="form-text text-muted">@L["Receptionist_NotesHint"]</small>
+                            </div>
                         }
-                        @L["Receptionist_Submit"]
-                    </button>
-                </EditForm>
+
+                        <button type="submit" class="btn btn-primary" disabled="@(isCreating || actionInProgress != null)">
+                            @if (isCreating)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            @L["Receptionist_Submit"]
+                        </button>
+                    </EditForm>
+                }
             </div>
         </div>
 
@@ -229,6 +251,9 @@
     private string partySizeError = string.Empty;
     private int? actionInProgress = null;
     private string? currentFilter = null;
+    private bool isShowingSequenceId = false;
+    private int lastCreatedSequenceNumber = 0;
+    private CancellationTokenSource? sequenceDisplayCts;
     
 
     protected override async Task OnInitializedAsync()
@@ -360,6 +385,11 @@
                 var sequenceNumber = reservation.SequenceNumber;
                 ToastService.Notify(new ToastMessage(ToastType.Success, string.Format(L["Receptionist_ReservationCreated"], sequenceNumber)));
                 newReservation = new();
+                lastCreatedSequenceNumber = sequenceNumber;
+                isShowingSequenceId = true;
+                sequenceDisplayCts?.Cancel();
+                sequenceDisplayCts = new CancellationTokenSource();
+                _ = StartSequenceDisplayTimerAsync(sequenceDisplayCts.Token);
                 await LoadReservations(currentFilter);
             }
             else
@@ -478,8 +508,32 @@
         builder.CloseElement();
     };
 
+    private void HideSequenceDisplay()
+    {
+        sequenceDisplayCts?.Cancel();
+        isShowingSequenceId = false;
+    }
+
+    private async Task StartSequenceDisplayTimerAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(5), ct);
+            if (!ct.IsCancellationRequested)
+            {
+                isShowingSequenceId = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
+        sequenceDisplayCts?.Cancel();
+        sequenceDisplayCts?.Dispose();
         reservationStatusSubscription?.Dispose();
         availableSeatsSubscription?.Dispose();
         countersSubscription?.Dispose();

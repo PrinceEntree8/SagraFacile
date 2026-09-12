@@ -217,6 +217,8 @@
     <data name="Receptionist_NameRequired" xml:space="preserve"><value>Customer name is required.</value></data>
     <data name="Receptionist_PartySizeMin" xml:space="preserve"><value>Party size must be at least 1.</value></data>
     <data name="Receptionist_SeatsContextFull" xml:space="preserve"><value>No seats available</value></data>
+    <data name="Receptionist_ReservationCreatedTitle" xml:space="preserve"><value>Reservation recorded!</value></data>
+    <data name="Receptionist_ClickToDismiss" xml:space="preserve"><value>Click to dismiss</value></data>
 
     <!-- Head Waiter -->
     <data name="HeadWaiter_PageTitle" xml:space="preserve"><value>Head Waiter - Available Seats</value></data>

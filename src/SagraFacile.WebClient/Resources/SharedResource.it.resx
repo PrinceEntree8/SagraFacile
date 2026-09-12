@@ -212,6 +212,8 @@
   <data name="Receptionist_NameRequired" xml:space="preserve"><value>Il nome del cliente è obbligatorio.</value></data>
   <data name="Receptionist_PartySizeMin" xml:space="preserve"><value>Il numero di persone deve essere almeno 1.</value></data>
   <data name="Receptionist_SeatsContextFull" xml:space="preserve"><value>Nessun posto disponibile</value></data>
+  <data name="Receptionist_ReservationCreatedTitle" xml:space="preserve"><value>Prenotazione registrata!</value></data>
+  <data name="Receptionist_ClickToDismiss" xml:space="preserve"><value>Clicca per chiudere</value></data>
 
   <!-- Head Waiter -->
   <data name="HeadWaiter_PageTitle" xml:space="preserve"><value>Capo Cameriere - Accomoda</value></data>
