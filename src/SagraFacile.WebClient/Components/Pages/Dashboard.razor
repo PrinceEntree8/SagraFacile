@@ -26,157 +26,161 @@
         </div>
     }
 
-    <h2 class="h4 mb-3">@L["Dashboard_QuickAccess"]</h2>
+    <div class="row g-4">
+        <div class="col-12 col-lg-8">
+            <h2 class="h4 mb-3">@L["Dashboard_QuickAccess"]</h2>
 
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        <div class="col">
-            <a href="/now-calling" class="text-decoration-none">
-                <div class="card h-100 shadow-sm border-0 hover-card">
-                    <div class="card-body text-center p-4">
-                        <i class="bi bi-megaphone fs-1 text-primary mb-3"></i>
-                        <h5 class="card-title">@L["Nav_NowCalling"]</h5>
-                        <p class="card-text text-muted small">@L["Dashboard_NowCalling_Desc"]</p>
-                    </div>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                <div class="col">
+                    <a href="/now-calling" class="text-decoration-none">
+                        <div class="card h-100 shadow-sm border-0 hover-card">
+                            <div class="card-body text-center p-4">
+                                <i class="bi bi-megaphone fs-1 text-primary mb-3"></i>
+                                <h5 class="card-title">@L["Nav_NowCalling"]</h5>
+                                <p class="card-text text-muted small">@L["Dashboard_NowCalling_Desc"]</p>
+                            </div>
+                        </div>
+                    </a>
                 </div>
-            </a>
+
+                @if (isCassiereOrAbove)
+                {
+                    <div class="col">
+                        <a href="/receptionist" class="text-decoration-none">
+                            <div class="card h-100 shadow-sm border-0 hover-card">
+                                <div class="card-body text-center p-4">
+                                    <i class="bi bi-person-check fs-1 text-success mb-3"></i>
+                                    <h5 class="card-title">@L["Nav_Receptionist"]</h5>
+                                    <p class="card-text text-muted small">@L["Dashboard_Receptionist_Desc"]</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col">
+                        <a href="/headwaiter" class="text-decoration-none">
+                            <div class="card h-100 shadow-sm border-0 hover-card">
+                                <div class="card-body text-center p-4">
+                                    <i class="bi bi-table fs-1 text-info mb-3"></i>
+                                    <h5 class="card-title">@L["Nav_HeadWaiter"]</h5>
+                                    <p class="card-text text-muted small">@L["Dashboard_HeadWaiter_Desc"]</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                }
+
+                @if (isSupervisoreOrAbove)
+                {
+                    <div class="col">
+                        <a href="/reservation-overview" class="text-decoration-none">
+                            <div class="card h-100 shadow-sm border-0 hover-card">
+                                <div class="card-body text-center p-4">
+                                    <i class="bi bi-grid-3x3-gap fs-1 text-warning mb-3"></i>
+                                    <h5 class="card-title">@L["ReservationOverview_Title"]</h5>
+                                    <p class="card-text text-muted small">@L["Dashboard_Overview_Desc"]</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="col">
+                        <a href="/reservation-report" class="text-decoration-none">
+                            <div class="card h-100 shadow-sm border-0 hover-card">
+                                <div class="card-body text-center p-4">
+                                    <i class="bi bi-bar-chart fs-1 text-secondary mb-3"></i>
+                                    <h5 class="card-title">@L["Nav_Reports"]</h5>
+                                    <p class="card-text text-muted small">@L["Dashboard_Reports_Desc"]</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                }
+
+                @if (isAdmin)
+                {
+                    <div class="col">
+                        <a href="/events" class="text-decoration-none">
+                            <div class="card h-100 shadow-sm border-0 hover-card">
+                                <div class="card-body text-center p-4">
+                                    <i class="bi bi-calendar-event fs-1 text-danger mb-3"></i>
+                                    <h5 class="card-title">@L["Nav_Events"]</h5>
+                                    <p class="card-text text-muted small">@L["Dashboard_Events_Desc"]</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="col">
+                        <a href="/admin" class="text-decoration-none">
+                            <div class="card h-100 shadow-sm border-0 hover-card">
+                                <div class="card-body text-center p-4">
+                                    <i class="bi bi-gear fs-1 text-dark mb-3"></i>
+                                    <h5 class="card-title">@L["Nav_Admin"]</h5>
+                                    <p class="card-text text-muted small">@L["Dashboard_Admin_Desc"]</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
         </div>
 
-        @if (isCassiereOrAbove)
+        @if (activeEvent is not null && (calledEntries.Count > 0 || initialLoadFailed))
         {
-            <div class="col">
-                <a href="/receptionist" class="text-decoration-none">
-                    <div class="card h-100 shadow-sm border-0 hover-card">
-                        <div class="card-body text-center p-4">
-                            <i class="bi bi-person-check fs-1 text-success mb-3"></i>
-                            <h5 class="card-title">@L["Nav_Receptionist"]</h5>
-                            <p class="card-text text-muted small">@L["Dashboard_Receptionist_Desc"]</p>
-                        </div>
+            <div class="col-12 col-lg-4">
+                <section class="card h-100 shadow-sm" aria-label='@L["Dashboard_LiveCalls"]' aria-live="assertive">
+                    <div class="card-header bg-transparent">
+                        <h2 class="h4 mb-0">
+                            <i class="bi bi-bell-fill text-warning me-2"></i>
+                            @L["Dashboard_LiveCalls"]
+                        </h2>
                     </div>
-                </a>
-            </div>
 
-            <div class="col">
-                <a href="/headwaiter" class="text-decoration-none">
-                    <div class="card h-100 shadow-sm border-0 hover-card">
-                        <div class="card-body text-center p-4">
-                            <i class="bi bi-table fs-1 text-info mb-3"></i>
-                            <h5 class="card-title">@L["Nav_HeadWaiter"]</h5>
-                            <p class="card-text text-muted small">@L["Dashboard_HeadWaiter_Desc"]</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        }
+                    <div class="card-body">
 
-        @if (isSupervisoreOrAbove)
-        {
-            <div class="col">
-                <a href="/reservation-overview" class="text-decoration-none">
-                    <div class="card h-100 shadow-sm border-0 hover-card">
-                        <div class="card-body text-center p-4">
-                            <i class="bi bi-grid-3x3-gap fs-1 text-warning mb-3"></i>
-                            <h5 class="card-title">@L["ReservationOverview_Title"]</h5>
-                            <p class="card-text text-muted small">@L["Dashboard_Overview_Desc"]</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
+                        @if (initialLoadFailed)
+                        {
+                            <div class="alert alert-warning" role="alert">
+                                @L["NowCalling_LoadWarning"]
+                            </div>
+                        }
 
-            <div class="col">
-                <a href="/reservation-report" class="text-decoration-none">
-                    <div class="card h-100 shadow-sm border-0 hover-card">
-                        <div class="card-body text-center p-4">
-                            <i class="bi bi-bar-chart fs-1 text-secondary mb-3"></i>
-                            <h5 class="card-title">@L["Nav_Reports"]</h5>
-                            <p class="card-text text-muted small">@L["Dashboard_Reports_Desc"]</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        }
+                        @if (calledEntries.Count > 0)
+                        {
+                            var lastCalled = calledEntries[0];
+                            <section class="mb-3" aria-label='@L["Dashboard_LiveCalls"]'>
+                                <div class="card border-primary">
+                                    <div class="card-body d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span class="badge bg-primary fs-5 me-2">#@lastCalled.SequenceNumber</span>
+                                            <strong>@lastCalled.CustomerName</strong>
+                                        </div>
+                                        <div class="text-muted">
+                                            <i class="bi bi-people"></i> @lastCalled.PartySize
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
 
-        @if (isAdmin)
-        {
-            <div class="col">
-                <a href="/events" class="text-decoration-none">
-                    <div class="card h-100 shadow-sm border-0 hover-card">
-                        <div class="card-body text-center p-4">
-                            <i class="bi bi-calendar-event fs-1 text-danger mb-3"></i>
-                            <h5 class="card-title">@L["Nav_Events"]</h5>
-                            <p class="card-text text-muted small">@L["Dashboard_Events_Desc"]</p>
-                        </div>
+                            @if (calledEntries.Count > 1)
+                            {
+                                <ul class="list-group" role="list">
+                                    @foreach (var entry in calledEntries.Skip(1).Take(9))
+                                    {
+                                        <li class="list-group-item d-flex justify-content-between align-items-center" role="listitem">
+                                            <span class="badge bg-secondary me-2">#@entry.SequenceNumber</span>
+                                            <span class="flex-grow-1">@entry.CustomerName</span>
+                                            <span class="text-muted"><i class="bi bi-people"></i> @entry.PartySize</span>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        }
                     </div>
-                </a>
-            </div>
-
-            <div class="col">
-                <a href="/admin" class="text-decoration-none">
-                    <div class="card h-100 shadow-sm border-0 hover-card">
-                        <div class="card-body text-center p-4">
-                            <i class="bi bi-gear fs-1 text-dark mb-3"></i>
-                            <h5 class="card-title">@L["Nav_Admin"]</h5>
-                            <p class="card-text text-muted small">@L["Dashboard_Admin_Desc"]</p>
-                        </div>
-                    </div>
-                </a>
+                </section>
             </div>
         }
     </div>
-
-    @if (activeEvent is not null)
-    {
-        <hr class="my-4" />
-
-        <h2 class="h4 mb-3">
-            <i class="bi bi-bell-fill text-warning me-2"></i>
-            @L["Dashboard_LiveCalls"]
-        </h2>
-
-        @if (initialLoadFailed)
-        {
-            <div class="alert alert-warning" role="alert">
-                @L["NowCalling_LoadWarning"]
-            </div>
-        }
-
-        @if (calledEntries.Count == 0)
-        {
-            <div class="text-center text-muted mt-3" role="status" aria-live="polite">
-                <p class="fs-5 mb-0">@L["Dashboard_WaitingForCalls"]</p>
-            </div>
-        }
-        else
-        {
-            var lastCalled = calledEntries[0];
-            <section class="mb-3" aria-label="Last called reservation" aria-live="assertive">
-                <div class="card border-primary">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="badge bg-primary fs-5 me-2">#@lastCalled.SequenceNumber</span>
-                            <strong>@lastCalled.CustomerName</strong>
-                        </div>
-                        <div class="text-muted">
-                            <i class="bi bi-people"></i> @lastCalled.PartySize
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            @if (calledEntries.Count > 1)
-            {
-                <ul class="list-group" role="list">
-                    @foreach (var entry in calledEntries.Skip(1).Take(9))
-                    {
-                        <li class="list-group-item d-flex justify-content-between align-items-center" role="listitem">
-                            <span class="badge bg-secondary me-2">#@entry.SequenceNumber</span>
-                            <span class="flex-grow-1">@entry.CustomerName</span>
-                            <span class="text-muted"><i class="bi bi-people"></i> @entry.PartySize</span>
-                        </li>
-                    }
-                </ul>
-            }
-        }
-    }
 </div>
 
 <style>
