@@ -47,4 +47,4 @@ public record ReservationMatchDto(
     
 public record CalledEntry(int Id, int SequenceNumber, string CustomerName, int PartySize, int CallCount);
 
-public record CreateReservationResult(int Id, int SequenceNumber);
+public record ReservationCommandResponse(bool Success, ReservationDto? Reservation, string? Message = null);

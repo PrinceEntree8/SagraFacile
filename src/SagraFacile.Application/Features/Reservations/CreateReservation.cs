@@ -2,7 +2,6 @@ using FluentValidation;
 using SagraFacile.Application.Exceptions;
 using SagraFacile.Application.Infrastructure.CQRS;
 using SagraFacile.Application.Interfaces;
-using SagraFacile.Contracts.Common;
 using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Extensions;
 using SagraFacile.Domain.Features.Reservations;
@@ -17,7 +16,7 @@ public static class CreateReservation
         int PartySize,
         string? Notes = null,
         bool PartyComplete = false
-    ) : ICommand<CommandResult<CreateReservationResult>>;
+    ) : ICommand<ReservationCommandResponse>;
 
     public class Validator : AbstractValidator<Command>
     {
@@ -38,10 +37,10 @@ public static class CreateReservation
     }
 
     public class Handler(IReservationRepository repository, IReservationNotifier notifier, IEventRepository eventRepository)
-        : ICommandHandler<Command, CommandResult<CreateReservationResult>>
+        : ICommandHandler<Command, ReservationCommandResponse>
     {
 
-        public async Task<CommandResult<CreateReservationResult>> Handle(Command command, CancellationToken cancellationToken)
+        public async Task<ReservationCommandResponse> Handle(Command command, CancellationToken cancellationToken)
         {
             var reservationEvent = await eventRepository.GetByIdAsync(command.EventId, cancellationToken);
             var partyCompletionEnabled = reservationEvent?.AdditionalOptions.Reservations.PartyCompletion.Enabled ?? false;
@@ -54,6 +53,7 @@ public static class CreateReservation
             const int maxRetries = 5;
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
+                await repository.AcquireEventLockAsync(command.EventId, cancellationToken);
                 var sequenceNumber = await repository.GetNextSequenceNumberAsync(command.EventId, cancellationToken);
                 var reservation = new Reservation
                 {
@@ -66,12 +66,16 @@ public static class CreateReservation
                     CreatedAt      = DateTime.UtcNow
                 };
 
-                try
-                {
                     await repository.AddAsync(reservation, cancellationToken);
-                    await repository.SaveChangesAsync(cancellationToken);
-                    
-                                
+                    try
+                    {
+                        await repository.SaveChangesAsync(cancellationToken);
+                    }
+                    catch (RepositoryUniqueConstraintException) when (attempt < maxRetries - 1)
+                    {
+                        continue;
+                    }
+
                     notifier.EnqueueStatusChangedAsync(new ReservationStatusChangedNotification(
                         reservation.Id,
                         reservation.SequenceNumber,
@@ -90,17 +94,12 @@ public static class CreateReservation
                         new CountersUpdatedNotification(counters),
                         cancellationToken).Forget();
 
-                    return new CommandResult<CreateReservationResult>(true,
-                        new CreateReservationResult(reservation.Id, reservation.SequenceNumber));
-                }
-                catch (RepositoryUniqueConstraintException)
-                {
-                    if (attempt == maxRetries - 1) throw;
-                }
+                    return new ReservationCommandResponse(true, ReservationDtoMapper.Map(reservation));
+
             }
 
-            return new CommandResult<CreateReservationResult>(false, default,
-                Message: "Failed to create reservation after maximum retries.");
+            return new ReservationCommandResponse(false, null,
+                "Failed to create reservation after maximum retries.");
         }
     }
 }

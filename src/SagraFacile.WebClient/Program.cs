@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Refit;
 using SagraFacile.WebClient;
 using SagraFacile.WebClient.Auth;
 using SagraFacile.WebClient.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
-builder.RootComponents.Add<App>("#app");
-builder.RootComponents.Add<HeadOutlet>("head::after");
 
 var appBaseAddress = new Uri(builder.Configuration["services:api:https:0"] ?? builder.HostEnvironment.BaseAddress);
 
@@ -17,19 +16,24 @@ builder.Services.AddScoped<JwtAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthStateProvider>());
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AuthorizationMessageHandler>();
-builder.Services.AddTransient<IReservationRealtimeService, ReservationRealtimeService>();
+builder.Services.AddScoped<IReservationRealtimeService, ReservationRealtimeService>();
 
 builder.Services.AddLocalization();
 
-builder.Services.AddHttpClient<IAuthService, AuthHttpService>(client => client.BaseAddress = appBaseAddress)
+builder.Services.AddRefitGeneratedClient<IAuthService>()
+    .ConfigureHttpClient(client => client.BaseAddress = appBaseAddress)
     .AddHttpMessageHandler<AuthorizationMessageHandler>();
-builder.Services.AddHttpClient<IEventService, EventService>(client => client.BaseAddress = appBaseAddress)
+builder.Services.AddRefitGeneratedClient<IEventService>()
+    .ConfigureHttpClient(client => client.BaseAddress = appBaseAddress)
     .AddHttpMessageHandler<AuthorizationMessageHandler>();
-builder.Services.AddHttpClient<IMenuService, MenuService>(client => client.BaseAddress = appBaseAddress)
+builder.Services.AddRefitGeneratedClient<IMenuService>()
+    .ConfigureHttpClient(client => client.BaseAddress = appBaseAddress)
     .AddHttpMessageHandler<AuthorizationMessageHandler>();
-builder.Services.AddHttpClient<IReservationService, ReservationService>(client => client.BaseAddress = appBaseAddress)
+builder.Services.AddRefitGeneratedClient<IReservationService>()
+    .ConfigureHttpClient(client => client.BaseAddress = appBaseAddress)
     .AddHttpMessageHandler<AuthorizationMessageHandler>();
-builder.Services.AddHttpClient<IUserService, UserService>(client => client.BaseAddress = appBaseAddress)
+builder.Services.AddRefitGeneratedClient<IUserService>()
+    .ConfigureHttpClient(client => client.BaseAddress = appBaseAddress)
     .AddHttpMessageHandler<AuthorizationMessageHandler>();
 
 builder.Services.AddScoped(sp =>
@@ -37,6 +41,8 @@ builder.Services.AddScoped(sp =>
     var handler = sp.GetRequiredService<AuthorizationMessageHandler>();
     return new HttpClient(handler) { BaseAddress = appBaseAddress };
 });
+
+builder.Services.AddBlazorBootstrap();
 
 var app = builder.Build();
 

@@ -1,18 +1,14 @@
-@page "/"
-@inject NavigationManager Navigation
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: true))
+@using SagraFacile.Contracts.Reservations
+@using SagraFacile.Domain.Features.Reservations
+@inject IServiceProvider Services
 @inject IStringLocalizer<SharedResource> L
-@inject IEventService EventService
-@inject IReservationService ReservationService
-@inject IJSRuntime JS
+@implements IDisposable
 
 <PageTitle>@L["Home_PageTitle"]</PageTitle>
 
 <div class="home-container container py-4">
-    @if (isLoading)
-    {
-        <p class="text-center"><em>@L["PublicMenu_Loading"]</em></p>
-    }
-    else if (activeEvent is null)
+    @if (ActiveEventName is null)
     {
         <div class="text-center text-muted mt-5">
             <h2>🍽️ @L["PublicMenu_NoActiveEvent"]</h2>
@@ -21,16 +17,16 @@
     else
     {
         <div class="text-center mb-4">
-            <h1>🍽️ @activeEvent.Name</h1>
+            <h1>🍽️ @ActiveEventName</h1>
         </div>
 
         <div class="text-center mb-4">
-            <a class="btn btn-primary btn-lg home-menu-button" @onclick='() => Navigation.NavigateTo("/menu")'>
+            <a class="btn btn-primary btn-lg home-menu-button" href="/menu">
                 @L["Home_GoToMenu"]
             </a>
         </div>
 
-        @if (initialLoadFailed)
+        @if (InitialLoadFailed)
         {
             <div class="alert alert-warning" role="alert">
                 @L["NowCalling_LoadWarning"]
@@ -78,63 +74,73 @@
 </div>
 
 @code {
-    private bool isLoading = true;
-    private EventDto? activeEvent;
-    private readonly List<CalledEntry> calledEntries = [];
-    private bool initialLoadFailed;
+    [Parameter]
+    public string? ActiveEventName { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    [Parameter]
+    public List<CalledEntry> InitialCalledEntries { get; set; } = [];
+
+    [Parameter]
+    public bool InitialLoadFailed { get; set; }
+
+    private readonly List<CalledEntry> calledEntries = [];
+    private IDisposable? reservationSubscription;
+
+    protected override void OnParametersSet()
     {
-        activeEvent = await EventService.GetActiveEventAsync();
-        if (activeEvent is not null)
-        {
-            await LoadInitialCalledReservationsAsync(activeEvent.Id);
-        }
-        isLoading = false;
+        calledEntries.Clear();
+        calledEntries.AddRange(InitialCalledEntries);
     }
 
-    private async Task LoadInitialCalledReservationsAsync(int eventId)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && ActiveEventName is not null)
+        {
+            await InitializeSignalRAsync();
+        }
+    }
+
+    private async Task InitializeSignalRAsync()
     {
         try
         {
-            var result = await ReservationService.GetLastCalledReservationsAsync(eventId);
+            var realtimeService = Services.GetRequiredService<IReservationRealtimeService>();
+            await realtimeService.EnsureStartedAsync();
 
-            calledEntries.Clear();
-            calledEntries.AddRange(result);
+            reservationSubscription = realtimeService.SubscribeReservationStatusChanged(async notification =>
+            {
+                if (notification.NewStatus != ReservationStatus.Called)
+                {
+                    calledEntries.RemoveAll(entry => entry.Id == notification.ReservationId);
+                }
+                else
+                {
+                    var entry = new CalledEntry(
+                        notification.ReservationId,
+                        notification.SequenceNumber,
+                        notification.CustomerName,
+                        notification.PartySize,
+                        notification.CallCount ?? 0);
+
+                    calledEntries.RemoveAll(existing => existing.Id == entry.Id);
+                    calledEntries.Insert(0, entry);
+                    if (calledEntries.Count > 10)
+                    {
+                        calledEntries.RemoveRange(10, calledEntries.Count - 10);
+                    }
+                }
+
+                await InvokeAsync(StateHasChanged);
+            });
         }
         catch
         {
-            initialLoadFailed = true;
+            // Keep the page usable if the realtime hub is temporarily unavailable.
         }
     }
 
-    private DotNetObjectReference<Home>? _dotNetRef;
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    public void Dispose()
     {
-        if (firstRender)
-        {
-            _dotNetRef = DotNetObjectReference.Create(this);
-            await JS.InvokeVoidAsync("visibilityHelpers.register", _dotNetRef);
-        }
-    }
-    
-    [JSInvokable("OnVisibilityChanged")]
-    public async Task OnVisibilityChanged(bool visible)
-    {
-        if (visible && activeEvent is not null)
-        {
-            await LoadInitialCalledReservationsAsync(activeEvent.Id);
-            await InvokeAsync(StateHasChanged);
-        }
-    }
-    
-    public async ValueTask DisposeAsync()
-    {
-        _dotNetRef?.Dispose();
-        try { await JS.InvokeVoidAsync("visibilityHelpers.unregister"); }
-        catch
-        {
-            // ignored
-        }
+        reservationSubscription?.Dispose();
     }
 }

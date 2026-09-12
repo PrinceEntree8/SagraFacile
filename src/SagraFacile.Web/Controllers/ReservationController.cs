@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SagraFacile.Application.Features.Reservations;
 using SagraFacile.Application.Infrastructure.CQRS;
+using SagraFacile.Contracts.Common;
 using SagraFacile.Contracts.Reservations;
 using SagraFacile.Domain.Features.Reservations;
 
@@ -13,6 +14,10 @@ namespace SagraFacile.Web.Controllers;
 public class ReservationController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
+    [EndpointName("Reservations_List")]
+    [ProducesResponseType(typeof(ReservationsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Get(
         [FromQuery] int eventId,
         [FromQuery] string? status,
@@ -22,9 +27,7 @@ public class ReservationController(IMediator mediator) : ControllerBase
     {
         var filter = ParseFilter(status);
         var result = await mediator.QueryAsync(new GetReservations.Query(eventId, page, pageSize, filter), ct);
-        return Ok(new
-        {
-            Reservations = result.Reservations.Select(r => new ReservationDto(
+        return Ok(new ReservationsDto(result.Reservations.Select(r => new ReservationDto(
                 r.Id,
                 r.SequenceNumber,
                 r.CustomerName,
@@ -36,13 +39,13 @@ public class ReservationController(IMediator mediator) : ControllerBase
                 r.LastCalledAt,
                 r.CallCount,
                 r.WaitingTime,
-                r.TimeSinceLastCall)),
-            result.TotalCount
-        });
+                r.TimeSinceLastCall)).ToList(), result.TotalCount));
     }
 
     [HttpGet("last-called")]
     [AllowAnonymous]
+    [EndpointName("Reservations_LastCalled")]
+    [ProducesResponseType(typeof(IList<CalledEntry>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Get(
         [FromQuery] int eventId,
         [FromQuery] int maxEntries = 10,
@@ -58,6 +61,10 @@ public class ReservationController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("counters")]
+    [EndpointName("Reservations_Counters")]
+    [ProducesResponseType(typeof(IList<ReservationCounterDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetCounters([FromQuery] int eventId, CancellationToken ct)
     {
         var result = await mediator.QueryAsync(new GetCounters.Query(eventId), ct);
@@ -65,6 +72,10 @@ public class ReservationController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("best-fit")]
+    [EndpointName("Reservations_BestFit")]
+    [ProducesResponseType(typeof(IList<ReservationMatchDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetBestFit([FromQuery] int eventId, [FromQuery] int availableSeats, CancellationToken ct)
     {
         var result = await mediator.QueryAsync(new GetBestFitReservation.Query(eventId, availableSeats), ct);
@@ -73,6 +84,10 @@ public class ReservationController(IMediator mediator) : ControllerBase
 
     [Authorize(Policy = "AdminOrSupervisore")]
     [HttpGet("report")]
+    [EndpointName("Reservations_Report")]
+    [ProducesResponseType(typeof(IEnumerable<ReservationReportDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetReport([FromQuery] int eventId, CancellationToken ct)
     {
         var result = await mediator.QueryAsync(new GetReservationReport.Query(eventId), ct);
@@ -92,37 +107,93 @@ public class ReservationController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateReservationRequest req, CancellationToken ct)
-        => Ok(await mediator.SendAsync(
-            new CreateReservation.Command(req.EventId, req.CustomerName, req.PartySize, req.Notes, req.PartyComplete), ct));
+    [EndpointName("Reservations_Create")]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> CreateReservation([FromBody] CreateReservationRequest req, CancellationToken ct)
+    {
+        var commandResult = await mediator.SendAsync(
+            new CreateReservation.Command(req.EventId, req.CustomerName, req.PartySize, req.Notes, req.PartyComplete),
+            ct);
+        if (!commandResult.Success)
+        {
+            return BadRequest(commandResult.Message);
+        }
+
+        return CreatedAtAction(nameof(GetReservation), new { id = commandResult.Reservation!.Id }, commandResult);
+    }
 
     [HttpPost("{id:int}/call")]
+    [EndpointName("Reservations_Call")]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Call(int id, [FromBody] CallReservationRequest req, CancellationToken ct)
         => Ok(await mediator.SendAsync(new CallReservation.Command(id, req.CalledBy, req.Notes), ct));
 
     [HttpPost("{id:int}/seat")]
+    [EndpointName("Reservations_Seat")]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Seat(int id, CancellationToken ct)
         => Ok(await mediator.SendAsync(new SeatReservation.Command(id), ct));
 
     [HttpPost("call-and-seat")]
+    [EndpointName("Reservations_CallAndSeat")]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CallAndSeat([FromBody] CallAndSeatRequest req, CancellationToken ct)
         => Ok(await mediator.SendAsync(new CallAndSeatReservation.Command(req.EventId, req.SequenceNumber), ct));
 
     [HttpPut("{id:int}")]
+    [EndpointName("Reservations_Edit")]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Edit(int id, [FromBody] EditReservationRequest req, CancellationToken ct)
         => Ok(await mediator.SendAsync(new EditReservation.Command(id, req.CustomerName, req.PartySize, req.Notes, req.Status), ct));
 
     [HttpPost("{id:int}/party-complete")]
+    [EndpointName("Reservations_MarkPartyComplete")]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> MarkPartyComplete(int id, CancellationToken ct)
         => Ok(await mediator.SendAsync(new MarkPartyComplete.Command(id), ct));
 
     [HttpDelete("{id:int}")]
+    [EndpointName("Reservations_Void")]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Void(int id, CancellationToken ct)
         => Ok(await mediator.SendAsync(new VoidReservation.Command(id), ct));
 
     [HttpPost("{id:int}/restore")]
+    [EndpointName("Reservations_Restore")]
+    [ProducesResponseType(typeof(ReservationCommandResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Restore(int id, CancellationToken ct)
         => Ok(await mediator.SendAsync(new RestoreReservation.Command(id), ct));
+    
+    [HttpGet("{id:int}")]
+    [EndpointName(nameof(GetReservation))]
+    [ProducesResponseType(typeof(ReservationDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetReservation([FromRoute] int id, CancellationToken ct)
+    {
+        var r = await mediator.QueryAsync(
+            new GetReservation.Query(id), 
+            ct);
+
+        return r is null ? NotFound() : Ok(r);
+    }
 
     private static ReservationStatusFilter ParseFilter(string? status)
     {

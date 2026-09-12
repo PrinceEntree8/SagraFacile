@@ -1,7 +1,9 @@
 @page "/events"
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @inject IEventService EventService
 @inject IStringLocalizer<SharedResource> L
+@inject ToastService ToastService
 
 <PageTitle>@L["Events_PageTitle"]</PageTitle>
 
@@ -14,10 +16,6 @@
                 <h3 class="mb-0">@L["Events_NewEvent"]</h3>
             </div>
             <div class="card-body">
-                @if (!string.IsNullOrEmpty(createMessage))
-                {
-                    <div class="alert @(createSuccess ? "alert-success" : "alert-danger")">@createMessage</div>
-                }
                 <EditForm Model="newEvent" OnValidSubmit="CreateEventAsync" FormName="CreateEventForm">
                     <DataAnnotationsValidator />
                     <div class="mb-3">
@@ -127,8 +125,6 @@
     private NewEventModel newEvent = new();
     private bool isLoading = true;
     private bool isCreating = false;
-    private string createMessage = string.Empty;
-    private bool createSuccess = false;
     private int? activatingEventId = null;
 
     protected override async Task OnInitializedAsync()
@@ -146,7 +142,6 @@
     private async Task CreateEventAsync()
     {
         isCreating = true;
-        createMessage = string.Empty;
         try
         {
             await EventService.CreateEventAsync(new CreateEventRequest(
@@ -156,15 +151,13 @@
                 newEvent.Currency,
                 newEvent.CurrencySymbol
             ));
-            createMessage = string.Format(L["Events_EventCreated"], newEvent.Name);
-            createSuccess = true;
+            ToastService.Notify(new ToastMessage(ToastType.Success, string.Format(L["Events_EventCreated"], newEvent.Name)));
             newEvent = new();
             await LoadEventsAsync();
         }
         catch (Exception ex)
         {
-            createMessage = string.Format(L["Events_Error"], ex.Message);
-            createSuccess = false;
+            ToastService.Notify(new ToastMessage(ToastType.Danger, string.Format(L["Events_Error"], ex.Message)));
         }
         isCreating = false;
     }

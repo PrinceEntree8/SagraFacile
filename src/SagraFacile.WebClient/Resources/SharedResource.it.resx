@@ -212,6 +212,8 @@
   <data name="Receptionist_NameRequired" xml:space="preserve"><value>Il nome del cliente è obbligatorio.</value></data>
   <data name="Receptionist_PartySizeMin" xml:space="preserve"><value>Il numero di persone deve essere almeno 1.</value></data>
   <data name="Receptionist_SeatsContextFull" xml:space="preserve"><value>Nessun posto disponibile</value></data>
+  <data name="Receptionist_ReservationCreatedTitle" xml:space="preserve"><value>Prenotazione registrata!</value></data>
+  <data name="Receptionist_ClickToDismiss" xml:space="preserve"><value>Clicca per chiudere</value></data>
 
   <!-- Head Waiter -->
   <data name="HeadWaiter_PageTitle" xml:space="preserve"><value>Capo Cameriere - Accomoda</value></data>
@@ -445,4 +447,21 @@
     <value>Prenotazione</value>
     <comment>ReservationView_ModalTitle</comment>
   </data>
+
+  <!-- Dashboard -->
+  <data name="Nav_Dashboard" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="Dashboard_PageTitle" xml:space="preserve"><value>Dashboard - SagraFacile</value></data>
+  <data name="Dashboard_Heading" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="Dashboard_ActiveEvent" xml:space="preserve"><value>Evento Attivo</value></data>
+  <data name="Dashboard_QuickAccess" xml:space="preserve"><value>Accesso Rapido</value></data>
+  <data name="Dashboard_NowCalling_Desc" xml:space="preserve"><value>Bachetta live delle prenotazioni chiamate</value></data>
+  <data name="Dashboard_Receptionist_Desc" xml:space="preserve"><value>Crea e gestisci prenotazioni, chiama gli ospiti</value></data>
+  <data name="Dashboard_HeadWaiter_Desc" xml:space="preserve"><value>Assegnazione tavoli e annunci</value></data>
+  <data name="Dashboard_Overview_Desc" xml:space="preserve"><value>Panoramica a griglia di tutte le prenotazioni</value></data>
+  <data name="Dashboard_Reports_Desc" xml:space="preserve"><value>Report e statistiche delle prenotazioni</value></data>
+  <data name="Dashboard_Events_Desc" xml:space="preserve"><value>Crea e gestisci eventi</value></data>
+  <data name="Dashboard_Admin_Desc" xml:space="preserve"><value>Gestione utenti e impostazioni di sistema</value></data>
+  <data name="Dashboard_LiveCalls" xml:space="preserve"><value>Chiamate Live</value></data>
+  <data name="Dashboard_WaitingForCalls" xml:space="preserve"><value>In attesa di chiamate...</value></data>
+  <data name="Dashboard_NewCall" xml:space="preserve"><value>Nuova chiamata: {0} (gruppo di {1})</value></data>
 </root>

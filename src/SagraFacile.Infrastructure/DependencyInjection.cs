@@ -34,13 +34,13 @@ public static class DependencyInjection
         .AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultTokenProviders();
 
-        services.AddTransient<IEventRepository, EventRepository>();
-        services.AddTransient<IReservationRepository, ReservationRepository>();
-        services.AddTransient<ITableRepository, TableRepository>();
-        services.AddTransient<IMenuRepository, MenuRepository>();
-        services.AddTransient<IAllergenRepository, AllergenRepository>();
-        services.AddTransient<IMenuCategoryRepository, MenuCategoryRepository>();
-        services.AddTransient<IMenuDetailsRepository, MenuDetailsRepository>();
+        services.AddScoped<IEventRepository, EventRepository>();
+        services.AddScoped<IReservationRepository, ReservationRepository>();
+        services.AddScoped<ITableRepository, TableRepository>();
+        services.AddScoped<IMenuRepository, MenuRepository>();
+        services.AddScoped<IAllergenRepository, AllergenRepository>();
+        services.AddScoped<IMenuCategoryRepository, MenuCategoryRepository>();
+        services.AddScoped<IMenuDetailsRepository, MenuDetailsRepository>();
         services.AddMemoryCache();
         services.AddSingleton<IMenuCacheService, MenuCacheService>();
 

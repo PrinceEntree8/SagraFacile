@@ -39,7 +39,8 @@ public class CreateReservationHandlerTests
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
-        var created = Assert.IsType<CreateReservationResult>(result.Data);
+        Assert.NotNull(result.Reservation);
+        var created = result.Reservation;
 
         // Assert
         Assert.Equal(1, created.SequenceNumber);
@@ -122,6 +123,20 @@ public class CreateReservationHandlerTests
 
         // Assert — SaveChanges was called twice (one failure + one success)
         Assert.Equal(2, callCount);
+        await _repository.Received(2).AcquireEventLockAsync(1, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ValidCommand_AcquiresEventLockBeforeSequencing()
+    {
+        // Arrange
+        _repository.GetNextSequenceNumberAsync(1, Arg.Any<CancellationToken>()).Returns(1);
+
+        // Act
+        await _handler.Handle(new CreateReservation.Command(1, "Test", 2), CancellationToken.None);
+
+        // Assert — the event lock is acquired exactly once for a single successful attempt.
+        await _repository.Received(1).AcquireEventLockAsync(1, Arg.Any<CancellationToken>());
     }
 
     [Fact]
