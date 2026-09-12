@@ -63,5 +63,7 @@ nunit-*.xml
 
 .air
 .idea
+.opencode
+.agents
 
 .DS_Store
