@@ -11,10 +11,10 @@ public sealed class ReservationRealtimeService : IReservationRealtimeService, IA
     private readonly HubConnection hubConnection;
 
     private readonly SemaphoreSlim startLock = new(1, 1);
-    private readonly WeakAsyncEvent<ReservationConnectionState> connectionStateChanged = new();
-    private readonly WeakAsyncEvent<ReservationStatusChangedNotification> reservationStatusChanged = new();
-    private readonly WeakAsyncEvent<int> availableSeatsUpdated = new();
-    private readonly WeakAsyncEvent<List<ReservationCounterDto>> countersUpdated = new();
+    private readonly StrongAsyncEvent<ReservationConnectionState> connectionStateChanged = new();
+    private readonly StrongAsyncEvent<ReservationStatusChangedNotification> reservationStatusChanged = new();
+    private readonly StrongAsyncEvent<int> availableSeatsUpdated = new();
+    private readonly StrongAsyncEvent<List<ReservationCounterDto>> countersUpdated = new();
     private bool lifecycleHandlersRegistered;
 
     public ReservationRealtimeService(TokenStorageService tokenStorage, NavigationManager navigationManager)
@@ -121,14 +121,14 @@ public sealed class ReservationRealtimeService : IReservationRealtimeService, IA
         startLock.Dispose();
     }
 
-    private sealed class WeakAsyncEvent<TPayload>
+    private sealed class StrongAsyncEvent<TPayload>
     {
-        private readonly ConcurrentDictionary<Guid, WeakReference<Func<TPayload, Task>>> handlers = new();
+        private readonly ConcurrentDictionary<Guid, Func<TPayload, Task>> handlers = new();
 
         public IDisposable Subscribe(Func<TPayload, Task> handler)
         {
             var key = Guid.NewGuid();
-            handlers[key] = new WeakReference<Func<TPayload, Task>>(handler);
+            handlers[key] = handler;
             return new Subscription(() => handlers.TryRemove(key, out _));
         }
 
@@ -136,13 +136,7 @@ public sealed class ReservationRealtimeService : IReservationRealtimeService, IA
         {
             foreach (var entry in handlers)
             {
-                if (entry.Value.TryGetTarget(out var handler))
-                {
-                    await handler(payload);
-                    continue;
-                }
-
-                handlers.TryRemove(entry.Key, out _);
+                await entry.Value(payload);
             }
         }
 
